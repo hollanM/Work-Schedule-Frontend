@@ -1,6 +1,7 @@
 name: Deploy dev to AWS
 
 #turn off deploy to AWS
+# PUtting temp text for committing for deployment
 on:
   pull_request:
     types: [closed]
