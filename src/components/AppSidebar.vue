@@ -33,6 +33,25 @@ const viewOptions = [
   'placeholder',
 ]
 
+const viewTagsOpen = ref(false)
+const tagsOptions = [
+  'placeholder',
+  'placeholder',
+  'placeholder',
+]
+
+const viewJobSitesOpen = ref(false)
+const jobSiteOptions = [
+  'placeholder',
+  'placeholder',
+  'placeholder',
+]
+const viewTaskListsOpen = ref(false)
+const taskListOptions = [
+  'placeholder',
+  'placeholder',
+  'placeholder',
+]
 </script>
 
 <template>
@@ -48,7 +67,7 @@ const viewOptions = [
         :key="item.name"
         :to="item.to || undefined"
         v-bind:router="!!item.to"
-        @click="item.name === 'View Options' ? viewOptionsOpen = !viewOptionsOpen : null"
+        @click="item.name === 'View Options' ? viewOptionsOpen = !viewOptionsOpen : (item.name === 'Tags' ? viewTagsOpen = !viewTagsOpen : (item.name === 'Job Sites' ? viewJobSitesOpen = !viewJobSitesOpen : (item.name === 'Task Lists' ? viewTaskListsOpen = !viewTaskListsOpen : null)))"
       >
         <template #prepend>
           <v-icon :icon="item.icon" />
@@ -74,6 +93,7 @@ const viewOptions = [
           </v-list>
         </template>
 
+        <!-- Options drop down -->
         <template #append v-if="item.name === 'View Options'">
           <v-icon :icon="viewOptionsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
         </template>
@@ -81,6 +101,45 @@ const viewOptions = [
         <template v-if="item.name === 'View Options'">
           <v-list v-show="viewOptionsOpen" dense>
             <v-list-item v-for="opt in viewOptions" :key="opt">
+              <v-list-item-title>{{ opt }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </template>
+
+        <!-- tags drop down -->
+        <template #append v-if="item.name === 'Tags'">
+          <v-icon :icon="viewTagsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+        </template>
+
+        <template v-if="item.name === 'Tags'">
+          <v-list v-show="viewTagsOpen" dense>
+            <v-list-item v-for="opt in tagsOptions" :key="opt">
+              <v-list-item-title>{{ opt }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </template>
+
+        <!-- Job Sites drop down -->
+        <template #append v-if="item.name === 'Job Sites'">
+          <v-icon :icon="viewJobSitesOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+        </template>
+
+        <template v-if="item.name === 'Job Sites'">
+          <v-list v-show="viewJobSitesOpen" dense>
+            <v-list-item v-for="opt in jobSiteOptions" :key="opt">
+              <v-list-item-title>{{ opt }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </template>
+
+        <!-- Task Lists drop down -->
+        <template #append v-if="item.name === 'Task Lists'">
+          <v-icon :icon="viewTaskListsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
+        </template>
+
+        <template v-if="item.name === 'Task Lists'">
+          <v-list v-show="viewTaskListsOpen" dense>
+            <v-list-item v-for="opt in taskListOptions" :key="opt">
               <v-list-item-title>{{ opt }}</v-list-item-title>
             </v-list-item>
           </v-list>

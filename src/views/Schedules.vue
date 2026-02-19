@@ -68,7 +68,7 @@ onMounted(() => {
   <div>
     <v-container>
       <v-toolbar>
-        <v-toolbar-title>DATE HERE</v-toolbar-title>
+        <v-toolbar-title>DATE OF WEEK SCHEDULE HERE</v-toolbar-title>
         <v-btn class="mx-2" color="primary" @click="editTutorial">Edit</v-btn>
           <v-btn class="mx-2" color="success" @click="addLesson">Add Lesson</v-btn>
       </v-toolbar>
