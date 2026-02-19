@@ -1,11 +1,23 @@
 <script setup>
 import { ref } from 'vue'
 
+const user = ref(null);
+
+
 defineProps({
   drawer: Boolean
 })
 
 defineEmits(['update:drawer'])
+
+const resetMenu = () => {
+  user.value = null;
+  user.value = Utils.getStore("user");
+  if (user.value) {
+    initials.value = user.value.fName[0] + user.value.lName[0];
+    name.value = user.value.fName + " " + user.value.lName;
+  }
+};
 
 // these don't do anything yet, just placeholders for the UI
 const menuItems = [
@@ -52,6 +64,8 @@ const taskListOptions = [
   'placeholder',
   'placeholder',
 ]
+
+
 </script>
 
 <template>
@@ -62,7 +76,7 @@ const taskListOptions = [
   >
     <v-list nav>
       <!-- schedule menu items -->
-      <v-list-item
+      <v-list-item 
         v-for="item in menuItems"
         :key="item.name"
         :to="item.to || undefined"
