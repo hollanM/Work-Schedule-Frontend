@@ -80,6 +80,10 @@ const goToday = () => {
   apiFetchToday();
 };
 
+const goWeek = () => {
+  console.log("Go to week view");
+};
+
 const addUser = () => {
   apiAddUser();
 };
@@ -88,22 +92,36 @@ const assignUser = (userId, date) => {
   apiAssignUser(userId, date);
 };
 
+// Prints the schedule
+const printSchedule = () => {
+  console.log("Print schedule");
+};
+
+// WHAT DO YOU DO
+const wrenchOptions = () => {
+  console.log("Open options");
+};
+
 /* =====================================================
    API calls (replace with axios later)
    ===================================================== */
 
+// Function to fetch the previous or next week (for week navigation buttons)
 function apiFetchWeek(direction) {
   console.log("API CALL → fetch week:", direction);
 }
 
+// Function to fetch the current week (for "Today" button)
 function apiFetchToday() {
   console.log("API CALL → fetch current week");
 }
 
+// Function to create a new user (for now just logs, but will eventually update backend and refresh data)
 function apiAddUser() {
   console.log("API CALL → create new user");
 }
 
+// Function to assign a user to a specific day (for now just logs, but will eventually update backend and refresh data)
 function apiAssignUser(userId, date) {
   console.log("API CALL → assign user to day:", {
     userId,
@@ -152,12 +170,12 @@ const totalHours = computed(() =>
 
         <!-- Button for viewing entire week schedule -->
         <v-btn-group divided>
-          <v-btn>Week</v-btn>
+          <v-btn @click="goWeek">Week</v-btn>
         </v-btn-group>
 
         <!-- Buttons for printing and options(?) -->
-        <v-btn icon="mdi-printer" variant="outlined" />
-        <v-btn icon="mdi-wrench" variant="outlined" />
+        <v-btn icon="mdi-printer" variant="outlined" @click="printSchedule" />
+        <v-btn icon="mdi-wrench" variant="outlined" @click="wrenchOptions" />
       </div>
     </div>
 
