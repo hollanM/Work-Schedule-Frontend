@@ -1,114 +1,239 @@
+<template>
+  <v-container fluid class="pa-6">
+
+    <!-- HEADER -->
+    <div class="d-flex align-center justify-space-between mb-6">
+      <h1 class="text-h4 font-weight-bold">
+        {{ formattedRange }}
+      </h1>
+
+      <div class="d-flex align-center ga-3">
+
+        <v-btn-group divided>
+          <v-btn icon="mdi-chevron-left" @click="prevWeek" />
+          <v-btn icon="mdi-calendar-month" />
+          <v-btn icon="mdi-chevron-right" @click="nextWeek" />
+        </v-btn-group>
+
+        <v-btn variant="outlined" @click="goToday">
+          TODAY
+        </v-btn>
+
+        <v-btn-group divided>
+          <v-btn>Week</v-btn>
+        </v-btn-group>
+
+        <v-btn icon="mdi-printer" variant="outlined" />
+        <v-btn icon="mdi-wrench" variant="outlined" />
+
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <v-card>
+      <v-table density="comfortable" class="schedule-table">
+        <thead>
+          <tr>
+            <th>Custom</th>
+            <th v-for="day in weekDays" :key="day.date">
+              {{ day.label }}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <!-- USERS -->
+          <tr v-for="user in users" :key="user.id">
+            <td class="d-flex align-center">
+              <v-avatar size="28" class="mr-2">
+                <v-img :src="user.avatar" />
+              </v-avatar>
+              {{ user.name }}
+            </td>
+
+            <td
+              v-for="day in weekDays"
+              :key="day.date"
+              @click="addHour(user.id, day.date)"
+              class="clickable"
+            >
+              <div v-if="user.hours[day.date]">
+                {{ user.hours[day.date] }}
+              </div>
+              <v-icon
+                v-else
+                size="16"
+                color="success"
+              >
+                mdi-plus
+              </v-icon>
+            </td>
+          </tr>
+
+          <!-- ADD USER -->
+          <tr>
+            <td>
+              <v-btn
+                variant="text"
+                color="success"
+                prepend-icon="mdi-plus-circle-outline"
+                @click="addUser"
+              >
+                ADD USER
+              </v-btn>
+            </td>
+            <td v-for="day in weekDays" :key="'empty-'+day.date"></td>
+          </tr>
+
+          <!-- TOTALS -->
+          <tr class="bg-grey-lighten-4">
+            <td>
+              <strong>Assigned Total</strong><br />
+              {{ totalHours }} hrs
+            </td>
+
+            <td v-for="day in weekDays" :key="'total-'+day.date">
+              {{ dayTotals[day.date] || 0 }}
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+    </v-card>
+
+  </v-container>
+</template>
+
 <script setup>
-import TutorialServices from "../services/tutorialServices";
-import LessonServices from "../services/lessonServices";
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed } from 'vue'
+import { startOfWeek, addDays, format } from 'date-fns'
 
-const router = useRouter();
-const tutorial = ref({});
-const lessons = ref([]);
-const message = ref("Add, Edit or Delete Lessons");
+/* =====================================================
+   STATE (will eventually come from backend)
+   ===================================================== */
 
-const props = defineProps({
-  id: {
-    required: true,
-  },
-});
+const currentDate = ref(new Date())
 
-const retrieveLessons = () => {
-  TutorialServices.get(props.id)
-    .then((response) => {
-      tutorial.value = response.data;
-      LessonServices.getAllLessons(props.id)
-        .then((response) => {
-          lessons.value = response.data;
-        })
-        .catch((e) => {
-          message.value = e.response.data.message;
-        });
-    })
-    .catch((e) => {
-      message.value = e.response.data.message;
-    });
-};
+// Placeholder data (pretend this came from API)
+const users = ref([
+  {
+    id: 1,
+    name: 'Perfect C.',
+    avatar: 'https://i.pravatar.cc/40',
+    hours: {}
+  }
+])
 
-const editTutorial = () => {
-  router.push({ name: "edit", params: { id: props.id } });
-};
+/* =====================================================
+   WEEK DISPLAY (UI only — backend will control data)
+   ===================================================== */
 
-const editLesson = (lesson) => {
-  router.push({
-    name: "editLesson",
-    params: { tutorialId: props.id, lessonId: lesson.id },
-  });
-};
+const weekStart = computed(() =>
+  startOfWeek(currentDate.value, { weekStartsOn: 1 })
+)
 
-const addLesson = () => {
-  router.push({ name: "addLesson", params: { tutorialId: props.id } });
-};
+const weekDays = computed(() =>
+  Array.from({ length: 7 }).map((_, i) => {
+    const date = addDays(weekStart.value, i)
+    return {
+      date: format(date, 'yyyy-MM-dd'),
+      label: format(date, 'EEEE')
+    }
+  })
+)
 
-const deleteLesson = (lesson) => {
-  LessonServices.deleteLesson(lesson.tutorialId, lesson.id)
-    .then(() => {
-      retrieveLessons();
-    })
-    .catch((e) => {
-      message.value = e.response.data.message;
-    });
-};
+const formattedRange = computed(() => {
+  const start = weekStart.value
+  const end = addDays(start, 6)
+  return `${format(start, 'MMMM d')} - ${format(end, 'MMMM d, yyyy')}`
+})
 
-onMounted(() => {
-  retrieveLessons();
-});
+/* =====================================================
+   API STUBS (replace with axios later)
+   ===================================================== */
 
+function apiFetchWeek(direction) {
+  console.log('API CALL → fetch week:', direction)
+}
+
+function apiFetchToday() {
+  console.log('API CALL → fetch current week')
+}
+
+function apiAddUser() {
+  console.log('API CALL → create new user')
+}
+
+function apiUpdateHours(userId, date) {
+  console.log('API CALL → update hours:', {
+    userId,
+    date
+  })
+}
+
+/* =====================================================
+   BUTTON HANDLERS
+   ===================================================== */
+
+const prevWeek = () => {
+  apiFetchWeek('previous')
+}
+
+const nextWeek = () => {
+  apiFetchWeek('next')
+}
+
+const goToday = () => {
+  apiFetchToday()
+}
+
+const addUser = () => {
+  apiAddUser()
+}
+
+const addHour = (userId, date) => {
+  apiUpdateHours(userId, date)
+}
+
+/* =====================================================
+   TOTALS (UI only, safe to keep)
+   ===================================================== */
+
+const dayTotals = computed(() => {
+  const totals = {}
+  weekDays.value.forEach(day => {
+    totals[day.date] = users.value.reduce(
+      (sum, user) => sum + (user.hours[day.date] || 0),
+      0
+    )
+  })
+  return totals
+})
+
+const totalHours = computed(() =>
+  Object.values(dayTotals.value).reduce((a, b) => a + b, 0)
+)
 </script>
 
-<template>
-  
-  <div>
-    <v-container>
-      <v-toolbar>
-        <v-toolbar-title>DATE OF WEEK SCHEDULE HERE</v-toolbar-title>
-        <v-btn class="mx-2" color="primary" @click="editTutorial">Edit</v-btn>
-          <v-btn class="mx-2" color="success" @click="addLesson">Add Lesson</v-btn>
-      </v-toolbar>
-      <br />
-      <v-card>
-        <v-card-title>
-          
-        </v-card-title>
-        <v-card-text>
-          <b>{{ message }}</b>
-        </v-card-text>
-        <v-table>
-          <thead>
-            <tr>
-              <th class="text-left">Custom</th>
-              <th class="text-left">Monday</th>
-              <th class="text-left">Tuesday</th>
-              <th class="text-left">Wednesday</th>
-              <th class="text-left">Thursday</th>
-              <th class="text-left">Friday</th>
-              <th class="text-left">Saturday</th>
-              <th class="text-left">Sunday</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in lessons" :key="item.title">
-              <td>{{ item.title }}</td>
-              <td>{{ item.description }}</td>
-              <td>
-                <v-icon small class="mx-4" @click="editLesson(item)">
-                  mdi-pencil
-                </v-icon>
-                <v-icon small class="mx-4" @click="deleteLesson(item)">
-                  mdi-trash-can
-                </v-icon>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </v-card>
-    </v-container>
-  </div>
-</template>
+<style scoped>
+.schedule-table th {
+  background: #e0e0e0;
+  font-weight: 600;
+}
+
+.schedule-table td,
+.schedule-table th {
+  border: 1px solid #cfcfcf;
+  text-align: center;
+  height: 56px;
+}
+
+.schedule-table td:first-child,
+.schedule-table th:first-child {
+  text-align: left;
+  width: 220px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+</style>
