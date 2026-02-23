@@ -6,6 +6,7 @@ import Dashboard from "/Dashboard.png";
 import Inbox from "/Inbox.png";
 import Schedule from "/Schedule.png";
 import Settings from "/Settings.png";
+import Dropdown_Arrow from "/Dropdown-arrow.png";
 import { ref, onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
@@ -43,6 +44,34 @@ onMounted(() => {
   logoURL.value = ocLogo;
   resetMenu();
 });
+
+const Dashboard_Open = ref(false);
+const Dashboard_Items = ref([
+  { title: 'Profile', route: { name: '' } },
+  { title: 'Preferences', route: { name: '' } },
+]);
+const Schedule_Open = ref(false);
+const Schedule_Items = ref([
+  { title: 'Profile', route: { name: '' } },
+  { title: 'Preferences', route: { name: '' } },
+]);
+const Attendance_Open = ref(false);
+const Attendance_Items = ref([
+  { title: 'Profile', route: { name: '' } },
+  { title: 'Preferences', route: { name: '' } },
+]);
+const Inbox_Open = ref(false);
+const Inbox_Items = ref([
+  { title: 'Profile', route: { name: '' } },
+  { title: 'Preferences', route: { name: '' } },
+]);
+const Settings_Open = ref(false);
+const Settings_Items = ref([
+  { title: 'Profile', route: { name: '' } },
+  { title: 'Preferences', route: { name: '' } },
+]);
+
+
 </script>
 
 <template>
@@ -51,39 +80,91 @@ onMounted(() => {
       <div id="Bell_Div" v-if="user" class="container">
         <div>
           <router-link :to="{ name: '' }">
-            <v-img class="image" id="Bell_img" :src="Bell" height="50" width="50" contain></v-img>
+            <v-img class="image" id="Bell_img" :src="Bell" height="40" width="40" contain></v-img>
           </router-link>
         </div>
       </div>
-      <div id="Dashboard_Div" v-if="user" class="container">
-        <div>
-          <router-link :to="{ name: '' }">
-            <v-img class="image" id="Dashboard_img" :src="Dashboard" height="50" width="50" contain></v-img>
-          </router-link>
-        </div>
-        <p id="Dashboard_p"> DashBoard </p>
-      </div>
-      <div id="Schedule_Div" v-if="user" class="container">
-        <div flex="1">
-          <router-link :to="{ name: '' }">
-            <v-img class="image" id="Schedule_img" :src="Schedule" height="50" width="50" contain></v-img>
-          </router-link>
-        </div>
-        <p id="Schedule_p"> Schedule </p>
-      </div>
-      <div id="Attendance_Div" v-if="user" class="container">
-      <div>
-        <router-link :to="{ name: '' }">
-          <v-img class="image" id="Attendance_img" :src="Attendance" height="50" width="50" contain></v-img>
-        </router-link>
-      </div>
-      <p id="Attendance_"> Attendance </p>
-      </div>
+      <v-menu v-model="Dashboard_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Dashboard_Div" class="container" v-bind="props">
+            <v-img class="image" :src="Dashboard" height="40" width="40" contain/>
+            <span>Dashboard</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Dashboard_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="(Dashboard_Item, index) in Dashboard_Items" :key="index" :to="Dashboard_Item.route">
+            <v-list-item-title>
+              {{ Dashboard_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-menu v-model="Schedule_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Schedule_Div" class="container" v-bind="props">
+            <v-img class="image" :src="Schedule" height="40" width="40" contain/>
+            <span>Schedule</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Schedule_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="(Schedule_Item, index) in Schedule_Items" :key="index" :to="Schedule_Item.route">
+            <v-list-item-title>
+              {{ Schedule_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Attendance_Div" class="container" v-bind="props">
+            <v-img class="image" :src="Attendance" height="40" width="40" contain/>
+            <span>Attendance</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items" :key="index" :to="Attendance_Item.route">
+            <v-list-item-title>
+              {{ Attendance_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-spacer></v-spacer>
-      <div v-if="user">
-        <v-btn class="mx-2" :to="{ name: 'tutorials' }"> List </v-btn>
-        <v-btn class="mx-2" :to="{ name: 'add' }"> Add Tutorial </v-btn>
-      </div>
+      <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Inbox_Div" class="container" v-bind="props">
+            <v-img class="image" :src="Inbox" height="40" width="40" contain/>
+            <span>Inbox</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Inbox_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="(Inbox_Item, index) in Inbox_Items" :key="index" :to="Inbox_Item.route">
+            <v-list-item-title>
+              {{ Inbox_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-menu v-model="Settings_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Settings_Div" class="container" v-bind="props">
+            <v-img class="image" :src="Settings" height="40" width="40" contain/>
+            <span>Settings</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" :to="Settings_Item.route">
+            <v-list-item-title>
+              {{ Settings_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <v-menu bottom min-width="200px" rounded offset-y v-if="user">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" icon x-large>
@@ -115,12 +196,56 @@ onMounted(() => {
 <style>
 .container 
 {
+  display: flex;
+  align-items: center;
+  gap: 8px; 
   cursor: pointer; 
+  height: 100%;
+  padding: .1vw;
+}
+
+.right-buttons /*container was not working for some reason*/
+{
+  display: flex;
+  align-items: center;
+  gap: 8px; 
+  cursor: pointer; 
+  height: 100%;
+  padding: .5vw;
+}
+
+.dropbtn
+{
+  transform: rotate(90deg); /*arrow is initally on its side, and will rotate when clicked on*/
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+
+.dropdown-menu a {
+  color: rgb(60, 60, 60);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  z-index: 1000;
 }
 
 #app-bar 
 {
-  /*background-color: rgb(60, 60, 60);*/
+  background-color: rgb(60, 60, 60);
+  overflow: visible;
 }
 
 #Bell_Div
@@ -129,12 +254,16 @@ onMounted(() => {
   color: rgb(193, 193, 193);
 }
 
+#Bell_Div:hover
+{
+  filter: brightness(50%); 
+}
+
 #Dashboard_Div
 {
   background-color: rgba(60, 60, 60);
   color: rgb(193, 193, 193);
 }
-
 
 #Dashboard_Div:hover
 {
@@ -147,9 +276,56 @@ onMounted(() => {
   color: rgb(193, 193, 193);
 }
 
+#Schedule_Div:hover
+{
+  filter: brightness(50%); 
+}
+
 #Attendance_Div
 {
   background-color: rgba(60, 60, 60);
   color: rgb(193, 193, 193);
+}
+
+#Attendance_Div:hover
+{
+  filter: brightness(50%); 
+}
+
+#Inbox_Div
+{
+  background-color: rgba(60, 60, 60);
+  color: rgb(193, 193, 193);
+}
+
+#Inbox_Div:hover
+{
+  filter: brightness(50%); 
+}
+
+#Settings_Div
+{
+  background-color: rgba(60, 60, 60);
+  color: rgb(193, 193, 193); 
+}
+
+#Settings_Div:hover
+{
+  filter: brightness(50%); 
+}
+
+.activator-btn {
+  background-color: rgba(60, 60, 60);
+  color: rgb(193, 193, 193);
+  height: 100%;
+  padding: 0.1vw;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.activator-btn:hover {
+  filter: brightness(50%);
 }
 </style>
