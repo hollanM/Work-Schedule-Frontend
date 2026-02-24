@@ -7,6 +7,14 @@ import Inbox from "/Inbox.png";
 import Schedule from "/Schedule.png";
 import Settings from "/Settings.png";
 import Dropdown_Arrow from "/Dropdown-arrow.png";
+import LockAsTerminal from "/LockAsTerminal.png";
+import Logout from "/Logout.png";
+import MyAvailability from "/MyAvailability.png";
+import MySchedule from "/MySchedule.png";
+import Profile from "/ProfileAndSettings.png";
+import SwitchWorkplaces from "/SwitchWorkplaces.png";
+import timesheets from "/timesheets.png";
+import TimeTracker from "/TimeTracker.png";
 import { ref, onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
@@ -47,28 +55,31 @@ onMounted(() => {
 
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Profile', route: { name: '' } },
-  { title: 'Preferences', route: { name: '' } },
+  { title: 'Home', route: { name: '' } },
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Profile', route: { name: '' } },
+  { title: 'Work Schedule', route: { name: '' } },
   { title: 'Preferences', route: { name: '' } },
 ]);
 const Attendance_Open = ref(false);
 const Attendance_Items = ref([
-  { title: 'Profile', route: { name: '' } },
-  { title: 'Preferences', route: { name: '' } },
+  { title: 'Time Sheets', route: { name: '' }, photo: timesheets },
+  { title: 'Time Tracker', route: { name: '' }, photo: TimeTracker },
+  { title: 'Lock as Terminal', route: { name: '' }, photo: LockAsTerminal },
 ]);
 const Inbox_Open = ref(false);
 const Inbox_Items = ref([
-  { title: 'Profile', route: { name: '' } },
-  { title: 'Preferences', route: { name: '' } },
+  { title: 'Inbox', route: { name: '' } },
 ]);
 const Settings_Open = ref(false);
 const Settings_Items = ref([
-  { title: 'Profile', route: { name: '' } },
-  { title: 'Preferences', route: { name: '' } },
+  { title: 'Profile', route: { name: '' }, photo: Profile },
+  { title: 'Settings', route: { name: '' }, photo: Settings },
+  { title: 'My Schedule', route: { name: '' }, photo: MySchedule },
+  { title: 'My Availability', route: { name: '' }, photo: MyAvailability },
+  { title: 'Switch Workspaces', route: { name: '' }, photo: SwitchWorkplaces },
+  { title: 'Logout', route: { name: 'login' }, photo: Logout },
 ]);
 
 
@@ -92,8 +103,11 @@ const Settings_Items = ref([
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Dashboard_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item v-for="(Dashboard_Item, index) in Dashboard_Items" :key="index" :to="Dashboard_Item.route">
+        <v-list class="dropdown">
+          <v-list-item v-for="(Dashboard_Item, index) in Dashboard_Items" :key="index" :to="Dashboard_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Dashboard_Item.photo" width="24" height="24" contain/>
+            </template>
             <v-list-item-title>
               {{ Dashboard_Item.title }}
             </v-list-item-title>
@@ -108,8 +122,11 @@ const Settings_Items = ref([
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Schedule_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item v-for="(Schedule_Item, index) in Schedule_Items" :key="index" :to="Schedule_Item.route">
+        <v-list class="dropdown">
+          <v-list-item v-for="(Schedule_Item, index) in Schedule_Items" :key="index" :to="Schedule_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Schedule_Item.photo" width="24" height="24" contain/>
+            </template>
             <v-list-item-title>
               {{ Schedule_Item.title }}
             </v-list-item-title>
@@ -124,8 +141,11 @@ const Settings_Items = ref([
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items" :key="index" :to="Attendance_Item.route">
+        <v-list class="dropdown">
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Attendance_Item.photo" width="24" height="24" contain/>
+            </template>
             <v-list-item-title>
               {{ Attendance_Item.title }}
             </v-list-item-title>
@@ -141,8 +161,11 @@ const Settings_Items = ref([
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Inbox_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item v-for="(Inbox_Item, index) in Inbox_Items" :key="index" :to="Inbox_Item.route">
+        <v-list class="dropdown">
+          <v-list-item v-for="(Inbox_Item, index) in Inbox_Items" :key="index" :to="Inbox_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Inbox_Item.photo" width="24" height="24" contain/>
+            </template>
             <v-list-item-title>
               {{ Inbox_Item.title }}
             </v-list-item-title>
@@ -157,8 +180,11 @@ const Settings_Items = ref([
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
-        <v-list>
-          <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" :to="Settings_Item.route">
+        <v-list class="dropdown">    
+          <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" :to="Settings_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Settings_Item.photo" width="24" height="24" contain/>
+            </template>
             <v-list-item-title>
               {{ Settings_Item.title }}
             </v-list-item-title>
@@ -220,26 +246,21 @@ const Settings_Items = ref([
 }
 
 .dropdown {
+  padding-top: 0;
   position: relative;
   display: inline-block;
+  background-color: rgb(60, 60, 60) !important;
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  min-width: 160px;
-  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
-  z-index: 1000;
-}
-
-.dropdown-menu a {
-  color: rgb(60, 60, 60);
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-  z-index: 1000;
+  background-color: rgb(60, 60, 60) !important; /*!important is the difference between this working and not*/
+  color: rgb(193, 193, 193) !important; /*at this point i think it is overwriting the list when the other normally happens*/
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  padding: 0.1vw;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 #app-bar 
@@ -250,7 +271,7 @@ const Settings_Items = ref([
 
 #Bell_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -261,7 +282,7 @@ const Settings_Items = ref([
 
 #Dashboard_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -272,7 +293,7 @@ const Settings_Items = ref([
 
 #Schedule_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -283,7 +304,7 @@ const Settings_Items = ref([
 
 #Attendance_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -294,7 +315,7 @@ const Settings_Items = ref([
 
 #Inbox_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -305,27 +326,12 @@ const Settings_Items = ref([
 
 #Settings_Div
 {
-  background-color: rgba(60, 60, 60);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193); 
 }
 
 #Settings_Div:hover
 {
   filter: brightness(50%); 
-}
-
-.activator-btn {
-  background-color: rgba(60, 60, 60);
-  color: rgb(193, 193, 193);
-  height: 100%;
-  padding: 0.1vw;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.activator-btn:hover {
-  filter: brightness(50%);
 }
 </style>
