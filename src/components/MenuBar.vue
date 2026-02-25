@@ -55,12 +55,12 @@ onMounted(() => {
 
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Home', route: { name: '' } },
+  { title: 'Home', route: { name: '' }, photo: Dashboard },
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Work Schedule', route: { name: '' } },
-  { title: 'Preferences', route: { name: '' } },
+  { title: 'Work Schedule', route: { name: '' }, photo: Schedule },
+  { title: 'Preferences', route: { name: '' }, photo: Schedule},
 ]);
 const Attendance_Open = ref(false);
 const Attendance_Items = ref([
@@ -70,7 +70,7 @@ const Attendance_Items = ref([
 ]);
 const Inbox_Open = ref(false);
 const Inbox_Items = ref([
-  { title: 'Inbox', route: { name: '' } },
+  { title: 'Inbox', route: { name: '' }, photo: Inbox },
 ]);
 const Settings_Open = ref(false);
 const Settings_Items = ref([
@@ -98,7 +98,7 @@ const Settings_Items = ref([
       <v-menu v-model="Dashboard_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Dashboard_Div" class="container" v-bind="props">
-            <v-img class="image" :src="Dashboard" height="40" width="40" contain/>
+            <v-img id="image" :src="Dashboard" height="40" width="40" contain/>
             <span>Dashboard</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Dashboard_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
@@ -117,7 +117,7 @@ const Settings_Items = ref([
       <v-menu v-model="Schedule_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Schedule_Div" class="container" v-bind="props">
-            <v-img class="image" :src="Schedule" height="40" width="40" contain/>
+            <v-img id="image" :src="Schedule" height="40" width="40" contain/>
             <span>Schedule</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Schedule_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
@@ -136,7 +136,7 @@ const Settings_Items = ref([
       <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
-            <v-img class="image" :src="Attendance" height="40" width="40" contain/>
+            <v-img id="image" :src="Attendance" height="40" width="40" contain/>
             <span>Attendance</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
@@ -156,7 +156,7 @@ const Settings_Items = ref([
       <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Inbox_Div" class="container" v-bind="props">
-            <v-img class="image" :src="Inbox" height="40" width="40" contain/>
+            <v-img id="image" :src="Inbox" height="40" width="40" contain/>
             <span>Inbox</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Inbox_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
@@ -172,10 +172,10 @@ const Settings_Items = ref([
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Settings_Open" transition="slide-y-transition" v-if="user">
+      <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
-            <v-img class="image" :src="Settings" height="40" width="40" contain/>
+            <v-img id="Settings_Image" :class="{ active: isActive, 'text-danger': hasError }" :src="Settings" height="40" width="40" contain/>
             <span>Settings</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
@@ -228,16 +228,7 @@ const Settings_Items = ref([
   cursor: pointer; 
   height: 100%;
   padding: .1vw;
-}
-
-.right-buttons /*container was not working for some reason*/
-{
-  display: flex;
-  align-items: center;
-  gap: 8px; 
-  cursor: pointer; 
-  height: 100%;
-  padding: .5vw;
+  min-height: 64px; /*might need to be dynamic later but works for now (height of the app-bar)*/
 }
 
 .dropbtn
@@ -249,11 +240,11 @@ const Settings_Items = ref([
   padding-top: 0;
   position: relative;
   display: inline-block;
-  background-color: rgb(60, 60, 60) !important;
+  background-color: rgb(76, 76, 76) !important; /*this is the color behind the buttons (not the button background)*/
 }
 
 .dropdown-menu {
-  background-color: rgb(60, 60, 60) !important; /*!important is the difference between this working and not*/
+  background-color: rgb(40, 40, 40) !important; /*!important is the difference between this working and not*/
   color: rgb(193, 193, 193) !important; /*at this point i think it is overwriting the list when the other normally happens*/
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   padding: 0.1vw;
@@ -263,10 +254,20 @@ const Settings_Items = ref([
   cursor: pointer;
 }
 
+.dropdown-menu:hover
+{
+  filter: brightness(60%); 
+}
+
+.v-menu
+{
+  height: 100%;
+}
+
 #app-bar 
 {
   background-color: rgb(60, 60, 60);
-  overflow: visible;
+  overflow: visible; /*lets the dropdown extend over the bottom of the app bar*/
 }
 
 #Bell_Div
