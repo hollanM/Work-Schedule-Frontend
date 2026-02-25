@@ -104,6 +104,7 @@ const wrenchOptions = () => {
 
 /* =====================================================
    API calls (replace with axios later)
+   :)
    ===================================================== */
 
 // Function to fetch the previous or next week (for week navigation buttons)
