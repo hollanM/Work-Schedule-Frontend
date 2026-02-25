@@ -79,7 +79,7 @@ const Settings_Items = ref([
   { title: 'My Schedule', route: { name: '' }, photo: MySchedule },
   { title: 'My Availability', route: { name: '' }, photo: MyAvailability },
   { title: 'Switch Workspaces', route: { name: '' }, photo: SwitchWorkplaces },
-  { title: 'Logout', route: { name: 'login' }, photo: Logout },
+  //{ title: 'Logout', route: { name: 'login' }, photo: Logout }, //example
 ]);
 
 
