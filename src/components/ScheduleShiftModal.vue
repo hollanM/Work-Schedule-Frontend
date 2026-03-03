@@ -26,12 +26,23 @@ const form = reactive({
     <div fluid class="modal">
   <div class = "modal-content">
     <div>
-        <h3 class="modal-text">Create Shift for {{ props.employeeName }} on {{ props.date }}</h3>
+        <div class="flex-row">
+            <h3 class="modal-text">Create Shift for {{ props.employeeName }} on {{ props.date }}</h3>
+
+        </div>
+        
     <div class="dividing-line"> </div>
     </div>
 
-
-    <div class="dividing-line"> </div>
+    <div>
+       
+        <div class="dividing-line"> </div>
+         <v-btn class="create-button" icon = "mdi-plus-circle-outline">
+            <v-icon right>mdi-plus-circle-outline</v-icon>
+            Create Custom Shift
+        </v-btn>
+    </div>
+    
   </div>
 </div>
 </template>
@@ -50,6 +61,7 @@ const form = reactive({
   display: flex;
   justify-content: center;
   align-items:center;
+
 }
 
 
@@ -62,21 +74,36 @@ const form = reactive({
   justify-content: space-between;
   border-radius: 20px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
 
 }
 
 .dividing-line{
   border-bottom: 5px solid #cfcfcf;
-  margin: 30px 0;
-  margin-left: 20px;
-  margin-right: 20px;
+  margin: 10px 0;
+  
 }
 
+.flex-row{
+    display:flex;
+}
 
 .modal-text{
     color: rgb(134, 134, 134);
     margin: 0;
     padding: 0;
+}
+
+.create-button{
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
 }
 
 </style>
