@@ -8,6 +8,7 @@ const router = useRouter();
 const fName = ref("");
 const lName = ref("");
 const user = ref({});
+const form_content = ref(true);
 const emit = defineEmits(["close"]);
 const props = defineProps({
   employeeName: { type: [Number, String], required: true },
@@ -34,9 +35,36 @@ const form = reactive({
                 >mdi-close</v-icon>
             </v-btn>
         </div>
-        
     <div class="dividing-line"> </div>
     </div>
+    <div v-if="form_content">
+        <!-- Middle div -->
+         <v-select
+  v-model="selectedOption"
+  :items="['Option 1', 'Option 2', 'Option 3']"
+  label="Choose an option"
+  outlined
+></v-select>
+<v-select
+  v-model="selectedOption"
+  :items="['Option 1', 'Option 2', 'Option 3']"
+  label="Choose an option"
+  outlined
+></v-select>
+<v-select
+  v-model="selectedOption"
+  :items="['Option 1', 'Option 2', 'Option 3']"
+  label="Choose an option"
+  outlined
+></v-select>
+<v-select
+  v-model="selectedOption"
+  :items="['Option 1', 'Option 2', 'Option 3']"
+  label="Choose an option"
+  outlined
+></v-select>
+    </div>
+
     <div>
        
         <div class="dividing-line"> </div>
@@ -119,8 +147,13 @@ const form = reactive({
     font-size: 20px;
     width: 10px;
     height: fit-content;
-
 }
 
+.form-content{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
 
 </style>
