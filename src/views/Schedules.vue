@@ -154,10 +154,6 @@ const totalHours = computed(() =>
 /* =====================================================
    Modal Logic (Julian's form changes)
    ===================================================== */
-function showModal() {
-  const modal = document.getElementById("schedule_modal");
-  modal.style.display = "block";
-}
 
 </script>
 
@@ -270,7 +266,7 @@ function showModal() {
 
 
   <!-- Julians Form changes start here -->
-  <ScheduleShiftModal/>
+  <ScheduleShiftModal id = "schedule_modal"></ScheduleShiftModal>
 </template>
 
 <style scoped>
@@ -304,6 +300,8 @@ function showModal() {
 .clickable:hover .hover-icon {
   opacity: 1;
 }
+
+
 
 
 </style>
