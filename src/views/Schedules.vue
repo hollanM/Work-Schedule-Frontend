@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
+import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 
 /* =====================================================
    STATE (will eventually come from backend)
@@ -269,14 +270,7 @@ function showModal() {
 
 
   <!-- Julians Form changes start here -->
-<div id = "shcedule_modal" fluid class = "modal">
-  <div class = "modal-content">
-    <div class="dividing-line"></div>
-    <div class="dividing-line"> </div>
-  </div>
-
-</div>
-  
+  <ScheduleShiftModal/>
 </template>
 
 <style scoped>
@@ -311,35 +305,5 @@ function showModal() {
   opacity: 1;
 }
 
-
-/*Julian's form style's start here*/
-.modal{
-  position: fixed;
-  top: 0%;
-  background-color: rgba(0, 0, 0, 0.158);
-  opacity: 100%;
-  z-index: 1;
-  width:100%;
-  height:100%;
-  display: flex;
-  justify-content: center;
-  align-items:center;
-}
-
-.modal-content{
-  background-color: #fefefe;
-  display: flex;
-  width: 50%;
-  height: 50%;
-  flex-direction: column;
-  border-radius: 20px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-
-}
-
-.dividing-line{
-  border-bottom: 1px solid #cfcfcf;
-  margin: 20px 0;
-}
 
 </style>
