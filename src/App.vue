@@ -5,7 +5,7 @@ import { ref } from 'vue'
 import MenuBar from "./components/MenuBar.vue";
 import AppSidebar from "./components/AppSidebar.vue";
 
-const drawer = ref(true);
+const drawer = ref(false);
 </script>
 
 <template>

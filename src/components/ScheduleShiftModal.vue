@@ -8,7 +8,7 @@ const router = useRouter();
 const fName = ref("");
 const lName = ref("");
 const user = ref({});
-const form_content = ref(true);
+const form_content = ref(false);
 const emit = defineEmits(["close"]);
 const props = defineProps({
   employeeName: { type: [Number, String], required: true },
@@ -25,11 +25,12 @@ const form = reactive({
 
 <template>
     <div fluid class="modal">
-  <div class = "modal-content">
+        
+  <div class = "modal-content transition">
     <div>
         <div class="flex-row">
             <h3 class="modal-text">Create Shift for {{ props.employeeName }} on {{ props.date }}</h3>
-            <v-btn class = "close-button" @click="$emit('close')">
+            <v-btn class = "close-button" @click="$emit('close'), form_content = false">
                 <v-icon
                     color="grey"
                 >mdi-close</v-icon>
@@ -37,42 +38,72 @@ const form = reactive({
         </div>
     <div class="dividing-line"> </div>
     </div>
+    <div v-if="!form_content">
+        <h3>your templates:</h3>
+    </div>
     <div v-if="form_content">
         <!-- Middle div -->
          <v-select
   v-model="selectedOption"
   :items="['Option 1', 'Option 2', 'Option 3']"
-  label="Choose an option"
+  label="Assign to"
   outlined
 ></v-select>
 <v-select
   v-model="selectedOption"
   :items="['Option 1', 'Option 2', 'Option 3']"
-  label="Choose an option"
+  label="Position"
   outlined
 ></v-select>
 <v-select
   v-model="selectedOption"
   :items="['Option 1', 'Option 2', 'Option 3']"
-  label="Choose an option"
+  label="Tags"
   outlined
 ></v-select>
 <v-select
   v-model="selectedOption"
   :items="['Option 1', 'Option 2', 'Option 3']"
-  label="Choose an option"
+  label="Shift Tasks"
   outlined
 ></v-select>
+<v-textarea
+  label="Shift Notes"
+  outlined
+></v-textarea>
+
+<div class="flex-row-baseline">
+    <v-checkbox-btn>
+    <template #label>
+        <span>Repeat Shift</span>
+    </template>
+</v-checkbox-btn>
+
+<v-checkbox-btn>
+    <template #label>
+        <span>Save Shift as Template</span>
+    </template>
+</v-checkbox-btn></div>
+
     </div>
 
     <div>
        
         <div class="dividing-line"> </div>
-         <v-btn class="create-button" icon = "mdi-plus-circle-outline">
+         <v-btn v-if="!form_content"class="create-button" icon = "mdi-plus-circle-outline" @click="form_content = true">
             
             Create Custom Shift
             <v-icon class="ml-3">mdi-plus-circle-outline</v-icon>
         </v-btn>
+        <div v-if="form_content" class="flex-row-right">
+            <v-btn class="create-button">
+            Save and Publish
+        </v-btn>
+        <v-btn class="create-button">
+            Save
+        </v-btn>
+        </div>
+        
     </div>
     
   </div>
@@ -121,6 +152,15 @@ const form = reactive({
     justify-content: space-between;
 }
 
+.flex-row-baseline{
+    display:flex;
+}
+
+.flex-row-right{
+    display:flex;
+    justify-content: flex-end;
+}
+
 .modal-text{
     color: rgb(134, 134, 134);
     margin: 0;
@@ -155,5 +195,23 @@ const form = reactive({
     justify-content: space-between;
     align-items: center;
 }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
+
+.transition{
+    transition: 0.2s ease-in-out;
+}
+
 
 </style>
