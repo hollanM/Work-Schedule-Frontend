@@ -3,12 +3,14 @@ import { ref, onMounted, reactive } from "vue";
 import AuthServices from "../services/authServices";
 import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
+import { VBtn } from "vuetify/components";
 
 const router = useRouter();
 const fName = ref("");
 const lName = ref("");
 const user = ref({});
 const form_content = ref(false);
+const color_picker = ref(false);
 const emit = defineEmits(["close"]);
 const props = defineProps({
   employeeName: { type: [Number, String], required: true },
@@ -26,7 +28,7 @@ const form = reactive({
 <template>
     <div fluid class="modal">
         
-  <div class = "modal-content transition">
+  <div class = "modal-content">
     <div>
         <div class="flex-row">
             <h3 class="modal-text">Create Shift for {{ props.employeeName }} on {{ props.date }}</h3>
@@ -41,7 +43,7 @@ const form = reactive({
     <div v-if="!form_content">
         <h3>your templates:</h3>
     </div>
-    <div v-if="form_content">
+    <div v-if="form_content" class="transition">
         <!-- Middle div -->
          <v-select
   v-model="selectedOption"
@@ -49,6 +51,31 @@ const form = reactive({
   label="Assign to"
   outlined
 ></v-select>
+<div class="flex-row">
+    <v-select
+  v-model="selectedOption"
+  :items="['Option 1', 'Option 2', 'Option 3']"
+  label="From"
+  outlined
+></v-select>
+<v-select
+    v-model="selectedOption"
+    :items="['Option 1', 'Option 2', 'Option 3']"
+    label="To"
+    outlined
+    ></v-select>
+    <v-btn class="circle-button" v-if="!color_picker" @click="color_picker = true">
+        <v-icon class="ml-3">mdi-format-color-fill</v-icon>
+    </v-btn>
+    <v-color-picker v-if="color_picker" @click="color_picker = false"
+        v-model="color"
+        mode="swatches"
+        hide-inputs
+        hide-sliders
+        hide-canvas
+        show-swatches
+      ></v-color-picker>    
+</div>
 <v-select
   v-model="selectedOption"
   :items="['Option 1', 'Option 2', 'Option 3']"
@@ -211,6 +238,18 @@ const form = reactive({
 
 .transition{
     transition: 0.2s ease-in-out;
+}
+
+.circle-button{
+    background-color: #00000000;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 40px;
+    height: 60px;
+    font-size: 40px;
+    padding-top: 10px;
 }
 
 
