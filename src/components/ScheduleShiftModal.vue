@@ -145,7 +145,7 @@ const form = reactive({
   top: 0%;
   background-color: rgba(0, 0, 0, 0.158);
   opacity: 100%;
-  z-index: 4000;
+  z-index: 1000;
   width:100%;
   height:100%;
   display: flex;
