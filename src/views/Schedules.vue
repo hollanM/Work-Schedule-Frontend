@@ -148,6 +148,16 @@ const dayTotals = computed(() => {
 const totalHours = computed(() =>
   Object.values(dayTotals.value).reduce((a, b) => a + b, 0),
 );
+
+
+/* =====================================================
+   Modal Logic (Julian's form changes)
+   ===================================================== */
+function showModal() {
+  const modal = document.getElementById("schedule_modal");
+  modal.style.display = "block";
+}
+
 </script>
 
 <!-- HTML CODE -->
@@ -219,7 +229,7 @@ const totalHours = computed(() =>
               <div v-if="user.hours[day.date]">
                 {{ user.hours[day.date] }}
               </div>
-              <v-icon v-else size="16" color="success" class="hover-icon">
+              <v-icon v-else size="16" color="success" class="hover-icon" @click="showModal()">
                 mdi-plus
               </v-icon>
             </td>
@@ -256,6 +266,17 @@ const totalHours = computed(() =>
       </v-table>
     </v-card>
   </v-container>
+
+
+  <!-- Julians Form changes start here -->
+<div id = "shcedule_modal" fluid class = "modal">
+  <div class = "modal-content">
+    <div class="dividing-line"></div>
+    <div class="dividing-line"> </div>
+  </div>
+
+</div>
+  
 </template>
 
 <style scoped>
@@ -289,4 +310,36 @@ const totalHours = computed(() =>
 .clickable:hover .hover-icon {
   opacity: 1;
 }
+
+
+/*Julian's form style's start here*/
+.modal{
+  position: fixed;
+  top: 0%;
+  background-color: rgba(0, 0, 0, 0.158);
+  opacity: 100%;
+  z-index: 1;
+  width:100%;
+  height:100%;
+  display: flex;
+  justify-content: center;
+  align-items:center;
+}
+
+.modal-content{
+  background-color: #fefefe;
+  display: flex;
+  width: 50%;
+  height: 50%;
+  flex-direction: column;
+  border-radius: 20px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+
+}
+
+.dividing-line{
+  border-bottom: 1px solid #cfcfcf;
+  margin: 20px 0;
+}
+
 </style>
