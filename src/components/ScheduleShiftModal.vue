@@ -8,7 +8,7 @@ const router = useRouter();
 const fName = ref("");
 const lName = ref("");
 const user = ref({});
-const emit = defineEmits(["refresh"]);
+const emit = defineEmits(["close"]);
 const props = defineProps({
   employeeName: { type: [Number, String], required: true },
   date: { type: String, required: true }
@@ -28,18 +28,22 @@ const form = reactive({
     <div>
         <div class="flex-row">
             <h3 class="modal-text">Create Shift for {{ props.employeeName }} on {{ props.date }}</h3>
-
+            <v-btn class = "close-button" @click="$emit('close')">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
         </div>
         
     <div class="dividing-line"> </div>
     </div>
-
     <div>
        
         <div class="dividing-line"> </div>
          <v-btn class="create-button" icon = "mdi-plus-circle-outline">
-            <v-icon right>mdi-plus-circle-outline</v-icon>
+            
             Create Custom Shift
+            <v-icon class="ml-3">mdi-plus-circle-outline</v-icon>
         </v-btn>
     </div>
     
@@ -86,6 +90,7 @@ const form = reactive({
 
 .flex-row{
     display:flex;
+    justify-content: space-between;
 }
 
 .modal-text{
@@ -105,5 +110,17 @@ const form = reactive({
     width: fit-content;
     height: fit-content;
 }
+
+.close-button{
+    background-color: transparent;
+    color: black;
+    border: grey solid 1px;
+    cursor: pointer;
+    font-size: 20px;
+    width: 10px;
+    height: fit-content;
+
+}
+
 
 </style>

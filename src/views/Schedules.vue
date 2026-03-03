@@ -155,6 +155,8 @@ const totalHours = computed(() =>
    Modal Logic (Julian's form changes)
    ===================================================== */
 
+   const showModal = ref(false);
+
 </script>
 
 <!-- HTML CODE -->
@@ -226,7 +228,7 @@ const totalHours = computed(() =>
               <div v-if="user.hours[day.date]">
                 {{ user.hours[day.date] }}
               </div>
-              <v-icon v-else size="16" color="success" class="hover-icon" @click="showModal()">
+              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true">
                 mdi-plus
               </v-icon>
             </td>
@@ -266,7 +268,10 @@ const totalHours = computed(() =>
 
 
   <!-- Julians Form changes start here -->
-  <ScheduleShiftModal id = "schedule_modal"></ScheduleShiftModal>
+   <transition name="fade">
+  <ScheduleShiftModal v-if="showModal"
+  @close="showModal = false"></ScheduleShiftModal>
+  </transition>
 </template>
 
 <style scoped>
@@ -301,6 +306,20 @@ const totalHours = computed(() =>
   opacity: 1;
 }
 
+/*Julian's styles start here */
+/* Fade transition for modal */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
 
 
 
