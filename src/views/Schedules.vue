@@ -156,6 +156,8 @@ const totalHours = computed(() =>
    ===================================================== */
 
    const showModal = ref(false);
+   const date = ref("");/*modal props*/
+   const employeeName = ref("");/*modal props*/
 
 </script>
 
@@ -228,7 +230,7 @@ const totalHours = computed(() =>
               <div v-if="user.hours[day.date]">
                 {{ user.hours[day.date] }}
               </div>
-              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true">
+              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true, date = day.date, employeeName = user.name">
                 mdi-plus
               </v-icon>
             </td>
@@ -270,7 +272,10 @@ const totalHours = computed(() =>
   <!-- Julians Form changes start here -->
    <transition name="fade">
   <ScheduleShiftModal v-if="showModal"
-  @close="showModal = false"></ScheduleShiftModal>
+  @close="showModal = false"
+  :employee_name="employeeName"
+  :date="date"
+  ></ScheduleShiftModal>
   </transition>
 </template>
 
