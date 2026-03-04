@@ -5,6 +5,8 @@ import positionServices from "../services/positionServices";
 import qualification_listServices from "../services/qualification_listServices.js";
 import task_listServices from "../services/task_listServices.js";
 import employeeServices from "../services/employeeServices.js";
+import shiftServices from "../services/shiftServices.js";
+import date_timeServices from "../services/date_timeServices.js";
 import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
@@ -15,10 +17,13 @@ const props = defineProps({
 });
 
 
-
+const start_time = ref("");
+const end_time = ref("");
 const selectedPosition = ref(null);
 const selectedTag = ref(null);
 const selectedTaskList = ref(null); 
+const color = ref("#000000");
+const saveAsTemplate = ref(false);
 const selectedEmployee = ref(props.employee_name)
 const router = useRouter();
 const fName = ref("");
@@ -179,6 +184,96 @@ async function getEmployees(){
   }
 }
 
+//collecting all form data to send to backend when creating shift.
+function getFormData() {
+  return {
+    employee_id: employees.value.find(emp => emp.name === selectedEmployee.value)?.id,
+    shiftTime: shiftTime.value,
+    color: color.value,
+    position_id: positions.value.find(pos => pos.name === selectedPosition.value)?.id, // if needed as name or map to id similarly
+    qualification_list_id: qualification_lists.value.find(q => q.name === selectedTag.value)?.id,
+    shift_task_list_id: task_lists.value.find(t => t.name === selectedTaskList.value)?.id,
+    is_template: saveAsTemplate.value
+  }
+}
+
+//the times need to be converted into sql times to be stored. annoying, but necessary.
+function convertTo24Hour(timeStr) {
+  // timeStr example: "12:15 am" or "4:30 pm"
+  const [time, modifier] = timeStr.split(' ')
+  let [hours, minutes] = time.split(':').map(Number)
+
+  if (modifier.toLowerCase() === 'pm' && hours !== 12) {
+    hours += 12
+  }
+  if (modifier.toLowerCase() === 'am' && hours === 12) {
+    hours = 0
+  }
+
+  // pad to 2 digits
+  const hh = String(hours).padStart(2, '0')
+  const mm = String(minutes).padStart(2, '0')
+
+  return `${hh}:${mm}:00` // seconds optional
+}
+
+function toSqlDateTime(date) {
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0') // months 0-indexed
+  const dd = String(date.getDate()).padStart(2, '0')
+  const hh = String(date.getHours()).padStart(2, '0')
+  const min = String(date.getMinutes()).padStart(2, '0')
+  const ss = String(date.getSeconds()).padStart(2, '0')
+
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
+}
+
+
+
+
+
+async function createShift(){
+    const formData = getFormData();
+    console.log("Form Data to submit:", formData);
+    // Here you would send formData to your backend API to create the shift
+    // Example: await shiftServices.create(formData);
+    
+
+    const shiftTime = formData.shiftTime
+    const [startStr, endStr] = shiftTime.split(' - ')
+
+    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
+    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+
+    const sqlStart = toSqlDateTime(startDateTime)  // "2026-03-03 00:00:00"
+    const sqlEnd = toSqlDateTime(endDateTime)      // "2026-03-03 00:15:00"
+    //setting id's of create date times.
+    start_time.value = await createDateTime(sqlStart)
+    end_time.value = await createDateTime(sqlEnd)
+
+    const response = await shiftServices.create({
+      employee_id: formData.employee_id,
+      start_day_id: start_time.value,
+      end_day_id: end_time.value,
+      color: formData.color,
+      position_id: formData.position_id,
+      qualification_list_id: formData.qualification_list_id,
+      shift_task_list_id: formData.shift_task_list_id,
+      is_template: formData.is_template
+    })
+    console.log("Shift creation response:", response.data);
+    emit('close'); // Close the modal after creating the shift
+
+}
+
+async function createDateTime(date){
+   const response = await date_timeServices.create({
+        first_date_time: date
+    })  
+    console.log(response.data)
+    return response.data.id
+}
+
 </script>
 
 <template>
@@ -252,19 +347,11 @@ v-if="qualification_lists_names.length"
   label="Task Lists"
   outlined
 ></v-select>
-<v-textarea
-  label="Shift Notes"
-  outlined
-></v-textarea>
 
 <div class="flex-row-baseline">
-    <v-checkbox-btn>
-    <template #label>
-        <span>Repeat Shift</span>
-    </template>
-</v-checkbox-btn>
 
-<v-checkbox-btn>
+<v-checkbox-btn
+v-model="saveAsTemplate">
     <template #label>
         <span>Save Shift as Template</span>
     </template>
@@ -284,7 +371,7 @@ v-if="qualification_lists_names.length"
             <v-btn class="create-button">
             Save and Publish
         </v-btn>
-        <v-btn class="create-button">
+        <v-btn class="create-button" @click="createShift()">
             Save
         </v-btn>
         </div>
