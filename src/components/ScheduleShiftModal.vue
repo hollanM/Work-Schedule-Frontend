@@ -30,6 +30,7 @@ const fName = ref("");
 const lName = ref("");
 const user = ref({});
 const message = ref("");
+const shifts = ref([]);
 const employees = ref([]);
 const employee_names = ref([]);
 const qualification_lists = ref([]);
@@ -41,12 +42,23 @@ const position_names = ref([]);
 const form_content = ref(false);
 const color_picker = ref(false);
 const emit = defineEmits(["close"]);
-
+const shiftTemplates = computed(() =>
+  shifts.value.filter(shift => shift.is_template === true || shift.is_template === 1 || shift.is_template === "1")
+)
 watch(
   () => props.employee_name,
   (newVal) => {
     selectedEmployee.value = newVal
   }
+)
+
+//watcher for when templates get sorted.
+watch(
+  shiftTemplates,
+  (newTemplates) => {
+    console.log("Shift templates updated:", newTemplates)
+  },
+  { immediate: true }
 )
 
 
@@ -115,15 +127,16 @@ const form = reactive({
 });
 
 
-onMounted(() => {
+onMounted( async () => {
   console.log("onMounted ran")
-  getPositions();
-  getQualificationLists();
-  getTaskLists();
-  getEmployees();
+  await getPositions();
+  await getQualificationLists();
+  await getTaskLists();
+  await getEmployees();
+  await getShifts();
+  await populateShiftTemplates();
   generateTimes();
-  generateShiftRanges();
-
+  generateShiftRanges(); 
 });
 
 
@@ -181,6 +194,28 @@ async function getEmployees(){
   catch(error){
     message.value = "Error: " + error.code + ":" + error.message;
     console.log(error);
+  }
+}
+
+//getting the times to display for templates was getting... annoying.
+async function getShifts() {
+  try {
+    const response = await shiftServices.getAll();
+    const rawShifts = response.data;
+
+    // Fetch start/end times for each shift
+    const enrichedShifts = await Promise.all(
+      rawShifts.map(async shift => {
+        const start = await date_timeServices.get(shift.start_day_id);
+        const end = await date_timeServices.get(shift.end_day_id);
+        return { ...shift, startObj: start.first_date_time, endObj: end.first_date_time };
+      })
+    );
+
+    shifts.value = enrichedShifts;
+    console.log("Shifts loaded:", shifts.value);
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -266,12 +301,64 @@ async function createShift(){
 
 }
 
+//date times will have to be made for each shift that gets created.
 async function createDateTime(date){
    const response = await date_timeServices.create({
         first_date_time: date
     })  
     console.log(response.data)
     return response.data.id
+}
+
+//this just gets the color attribute from the shift.
+function getTextColor(bgColor) {
+  // Simple luminance check to pick white or black text
+  if (!bgColor) return 'black'
+  const c = bgColor.substring(1)      // remove "#"
+  const rgb = parseInt(c, 16)         // convert to integer
+  const r = (rgb >> 16) & 0xff
+  const g = (rgb >> 8) & 0xff
+  const b = rgb & 0xff
+  const luminance = 0.299 * r + 0.587 * g + 0.114 * b
+  return luminance > 186 ? 'black' : 'white'
+}
+
+//this is formatting the time for the templates.
+function formatShiftTimeFromISO(isoString) {
+  if (!isoString) return "Invalid time";
+
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "Invalid time";
+
+  const hours24 = date.getHours(); // local time
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours24 >= 12 ? "pm" : "am";
+  const hours12 = hours24 % 12 || 12;
+
+  return `${hours12}:${minutes} ${ampm}`;
+}
+
+
+// Call this after you fetch shifts
+async function populateShiftTemplates() {
+  // Filter out templates from all shifts
+  const templates = shifts.value.filter(
+    shift => shift.is_template === true || shift.is_template === 1 || shift.is_template === "1"
+  );
+
+  // For each template, fetch its start/end date-times and add formattedTime
+  for (const template of templates) {
+    const startObj = await date_timeServices.get(template.start_day_id);
+    const endObj = await date_timeServices.get(template.end_day_id);
+    const position = await positionServices.get(template.position_id);
+    // Add a new property just for frontend display
+    console.log("StartObj:", startObj, "EndObj:", endObj);
+    template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
+    template.position_name = position.data.name;
+  }
+
+  // Now shiftTemplates can just point to this array
+  shiftTemplates.value = templates;
 }
 
 </script>
@@ -292,8 +379,23 @@ async function createDateTime(date){
     <div class="dividing-line"> </div>
     </div>
     <div v-if="!form_content">
-        <h3>your templates:</h3>
-    </div>
+        <div v-if="shiftTemplates.length === 0">Loading templates…</div>
+        <div v-if="shiftTemplates.length > 0" >
+            <h3 class = "modal-header">Shift Templates:</h3>
+        <div class="shift-template-grid">
+            <v-btn class = "shift-template-button"
+            v-for="template in shiftTemplates"
+            :key="template.id"
+            :style="{ backgroundColor: template.color, color: getTextColor(template.color) }"
+            >
+            {{ template.position_name }}
+            {{ template.formattedTime }}
+            </v-btn>
+        </div>
+        </div>
+        
+  </div>
+
     <div v-if="form_content" class="transition">
         <!-- Middle div -->
 
@@ -501,4 +603,21 @@ v-model="saveAsTemplate">
     height: 80px;
 }
 
+.modal-header{
+    color: rgb(148, 148, 148);
+    font-size: 18px;
+}
+
+.shift-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.shift-template-button {
+  text-align: center;
+  font-size: 0.55rem;
+  width: 100%;
+  max-width: 600px;
+}
 </style>
