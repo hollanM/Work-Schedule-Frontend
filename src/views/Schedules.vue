@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
 import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
+import employeeServices from "../services/employeeServices";
 
 /* =====================================================
    STATE (will eventually come from backend)
@@ -13,30 +14,25 @@ const currentDate = ref(new Date());
     GET USER DATA
    ===================================================== */
 
+
+async function getEmployees(){
+
+}
+
 const users = ref([]);
 
-const fetchUsers = () => {
+//or employees, depending on who you ask...
+const fetchUsers = async() => {
   console.log("API CALL → fetch users for manager");
   // Simulate API call and update users.value with response
-  users.value = [
-    {
-      id: 1,
-      name: "Perfect C.",
-      avatar: "https://i.pravatar.cc/40",
-      hours: {
-        "2026-02-24": 7,
-      },
-    },
-    {
-      id: 2,
-      name: "Another User",
-      avatar: "https://i.pravatar.cc/",
-      hours: {
-        "2026-02-24": 4,
-        "2026-02-23": 6,
-      },
-    },
-  ];
+  const response = await employeeServices.getAll(); // Replace with actual API call
+  const employees = response.data; // Assuming the response has a data property with the list of employees
+  console.log("Fetched employees:", employees);
+  for (const employee of employees) {
+    employee.avatar = `https://i.pravatar.cc/40?u=${employee.id}`; // Generate avatar URL based on employee ID
+    employee.hours = 0;
+  }
+  users.value = employees;
 };
 
 fetchUsers();

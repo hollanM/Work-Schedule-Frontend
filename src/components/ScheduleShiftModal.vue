@@ -474,11 +474,17 @@ v-model="saveAsTemplate">
     <div>
        
         <div class="dividing-line"> </div>
-         <v-btn v-if="!form_content"class="create-button" icon = "mdi-plus-circle-outline" @click="form_content = true">
+        <div class="flex-row-right" v-if="!form_content">
+            <v-btn v-if="!form_content"class="create-button" icon = "mdi-plus-circle-outline" @click="form_content = true">
             
             Create Custom Shift
             <v-icon class="ml-3">mdi-plus-circle-outline</v-icon>
         </v-btn>
+
+        </div>
+
+        </div>
+
         <div v-if="form_content" class="flex-row-right">
             <v-btn class="create-button">
             Save and Publish
@@ -491,7 +497,7 @@ v-model="saveAsTemplate">
     </div>
     
   </div>
-</div>
+
 </template>
 
 <style scoped>  
@@ -620,7 +626,7 @@ v-model="saveAsTemplate">
 
 .shift-template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 10px;
 }
 
