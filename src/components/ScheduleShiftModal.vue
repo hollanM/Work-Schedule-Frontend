@@ -1,21 +1,32 @@
 <script setup>
-import { ref, onMounted, computed, reactive } from "vue";
+import { ref, onMounted, computed, reactive, watch } from "vue";
 import AuthServices from "../services/authServices";
 import positionServices from "../services/positionServices";
 import qualification_listServices from "../services/qualification_listServices.js";
 import task_listServices from "../services/task_listServices.js";
+import employeeServices from "../services/employeeServices.js";
 import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
 
+const props = defineProps({
+  employee_name: { type: [Number, String], required: true },
+  date: { type: String, required: true }
+});
+
+
+
 const selectedPosition = ref(null);
 const selectedTag = ref(null);
 const selectedTaskList = ref(null); 
+const selectedEmployee = ref(props.employee_name)
 const router = useRouter();
 const fName = ref("");
 const lName = ref("");
 const user = ref({});
 const message = ref("");
+const employees = ref([]);
+const employee_names = ref([]);
 const qualification_lists = ref([]);
 const qualification_lists_names = ref([]);
 const task_lists = ref([]);
@@ -25,10 +36,68 @@ const position_names = ref([]);
 const form_content = ref(false);
 const color_picker = ref(false);
 const emit = defineEmits(["close"]);
-const props = defineProps({
-  employee_name: { type: [Number, String], required: true },
-  date: { type: String, required: true }
-});
+
+watch(
+  () => props.employee_name,
+  (newVal) => {
+    selectedEmployee.value = newVal
+  }
+)
+
+
+//auto complete list here for autocompleting the time range.
+const timeList = ref([])
+
+function formatTime(totalMinutes) {
+  const hour24 = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  const period = hour24 >= 12 ? 'pm' : 'am'
+  let hour12 = hour24 % 12
+  if (hour12 === 0) hour12 = 12
+
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`
+}
+
+function generateTimes() {
+  const list = []
+
+  for (let mins = 0; mins < 24 * 60; mins += 5) {
+    list.push(formatTime(mins))
+  }
+
+  timeList.value = list
+}
+
+
+const shiftRanges = ref([])
+const shiftTime = ref('')
+
+function generateShiftRanges() {
+  const ranges = []
+
+  for (let i = 0; i < timeList.value.length; i++) {
+    for (let j = i + 1; j < timeList.value.length; j++) {
+      ranges.push(`${timeList.value[i]} - ${timeList.value[j]}`)
+    }
+  }
+
+  shiftRanges.value = ranges
+}
+
+//Normalizing strings if user don't want to add spaces.
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .replace(/\s+/g, '')   // remove spaces
+    .replace(/-/g, '')     // remove dashes
+    .replace(/:/g, '')     // remove colons
+}
+
+function filterShifts(item, queryText) {
+  return normalize(item).includes(normalize(queryText))
+}
+
 
 //trying to force local time here, since timezones ruin everything. 
 const formattedDate = computed(() =>
@@ -46,9 +115,14 @@ onMounted(() => {
   getPositions();
   getQualificationLists();
   getTaskLists();
+  getEmployees();
+  generateTimes();
+  generateShiftRanges();
 
 });
 
+
+//backend calls for populating dropdowns, etc.
 async function getPositions(){
   try{
     const response = await positionServices.getAll();
@@ -91,6 +165,20 @@ async function getTaskLists(){
   }
 }
 
+async function getEmployees(){
+  try{
+    const response = await employeeServices.getAll();
+    employees.value = response.data;
+    console.log("returned:" + employees.value);
+    employee_names.value = employees.value.map(emp => emp.name);
+    console.log("employee names:" + employee_names.value);
+  }
+  catch(error){
+    message.value = "Error: " + error.code + ":" + error.message;
+    console.log(error);
+  }
+}
+
 </script>
 
 <template>
@@ -99,7 +187,7 @@ async function getTaskLists(){
   <div class = "modal-content">
     <div>
         <div class="flex-row">
-            <h3 class="modal-text">Create Shift for {{ props.employee_name }} on {{ formattedDate }}</h3>
+            <h3 class="modal-text">Create Shift for {{ selectedEmployee }} on {{ formattedDate }}</h3>
             <v-btn class = "close-button" @click="$emit('close'), form_content = false">
                 <v-icon
                     color="grey"
@@ -113,14 +201,24 @@ async function getTaskLists(){
     </div>
     <div v-if="form_content" class="transition">
         <!-- Middle div -->
-<div class="flex-row">
-   <v-autocomplete
-  v-model="shiftTime"
-  :items="shiftTimes"
-  label="Shift Time"
-  clearable
+
+        <v-select
+  v-if="employee_names.length"
+  v-model="selectedEmployee"
+  :items="employee_names"
+  label="Assign to"
   outlined
-/>
+></v-select>
+
+<div class="flex-row">
+<v-autocomplete
+  v-model="shiftTime"
+  :items="shiftRanges"
+  label="Time"
+  clearable
+  :custom-filter="filterShifts"
+  @update:modelValue="val => shiftTime = val"
+></v-autocomplete>
     <v-btn class="circle-button" v-if="!color_picker" @click="color_picker = true">
         <v-icon class="ml-3">mdi-format-color-fill</v-icon>
     </v-btn>
