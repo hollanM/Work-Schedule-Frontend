@@ -67,7 +67,7 @@ const form = reactive({
     <v-btn class="circle-button" v-if="!color_picker" @click="color_picker = true">
         <v-icon class="ml-3">mdi-format-color-fill</v-icon>
     </v-btn>
-    <v-color-picker v-if="color_picker" @click="color_picker = false"
+    <v-color-picker class = "modal-color-picker" v-if="color_picker" @click="color_picker = false"
         v-model="color"
         mode="swatches"
         hide-inputs
@@ -252,5 +252,8 @@ const form = reactive({
     padding-top: 10px;
 }
 
+.modal-color-picker{
+    height: 80px;
+}
 
 </style>
