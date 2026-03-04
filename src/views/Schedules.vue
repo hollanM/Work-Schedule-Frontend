@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
 import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 import employeeServices from "../services/employeeServices";
+import shiftServices from "../services/shiftServices";
+import date_timeServices from "../services/date_timeServices";
 
 /* =====================================================
    STATE (will eventually come from backend)
@@ -10,33 +12,81 @@ import employeeServices from "../services/employeeServices";
 
 const currentDate = ref(new Date());
 
+const shiftsByUserAndDate = computed(() => {
+  const map = {}
+
+  for (const shift of shifts.value) {
+    const key = `${shift.employee_id}-${shift.shiftDate}`
+    if (!map[key]) map[key] = []
+    map[key].push(shift)
+  }
+
+  return map
+})
+
+async function reload(){
+  await fetchEmployees();
+  await loadShifts();
+}
+
 /* =====================================================
     GET USER DATA
    ===================================================== */
 
 
-async function getEmployees(){
-
-}
-
-const users = ref([]);
+const employees = ref([]);
+const shifts = ref([]);
 
 //or employees, depending on who you ask...
-const fetchUsers = async() => {
+const fetchEmployees = async() => {
   console.log("API CALL → fetch users for manager");
   // Simulate API call and update users.value with response
   const response = await employeeServices.getAll(); // Replace with actual API call
-  const employees = response.data; // Assuming the response has a data property with the list of employees
-  console.log("Fetched employees:", employees);
-  for (const employee of employees) {
+ employees.value = response.data; // Assuming the response has a data property with the list of employees
+  console.log("Fetched employees:", employees.value);
+  for (const employee of employees.value) {
     employee.avatar = `https://i.pravatar.cc/40?u=${employee.id}`; // Generate avatar URL based on employee ID
     employee.hours = 0;
   }
-  users.value = employees;
 };
 
-fetchUsers();
+async function loadShifts() {
+  const response = await shiftServices.getAll()
+  shifts.value = response.data
 
+
+  for (const shift of shifts.value) {
+    if(shift.is_template) continue; // skip templates, they don't have dates
+    const start = await date_timeServices.get(shift.start_day_id)
+    const end = await date_timeServices.get(shift.end_day_id)
+
+    const dateObj = new Date(start.data.first_date_time)
+
+    shift.shiftDate = dateObj.toISOString().split("T")[0] // yyyy-MM-dd
+    shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
+  }
+}
+
+//formating out of iso time format again.
+function formatShiftTimeFromISO(isoString) {
+  if (!isoString) return "Invalid time";
+
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "Invalid time";
+
+  const hours24 = date.getHours(); // local time
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const ampm = hours24 >= 12 ? "pm" : "am";
+  const hours12 = hours24 % 12 || 12;
+
+  return `${hours12}:${minutes} ${ampm}`;
+}
+
+
+onMounted(() => {
+  fetchEmployees();
+  loadShifts();
+});
 /* =====================================================
    WEEK DISPLAY (UI only — backend will control data)
    ===================================================== */
@@ -60,6 +110,8 @@ const formattedRange = computed(() => {
   const end = addDays(start, 6);
   return `${format(start, "MMMM d")} - ${format(end, "MMMM d, yyyy")}`;
 });
+
+
 
 /* =====================================================
    BUTTON HANDLERS
@@ -131,20 +183,20 @@ function apiAssignUser(userId, date) {
    TOTALS (UI only, safe to keep)
    ===================================================== */
 
-const dayTotals = computed(() => {
-  const totals = {};
-  weekDays.value.forEach((day) => {
-    totals[day.date] = users.value.reduce(
-      (sum, user) => sum + (user.hours[day.date] || 0),
-      0,
-    );
-  });
-  return totals;
-});
+// const dayTotals = computed(() => {
+//   const totals = {};
+//   weekDays.value.forEach((day) => {
+//     totals[day.date] = users.value.reduce(
+//       (sum, user) => sum + (user.hours[day.date] || 0),
+//       0,
+//     );
+//   });
+//   return totals;
+// });
 
-const totalHours = computed(() =>
-  Object.values(dayTotals.value).reduce((a, b) => a + b, 0),
-);
+// const totalHours = computed(() =>
+//   Object.values(dayTotals.value).reduce((a, b) => a + b, 0),
+// );
 
 
 /* =====================================================
@@ -204,12 +256,12 @@ const totalHours = computed(() =>
         <tbody>
           <!-- Getting users into tables -->
           <!-- TODO: Make a function that gets all users for the assigned manager -->
-          <tr v-for="user in users" :key="user.id">
+          <tr v-for="employee in employees" :key="employee.id">
             <td class="d-flex align-center">
               <v-avatar size="28" class="mr-2">
-                <v-img :src="user.avatar" />
+                <v-img :src="employee.avatar" />
               </v-avatar>
-              {{ user.name }}
+              {{ employee.name }}
             </td>
 
             <!-- Assigns user to that day -->
@@ -218,15 +270,23 @@ const totalHours = computed(() =>
             <td
               v-for="day in weekDays"
               :key="day.date"
-              @click="assignUser(user.id, day.date)"
-              class="clickable"
-            >
+              @click="assignUser(employee.id, day.date)"
+              class="clickable shift-cell"
+            > 
               <!-- If the user has hours for that day, show it -->
               <!-- Else show a plus button to assign. -->
-              <div v-if="user.hours[day.date]">
-                {{ user.hours[day.date] }}
-              </div>
-              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true, date = day.date, employeeName = user.name">
+              <div class="shift-template-button-container"v-if="shiftsByUserAndDate[`${employee.id}-${day.date}`] && shiftsByUserAndDate[`${employee.id}-${day.date}`].length > 0"
+                    v-for="shift in shiftsByUserAndDate[`${employee.id}-${day.date}`] || []"
+                    :key="shift.id"
+                  >
+                    <v-btn
+                      class ="shift-template-button"
+                      :style="{ backgroundColor: shift.color, color: 'white' }"
+                    >
+                      {{ shift.formattedTime }}
+                    </v-btn>
+                  </div>
+              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true, date = day.date, employeeName = employee.name">
                 mdi-plus
               </v-icon>
             </td>
@@ -252,11 +312,11 @@ const totalHours = computed(() =>
           <tr class="bg-grey-lighten-4">
             <td>
               <strong>Assigned Total</strong><br />
-              {{ totalHours }} hrs
+              0 hrs
             </td>
 
             <td v-for="day in weekDays" :key="'total-' + day.date">
-              {{ dayTotals[day.date] || 0 }}
+              0
             </td>
           </tr>
         </tbody>
@@ -268,7 +328,7 @@ const totalHours = computed(() =>
   <!-- Julians Form changes start here -->
    <transition name="fade">
   <ScheduleShiftModal v-if="showModal"
-  @close="showModal = false"
+  @close="showModal = false; reload()"
   :employee_name="employeeName"
   :date="date"
   ></ScheduleShiftModal>
@@ -298,6 +358,12 @@ const totalHours = computed(() =>
   cursor: pointer;
 }
 
+.shift-cell {
+  padding: 0 !important; /* remove all padding */
+  margin: 0 !important;        /* optional: let height shrink to content */
+  max-width: 200px !important;
+}
+
 .hover-icon {
   opacity: 0;
   transition: opacity 0.2s;
@@ -321,7 +387,20 @@ const totalHours = computed(() =>
 .fade-leave-from {
   opacity: 1;
 }
-
+.shift-template-button-container {
+  max-width: fit-content;
+    margin: 0;
+  padding: 0;
+  display: inline-block; 
+}
+/* Shift template button styles */
+.shift-template-button {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  min-width: 0 !important;      /* remove Vuetify default min width */ 
+}
 
 
 </style>
