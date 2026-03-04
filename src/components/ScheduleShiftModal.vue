@@ -351,14 +351,24 @@ async function populateShiftTemplates() {
     const startObj = await date_timeServices.get(template.start_day_id);
     const endObj = await date_timeServices.get(template.end_day_id);
     const position = await positionServices.get(template.position_id);
+    const task_list = await task_listServices.get(template.shift_task_list_id);
+
     // Add a new property just for frontend display
     console.log("StartObj:", startObj, "EndObj:", endObj);
     template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
     template.position_name = position.data.name;
+    template.task_list_name = task_list.data.name;
   }
 
   // Now shiftTemplates can just point to this array
   shiftTemplates.value = templates;
+}
+
+function fillFromTemplate(template){
+    selectedPosition.value = template.position_name
+    shiftTime.value = template.formattedTime
+    selectedTaskList.value = template.task_list_name
+    color.value = template.color
 }
 
 </script>
@@ -387,7 +397,7 @@ async function populateShiftTemplates() {
             v-for="template in shiftTemplates"
             :key="template.id"
             :style="{ backgroundColor: template.color, color: getTextColor(template.color) }"
-            >
+            @click="fillFromTemplate(template), form_content = true">
             {{ template.position_name }}
             {{ template.formattedTime }}
             </v-btn>
