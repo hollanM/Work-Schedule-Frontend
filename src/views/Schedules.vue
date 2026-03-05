@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
+import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 
 /* =====================================================
    STATE (will eventually come from backend)
@@ -148,6 +149,14 @@ const dayTotals = computed(() => {
 const totalHours = computed(() =>
   Object.values(dayTotals.value).reduce((a, b) => a + b, 0),
 );
+
+
+/* =====================================================
+   Modal Logic (Julian's form changes)
+   ===================================================== */
+
+   const showModal = ref(false);
+
 </script>
 
 <!-- HTML CODE -->
@@ -219,7 +228,7 @@ const totalHours = computed(() =>
               <div v-if="user.hours[day.date]">
                 {{ user.hours[day.date] }}
               </div>
-              <v-icon v-else size="16" color="success" class="hover-icon">
+              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true">
                 mdi-plus
               </v-icon>
             </td>
@@ -256,6 +265,13 @@ const totalHours = computed(() =>
       </v-table>
     </v-card>
   </v-container>
+
+
+  <!-- Julians Form changes start here -->
+   <transition name="fade">
+  <ScheduleShiftModal v-if="showModal"
+  @close="showModal = false"></ScheduleShiftModal>
+  </transition>
 </template>
 
 <style scoped>
@@ -289,4 +305,22 @@ const totalHours = computed(() =>
 .clickable:hover .hover-icon {
   opacity: 1;
 }
+
+/*Julian's styles start here */
+/* Fade transition for modal */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
+
+
+
 </style>
