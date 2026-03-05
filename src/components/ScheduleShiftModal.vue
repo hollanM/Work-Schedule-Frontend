@@ -226,7 +226,7 @@ function getFormData() {
     shiftTime: shiftTime.value,
     color: color.value,
     position_id: positions.value.find(pos => pos.name === selectedPosition.value)?.id, // if needed as name or map to id similarly
-    qualification_list_id: qualification_lists.value.find(q => q.name === selectedTag.value)?.id,
+    qualification_list_id: qualification_lists.value.find(q => q.qualification_description === selectedTag.value)?.id,
     shift_task_list_id: task_lists.value.find(t => t.name === selectedTaskList.value)?.id,
     is_template: saveAsTemplate.value
   }
@@ -352,12 +352,14 @@ async function populateShiftTemplates() {
     const endObj = await date_timeServices.get(template.end_day_id);
     const position = await positionServices.get(template.position_id);
     const task_list = await task_listServices.get(template.shift_task_list_id);
+    const qualification_list = await qualification_listServices.get(template.qualification_list_id);
 
     // Add a new property just for frontend display
     console.log("StartObj:", startObj, "EndObj:", endObj);
     template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
     template.position_name = position.data.name;
     template.task_list_name = task_list.data.name;
+    template.qualification_list_name = qualification_list.data.qualification_description;
   }
 
   // Now shiftTemplates can just point to this array
@@ -368,6 +370,7 @@ function fillFromTemplate(template){
     selectedPosition.value = template.position_name
     shiftTime.value = template.formattedTime
     selectedTaskList.value = template.task_list_name
+    selectedTag.value = template.qualification_list_name
     color.value = template.color
 }
 
