@@ -28,6 +28,7 @@ const initials = ref("");
 const name = ref("");
 const logoURL = ref("");
 const isUserModalOpened = ref(false);
+const userModalDrawer = ref(false);
 
 const resetMenu = () => {
   user.value = null;
@@ -98,10 +99,12 @@ const handleSettingsItemClick = (item) => {
 const openModal = () => 
 {
   isUserModalOpened.value = true;
+  userModalDrawer.value = true; //need to have the drawer open state as well
 };
 const closeModal = () => 
 {
   isUserModalOpened.value = false;
+  userModalDrawer.value = false;
 };
 
 const userModalSaveButton = () => 
@@ -112,7 +115,7 @@ const userModalSaveButton = () =>
 
 <template>
   <div app>
-    <UserModal :isOpen="isUserModalOpened" @modal-close="closeModal" @submit="userModalSaveButton" name="test-modal">
+    <UserModal :isOpen="isUserModalOpened" :drawer="userModalDrawer" :@modal-close="closeModal" @update:drawer="userModalDrawer = $event" @submit="userModalSaveButton" name="user-modal">
       <template #header>header</template>
       <template #content>content</template>
       <template #footer>content</template>
