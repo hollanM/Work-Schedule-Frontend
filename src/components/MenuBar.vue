@@ -28,7 +28,6 @@ const initials = ref("");
 const name = ref("");
 const logoURL = ref("");
 const isUserModalOpened = ref(false);
-const userModalDrawer = ref(false);
 
 const resetMenu = () => {
   user.value = null;
@@ -99,26 +98,24 @@ const handleSettingsItemClick = (item) => {
 const openModal = () => 
 {
   isUserModalOpened.value = true;
-  userModalDrawer.value = true; //need to have the drawer open state as well
 };
 const closeModal = () => 
 {
   isUserModalOpened.value = false;
-  userModalDrawer.value = false;
 };
 
-const userModalSaveButton = () => 
+const userModalSaveButton = () => //this is for the save button in the user modal, will need to submit froms in the future
 {
 
 }
 </script>
 
 <template>
-  <div app>
-    <UserModal :isOpen="isUserModalOpened" :drawer="userModalDrawer" :@modal-close="closeModal" @update:drawer="userModalDrawer = $event" @submit="userModalSaveButton" name="user-modal">
-      <template #header>header</template>
-      <template #content>content</template>
-      <template #footer>content</template>
+  <div app> <!-- these are the parameters being passed to the user modal -->
+    <UserModal :isOpen="isUserModalOpened" @modal-close="closeModal" @submit="userModalSaveButton" name="user-modal">
+      <template #sidebar></template> <!-- these match the componet names in the userModal-->
+      <template #content></template>
+      <template #footer></template>
     </UserModal>
     <v-app-bar id="app-bar">
       <div id="Bell_Div" v-if="user" class="container">
