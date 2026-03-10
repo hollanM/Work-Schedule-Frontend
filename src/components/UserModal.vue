@@ -25,7 +25,7 @@ const emit = defineEmits(["modal-close"]);
 
 const target = ref(null)
 onClickOutside(target, () => { //handles the closing of the user modal
-  //console.log("onClickOutside triggered - closing modal");  //is you cant close the modal use this to check if its firing
+  //console.log("onClickOutside triggered - closing modal");  //if you cant close the modal use this to check if its firing
   emit('modal-close');
 });
 
@@ -38,23 +38,14 @@ const menuItems = [ //same as Sam's sidebar, but for the user modal
 ]
 
 //const currentComponent = ref(props.selectedComponent);
-const currentComponent = shallowRef(componentMap[props.selectedComponent] || ProfileModal);
+const currentComponent = shallowRef(componentMap[props.selectedComponent]); //compiler wanted this to be a shallwRef, not that I know what a shallowRef is but is stopped some warnings
 watch(() => props.selectedComponent, (value) => {
-  currentComponent.value = componentMap[value] || ProfileModal;
+  currentComponent.value = componentMap[value];
 });
 
-
-
 const changeModalContent = (item) => {
-  currentComponent.value = componentMap[item.component] || ProfileModal;
+  currentComponent.value = componentMap[item.component];
 };
-
-// const changeModalContent = (item) => {
-//   currentComponent.value = item.component;
-//   //console.log(`Clicked on ${item.name}`);
-// }
-
-
 
 </script>
 
@@ -76,9 +67,7 @@ const changeModalContent = (item) => {
                 </slot>
                 <div id="userModalComponetScreen"> 
                     <slot name="content">
-                        <template>
-                            <component :is="currentComponent" />
-                        </template>
+                        <component :is="currentComponent" />
                     </slot>
                 </div>
                 <slot name="footer">
