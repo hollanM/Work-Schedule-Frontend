@@ -68,7 +68,7 @@ const taskListOptions = [
 
 </script>
 
-<template>
+<template id="sidebarTemplate">
   <v-navigation-drawer
     :model-value="drawer"
     @update:model-value="$emit('update:drawer', $event)"
@@ -162,3 +162,10 @@ const taskListOptions = [
     </v-list>
   </v-navigation-drawer>
 </template>
+
+<style scoped>
+  #sidebarTemplate /* I tried but this did not put the sidebar under the popup */
+  {
+    z-index: 980;
+  }
+</style>

@@ -115,7 +115,6 @@ const userModalSaveButton = () => //this is for the save button in the user moda
     <UserModal :isOpen="isUserModalOpened" @modal-close="closeModal" @submit="userModalSaveButton" name="user-modal">
       <template #sidebar></template> <!-- these match the componet names in the userModal-->
       <template #content></template>
-      <template #footer></template>
     </UserModal>
     <v-app-bar id="app-bar">
       <div id="Bell_Div" v-if="user" class="container">
@@ -205,7 +204,7 @@ const userModalSaveButton = () => //this is for the save button in the user moda
       <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
-            <v-img id="Settings_Image" :class="{ active: isActive }" :src="Settings" height="40" width="40" contain/>
+            <v-img id="Settings_Image" :src="Settings" height="40" width="40" contain/>
             <span>Settings</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>

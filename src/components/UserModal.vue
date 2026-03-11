@@ -47,6 +47,10 @@ const changeModalContent = (item) => {
   currentComponent.value = componentMap[item.component];
 };
 
+const continueToAssignments = () =>
+{
+  
+};
 </script>
 
 <template>
@@ -70,11 +74,12 @@ const changeModalContent = (item) => {
                         <component :is="currentComponent" />
                     </slot>
                 </div>
-                <slot name="footer">
-                    <div id="footer">
-                        <button @click.stop="emit('modal-close')">Submit</button>
-                    </div>
-                </slot>
+                <div id="header">
+                    <button @click.stop="emit('modal-close')">X</button>
+                </div>
+                <div id="footer"> 
+                    <button id="continueButton" @click="continueToAssignments"> Continue to Assignments </button>
+                </div>
             </div>
         </div>
     </div>
@@ -105,6 +110,14 @@ const changeModalContent = (item) => {
     min-height: 60vh;
 }
 
+.userModalComponetScreen
+{
+    border-radius: 8px;
+    outline-width: 2px;
+    outline-color: black;
+    outline-style: solid;
+}
+
 #userModalNav 
 {
     min-height: 60vh; /* needs to match the containers height, not a perfect fix and will need to change later */
@@ -113,10 +126,25 @@ const changeModalContent = (item) => {
     color: white;
 }
 
-#footer
+#header
 {
+    position: absolute; /* removes this object from the normal flex-grid */
+    top: 21.4vh; /* only way to control location now */
+    right: 20vw;
     z-index: 999; /* this needs to be above the componets inside of this modal */
     min-width: 60px;
+    min-height: 30px;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgb(76, 76, 76);
+    color: white;
+}
+
+#footer
+{
+    display: flex;
+    z-index: 999; /* this needs to be above the componets inside of this modal */
+    min-width: 90px;
     min-height: 30px;
     border-radius: 2px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
