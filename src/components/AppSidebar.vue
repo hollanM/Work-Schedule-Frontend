@@ -1,14 +1,21 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import store from "../store/store.js"
 
 const user = ref(null);
+const drawer = ref(true)
+const loggedIn = ref(false)
+
+const userSession = computed(() => store.getters.getLoginUserInfo);
+console.log(userSession);
 
 
-defineProps({
-  drawer: Boolean
-})
 
-defineEmits(['update:drawer'])
+
+
+function toggle(){
+  drawer.value = !drawer.value
+}
 
 const resetMenu = () => {
   user.value = null;
@@ -69,11 +76,13 @@ const taskListOptions = [
 </script>
 
 <template>
+   
   <v-navigation-drawer
-    :model-value="drawer"
-    @update:model-value="$emit('update:drawer', $event)"
+    v-model="drawer"
     app
+    class = "drawer"
   >
+   
     <v-list nav>
       <!-- schedule menu items -->
       <v-list-item 
@@ -161,4 +170,60 @@ const taskListOptions = [
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
+
+    <v-btn class="circle-button zero-margin "  @click="toggle()"
+    :class="{ closed: !drawer }"
+    >
+        <v-icon class="ml-3">
+          {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
+        </v-icon>
+    </v-btn>
 </template>
+
+<style scoped>
+.circle-button{
+    background-color: #ff000000;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 10px !important;
+    height: 30px !important;
+    min-width: 30px;
+    font-size: 20px;
+    z-index: 1001;
+    position: absolute;
+  top: 50%;
+  left: 256px; /* drawer width */
+  transform: translate(-50%, -50%);
+  transition: left 0.25s ease;
+}
+
+.closed{
+    background-color: #ff000000;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 10px !important;
+    height: 30px !important;
+    min-width: 30px;
+    font-size: 20px;
+    z-index: 1001;
+    position: absolute;
+  top: 50%;
+  left: 0; /* drawer width */
+  transform: translate(-50%, -50%);
+  transition: left 0.25s ease;
+}
+
+.drawer{
+  overflow: visible;
+}
+
+.zero-margin{
+  margin: 0;
+}
+</style>
+
+
