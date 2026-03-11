@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, shallowRef } from "vue";
+import { defineProps, defineEmits, ref, watch, shallowRef, computed } from "vue";
 import {onClickOutside} from "@vueuse/core";
 import ProfileModal from "./UserProfileModal.vue";
 import AssignmentsModal from "./UserAssignmentsModal.vue";
@@ -19,6 +19,8 @@ const props = defineProps({
   isOpen: Boolean,
   selectedComponent: { type: String, default: 'ProfileModal' },
 });
+
+watch(() => props.selectedComponent, (value) => { activeKey.value = value; });
 
 const user = ref(null); //might not be needed, or will be needed later
 const emit = defineEmits(["modal-close"]);
@@ -47,9 +49,24 @@ const changeModalContent = (item) => {
   currentComponent.value = componentMap[item.component];
 };
 
-const continueToAssignments = () =>
+const continueTo = () =>
 {
-  
+    if(currentComponent.value === componentMap['ProfileModal'])
+    {
+        currentComponent.value = componentMap['AssignmentsModal'];
+    }
+    else if(currentComponent.value === componentMap['AssignmentsModal'])
+    {
+        currentComponent.value = componentMap['HourlyRatesModal'];
+    }
+    else if(currentComponent.value === componentMap['HourlyRatesModal'])
+    {
+        currentComponent.value = componentMap['LogNotesModal'];
+    }
+    else if(currentComponent.value === componentMap['LogNotesModal'])
+    {
+        currentComponent.value = componentMap['AdvancedModal'];
+    }
 };
 </script>
 
@@ -77,8 +94,20 @@ const continueToAssignments = () =>
                 <div id="header">
                     <button @click.stop="emit('modal-close')">X</button>
                 </div>
-                <div id="footer"> 
-                    <button id="continueButton" @click="continueToAssignments"> Continue to Assignments </button>
+                <div id="footer" v-if="currentComponent.value === componentMap[ProfileModal]"> 
+                    <button id="continueButton" @click="continueTo"> Continue to Assignments </button>
+                </div>
+                <div id="footer" v-if="currentComponent.value === componentMap[AssignmentsModal]"> 
+                    <button id="continueButton" @click="continueTo"> Continue to Hourly Rates </button>
+                </div>
+                <div id="footer" v-if="currentComponent.value === componentMap[HourlyRatesModal]"> 
+                    <button id="continueButton" @click="continueTo"> Continue to Log Notes </button>
+                </div>
+                <div id="footer" v-if="currentComponent.value === componentMap[LogNotesModal]"> 
+                    <button id="continueButton" @click="continueTo"> Continue to Advanced </button>
+                </div>
+                <div id="footer" v-if="currentComponent.value === componentMap[AdvancedModal]"> 
+                    <button id="continueButton" @click="continueTo"> Save and Exit </button>
                 </div>
             </div>
         </div>
@@ -128,11 +157,12 @@ const continueToAssignments = () =>
 
 #header
 {
+    text-align: center;
     position: absolute; /* removes this object from the normal flex-grid */
-    top: 21.4vh; /* only way to control location now */
-    right: 20vw;
+    top: 24.5vh; /* only way to control location now */
+    right: 21.2vw;
     z-index: 999; /* this needs to be above the componets inside of this modal */
-    min-width: 60px;
+    min-width: 30px;
     min-height: 30px;
     border-radius: 2px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -142,9 +172,12 @@ const continueToAssignments = () =>
 
 #footer
 {
-    display: flex;
+    text-align: center;
+    position: absolute;
+    bottom: 20.1vh;
+    right: 21.2vw;
     z-index: 999; /* this needs to be above the componets inside of this modal */
-    min-width: 90px;
+    min-width: 200px;
     min-height: 30px;
     border-radius: 2px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
