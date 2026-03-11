@@ -1,8 +1,16 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import store from "../store/store.js"
 
 const user = ref(null);
 const drawer = ref(true)
+const loggedIn = ref(false)
+
+const userSession = computed(() => store.getters.getLoginUserInfo);
+console.log(userSession);
+
+
+
 
 
 function toggle(){
