@@ -9,7 +9,7 @@ import ViewTutorial from "./views/ViewTutorial.vue";
 import AddLesson from "./views/AddLesson.vue";
 import EditLesson from "./views/EditLesson.vue";
 import Schedules from "./views/Schedules.vue";
-
+import EditProfile from "./views/EditProfile.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,10 +55,17 @@ const router = createRouter({
       props: true,
     },
     {
+
       path: "/schedules",
       name: "schedules",
       component: Schedules,
-    }
+    },
+    {
+      path: "/editProfile/:id",
+      name: "editProfile",
+      component: EditProfile,
+      props: true,
+    },
   ],
 });
 

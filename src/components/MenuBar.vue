@@ -15,6 +15,7 @@ import Profile from "/ProfileAndSettings.png";
 import SwitchWorkplaces from "/SwitchWorkplaces.png";
 import timesheets from "/timesheets.png";
 import TimeTracker from "/TimeTracker.png";
+
 import { ref, onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
@@ -33,6 +34,7 @@ const resetMenu = () => {
   if (user.value) {
     initials.value = user.value.fName[0] + user.value.lName[0];
     name.value = user.value.fName + " " + user.value.lName;
+    Profile_Items.value[0].route.params.id = user.value.userId;
   }
 };
 
@@ -80,6 +82,12 @@ const Settings_Items = ref([
   { title: 'My Availability', route: { name: '' }, photo: MyAvailability },
   { title: 'Switch Workspaces', route: { name: '' }, photo: SwitchWorkplaces },
   //{ title: 'Logout', route: { name: 'login' }, photo: Logout }, //example
+]);
+
+const Profile_Open = ref(false);
+const Profile_Items = ref([
+  { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
+  { title: 'Logout', route: { name: 'login' }, photo: Logout },
 ]);
 
 
@@ -191,7 +199,7 @@ const Settings_Items = ref([
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu bottom min-width="200px" rounded offset-y v-if="user">
+      <!-- <v-menu bottom min-width="200px" rounded offset-y v-if="user">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" icon x-large>
             <v-avatar v-if="user" color="secondary">
@@ -214,7 +222,35 @@ const Settings_Items = ref([
             </div>
           </v-card-text>
         </v-card>
+      </v-menu> -->
+
+      <v-menu v-model="Profile_Open" transition="slide-y-transition" v-if="user">
+        <template #activator="{ props }">
+          <v-btn id="Profile_Div" class="container" v-bind="props">
+            <v-img id="Profile_Image" :src="user.profileImage" height="40" width="40" cover class="profile-round"/>
+            <span>Profile</span>
+
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{ transform: Profile_Open ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+
+        <v-list class="dropdown">
+          <v-list-item
+            v-for="(Profile_Item, index) in Profile_Items"
+            :key="index"
+            :to="Profile_Item.route"
+            class="dropdown-menu"
+            @click="Profile_Item.action === 'logout' ? logout() : null"
+          >
+            <template #prepend>
+              <v-img :src="Profile_Item.photo" width="24" height="24" contain />
+            </template>
+
+            <v-list-item-title>{{ Profile_Item.title }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
       </v-menu>
+
     </v-app-bar>
   </div>
 </template>
@@ -335,4 +371,22 @@ const Settings_Items = ref([
 {
   filter: brightness(50%); 
 }
+
+#Profile_Div {
+  background-color: rgb(60, 60, 60);
+  color: rgb(193, 193, 193);
+}
+
+#Profile_Image {
+  flex-shrink: 0;
+}
+
+#Profile_Div:hover {
+  filter: brightness(50%);
+}
+
+.profile-round {
+  border-radius: 50%;
+}
+
 </style>
