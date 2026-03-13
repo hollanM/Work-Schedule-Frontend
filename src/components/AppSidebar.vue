@@ -2,11 +2,15 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import store from "../store/store.js"
 import userServices from "../services/userServices"
+import positionServices from "../services/positionServices.js"
 
 const user = ref(null);
 const currentUser = ref(null)
 const drawer = ref(false)
 const loggedIn = ref(false)
+const positions = ref([])
+const position_names = ref([])
+const message = ref("")
 
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
@@ -21,8 +25,9 @@ async function getCurrentUser(){
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
 }
-onMounted(() => {
-  getCurrentUser()
+onMounted( async () => {
+ await getCurrentUser()
+  await getPositions();
 });
 
 watch(
@@ -35,9 +40,42 @@ watch(
   { immediate: true }
 )
 
+function toggleDropdown(name) {
+  switch(name) {
+    case 'Positions':
+      positionOptionsOpen.value = !positionOptionsOpen.value
+      break
+    case 'View Options':
+      viewOptionsOpen.value = !viewOptionsOpen.value
+      break
+    case 'Tags':
+      viewTagsOpen.value = !viewTagsOpen.value
+      break
+    case 'Job Sites':
+      viewJobSitesOpen.value = !viewJobSitesOpen.value
+      break
+    case 'Task Lists':
+      viewTaskListsOpen.value = !viewTaskListsOpen.value
+      break
+  }
+}
 
 function toggle(){
   drawer.value = !drawer.value
+}
+
+async function getPositions(){
+  try{
+    const response = await positionServices.getAll();
+    positions.value = response.data;
+    console.log("returned:" + positions.value);
+    position_names.value = positions.value.map(pos => pos.name);
+    console.log("position names:" + position_names.value);
+  }
+  catch(error){
+    message.value = "Error: " + error.code + ":" + error.message;
+    console.log(error);
+  }
 }
 
 const resetMenu = () => {
@@ -67,6 +105,13 @@ const scheduleOptions = [
   'Evening Shift',
 ]
 
+
+const positionOptionsOpen = ref(false)
+const positionOptions = [
+  'barista',
+  'monke',
+  'ape'
+]
 // View Options collapsible state (UI-only)
 const viewOptionsOpen = ref(false)
 const viewOptions = [
@@ -106,92 +151,31 @@ const taskListOptions = [
     class = "drawer"
   >
    
-    <v-list nav>
-      <!-- schedule menu items -->
-      <v-list-item 
-        v-for="item in menuItems"
-        :key="item.name"
-        :to="item.to || undefined"
-        v-bind:router="!!item.to"
-        @click="item.name === 'View Options' ? viewOptionsOpen = !viewOptionsOpen : (item.name === 'Tags' ? viewTagsOpen = !viewTagsOpen : (item.name === 'Job Sites' ? viewJobSitesOpen = !viewJobSitesOpen : (item.name === 'Task Lists' ? viewTaskListsOpen = !viewTaskListsOpen : null)))"
-      >
-        <template #prepend>
-          <v-icon :icon="item.icon" />
-        </template>
+  <v-expansion-panels>
+  <v-expansion-panel title="Positions">
+    <v-expansion-panel-text>
+      <v-list>
+        <v-list-item
+          v-for="item in positions"
+          :key="item.id"
+          :title="item.name"
+        />
+      </v-list>
+       <v-list-item style="cursor: pointer;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <v-icon>mdi-plus</v-icon>
+        <span>Add Position</span>
+      </div>
+    </v-list-item>
+    </v-expansion-panel-text>
+    
+  </v-expansion-panel>
 
-        <v-list-item-title>
-          {{ item.name }}
-        </v-list-item-title>
-
-        <!-- schedule drop down -->
-        <template v-if="item.name === 'Schedule'">
-          <v-list dense>
-            <v-list-item>
-              <v-select
-                v-model="selectedSchedule"
-                :items="scheduleOptions"
-                label="Schedule Name"
-                dense
-                hide-details
-                solo
-              />
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Options drop down -->
-        <template #append v-if="item.name === 'View Options'">
-          <v-icon :icon="viewOptionsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'View Options'">
-          <v-list v-show="viewOptionsOpen" dense>
-            <v-list-item v-for="opt in viewOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- tags drop down -->
-        <template #append v-if="item.name === 'Tags'">
-          <v-icon :icon="viewTagsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Tags'">
-          <v-list v-show="viewTagsOpen" dense>
-            <v-list-item v-for="opt in tagsOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Job Sites drop down -->
-        <template #append v-if="item.name === 'Job Sites'">
-          <v-icon :icon="viewJobSitesOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Job Sites'">
-          <v-list v-show="viewJobSitesOpen" dense>
-            <v-list-item v-for="opt in jobSiteOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Task Lists drop down -->
-        <template #append v-if="item.name === 'Task Lists'">
-          <v-icon :icon="viewTaskListsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Task Lists'">
-          <v-list v-show="viewTaskListsOpen" dense>
-            <v-list-item v-for="opt in taskListOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-      </v-list-item>
-    </v-list>
+   <v-expansion-panel
+    title="Task Lists"
+  >
+  </v-expansion-panel>
+</v-expansion-panels>
   </v-navigation-drawer>
 
     <v-btn v-if="userSession && userSession.userId" class="circle-button zero-margin "  @click="toggle()"
@@ -246,6 +230,10 @@ const taskListOptions = [
 
 .zero-margin{
   margin: 0;
+}
+
+.chevron-top {
+  align-self: flex-start; /* fixes it to top instead of vertically centered */
 }
 </style>
 
