@@ -630,14 +630,3 @@ v-model="saveAsTemplate">
   max-width: 600px;
 }
 </style>
-.circle-button{
-    background-color: #00000000;
-    color: rgb(148, 148, 148);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    width: 40px;
-    height: 60px;
-    font-size: 40px;
-    padding-top: 10px;
-}

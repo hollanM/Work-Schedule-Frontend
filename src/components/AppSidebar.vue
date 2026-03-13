@@ -11,6 +11,7 @@ const loggedIn = ref(false)
 const positions = ref([])
 const position_names = ref([])
 const message = ref("")
+const addPositionModal = ref(false)
 
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
@@ -161,7 +162,7 @@ const taskListOptions = [
           :title="item.name"
         />
       </v-list>
-       <v-list-item style="cursor: pointer;">
+       <v-list-item style="cursor: pointer;" @click="addPositionModal = true">
       <div style="display: flex; align-items: center; gap: 8px;">
         <v-icon>mdi-plus</v-icon>
         <span>Add Position</span>
@@ -185,6 +186,33 @@ const taskListOptions = [
           {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
         </v-icon>
     </v-btn>
+
+
+
+    <div v-if="addPositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Add position</h3>
+     <v-btn class = "close-button" @click="addPositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+              <div class="dividing-line"> </div>
+    <v-text-field label="Name"></v-text-field>
+
+      <div class="dividing-line"> </div>
+      <div class="flex-row-right">
+          <v-btn class="create-button" @click="createShift()">
+            Save
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
 </template>
 
 <style scoped>
@@ -234,6 +262,78 @@ const taskListOptions = [
 
 .chevron-top {
   align-self: flex-start; /* fixes it to top instead of vertically centered */
+}
+
+.modal{
+  position: fixed;
+  top: 0%;
+  background-color: rgba(0, 0, 0, 0.158);
+  opacity: 100%;
+  z-index: 10000;
+  width:100%;
+  height:100%;
+  display: flex;
+  justify-content: center;
+  align-items:center;
+
+}
+
+
+.modal-content{
+  background-color: #fefefe;
+  display: flex;
+  width: 50%;
+  height:fit-content;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 20px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+}
+
+.close-button{
+    background-color: transparent;
+    color: black;
+    border: grey solid 1px;
+    cursor: pointer;
+    font-size: 20px;
+    width: 10px;
+    height: fit-content;
+}
+
+.modal-text{
+    color: rgb(134, 134, 134);
+    margin: 0;
+    padding: 0;
+}
+
+
+.flex-row-right{
+    display:flex;
+    justify-content: flex-end;
+}
+
+.flex-row{
+    display:flex;
+    justify-content: space-between;
+}
+.create-button{
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.dividing-line{
+  border-bottom: 5px solid #cfcfcf;
+  margin: 10px 0;
+  
 }
 </style>
 
