@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import AuthServices from "../services/authServices";
 import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
+import store from "../store/store"
 
 const router = useRouter();
 const fName = ref("");
@@ -35,6 +36,7 @@ const handleCredentialResponse = async (response) => {
   await AuthServices.loginUser(token)
     .then((response) => {
       user.value = response.data;
+      store.commit("setLoginUser", user.value); 
       Utils.setStore("user", user.value);
       fName.value = user.value.fName;
       lName.value = user.value.lName;

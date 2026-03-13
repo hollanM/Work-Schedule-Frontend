@@ -1,3 +1,5 @@
+
+
 <script setup>
 import ocLogo from "/oc-logo-white.png";
 import Attendance from "/Attendance.png";
@@ -19,6 +21,7 @@ import { ref, onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
 import { useRouter, useRoute } from 'vue-router'
+import store from "../store/store"
 
 const router = useRouter()
 const user = ref(null);
@@ -39,7 +42,7 @@ const resetMenu = () => {
 const logout = () => {
   AuthServices.logoutUser(user.value)
     .then((response) => {
-      
+      store.commit("setLoginUser", null);
       Utils.removeItem("user");
       router.push({ name: "login" });
     })
