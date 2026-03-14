@@ -27,7 +27,6 @@ const title = ref("Tutorials");
 const initials = ref("");
 const name = ref("");
 const logoURL = ref("");
-const isUserModalOpened = ref(false);
 
 const resetMenu = () => {
   user.value = null;
@@ -76,7 +75,7 @@ const Inbox_Items = ref([
 ]);
 const Settings_Open = ref(false);
 const Settings_Items = ref([
-  { title: 'Profile', click: 'openModal',photo: Profile }, //we need to have functions now instead of router links here
+  { title: 'Profile', click: '',photo: Profile }, //we need to have functions now instead of router links here
   { title: 'Settings', click: '', photo: Settings },
   { title: 'My Schedule', click: '', photo: MySchedule },
   { title: 'My Availability', click: '', photo: MyAvailability },
@@ -84,38 +83,18 @@ const Settings_Items = ref([
 ]);
 
 const handleSettingsItemClick = (item) => {
-  if (item.click === 'openModal') 
+  if (item.click === '') 
   {
-    openModal();
-    Settings_Open.value = false; // Close the menu after clicking
+
   } else if (item.route?.name) 
   {
-    Settings_Open.value = false;
-    //router.push(item.route); //reload the page just in case after the user messes with the popup
+
   }
 };
-
-const openModal = () => 
-{
-  isUserModalOpened.value = true;
-};
-const closeModal = () => 
-{
-  isUserModalOpened.value = false;
-};
-
-const userModalSaveButton = () => //this is for the save button in the user modal, will need to submit froms in the future
-{
-
-}
 </script>
 
 <template>
-  <div app> <!-- these are the parameters being passed to the user modal -->
-    <UserModal :isOpen="isUserModalOpened" @modal-close="closeModal" @submit="userModalSaveButton" name="user-modal">
-      <template #sidebar></template> <!-- these match the componet names in the userModal-->
-      <template #content></template>
-    </UserModal>
+  <div app>
     <v-app-bar id="app-bar">
       <div id="Bell_Div" v-if="user" class="container">
         <div>
