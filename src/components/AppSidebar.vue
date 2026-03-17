@@ -75,8 +75,7 @@ const taskListOptions = [
 
 </script>
 
-<template>
-   
+<template id="sidebarTemplate">
   <v-navigation-drawer
     v-model="drawer"
     app
@@ -181,49 +180,8 @@ const taskListOptions = [
 </template>
 
 <style scoped>
-.circle-button{
-    background-color: #ff000000;
-    color: rgb(148, 148, 148);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    width: 10px !important;
-    height: 30px !important;
-    min-width: 30px;
-    font-size: 20px;
-    z-index: 1001;
-    position: absolute;
-  top: 50%;
-  left: 256px; /* drawer width */
-  transform: translate(-50%, -50%);
-  transition: left 0.25s ease;
-}
-
-.closed{
-    background-color: #ff000000;
-    color: rgb(148, 148, 148);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    width: 10px !important;
-    height: 30px !important;
-    min-width: 30px;
-    font-size: 20px;
-    z-index: 1001;
-    position: absolute;
-  top: 50%;
-  left: 0; /* drawer width */
-  transform: translate(-50%, -50%);
-  transition: left 0.25s ease;
-}
-
-.drawer{
-  overflow: visible;
-}
-
-.zero-margin{
-  margin: 0;
-}
+  #sidebarTemplate /* I tried but this did not put the sidebar under the popup */
+  {
+    z-index: 980;
+  }
 </style>
-
-
