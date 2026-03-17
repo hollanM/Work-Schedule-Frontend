@@ -4,6 +4,7 @@ import store from "../store/store.js"
 import userServices from "../services/userServices"
 import positionServices from "../services/positionServices.js"
 
+
 const user = ref(null);
 const currentUser = ref(null)
 const drawer = ref(false)
@@ -13,7 +14,9 @@ const position_names = ref([])
 const message = ref("")
 const addPositionModal = ref(false)
 const positionName = ref("")
-
+const selectedPosition = ref("")
+const positionId = ref("")
+const editPositionModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -76,6 +79,13 @@ function toggle(){
   drawer.value = !drawer.value
 }
 
+async function editPosition(id){
+  const obj = {name: positionName.value}
+  const response = await positionServices.update(id, obj);
+  console.log(response.data)
+  await getPositions();
+}
+
 async function getPositions(){
   try{
     const response = await positionServices.getAll();
@@ -125,7 +135,7 @@ const resetMenu = () => {
         <div class ="flex-row">
         <span>{{ item.name }}</span>
         <div class = "flex-row-right">
-      <v-icon class="hover-icon">
+      <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
         mdi-pencil
       </v-icon>
       <v-icon class="hover-icon">
@@ -183,6 +193,35 @@ const resetMenu = () => {
       <div class="dividing-line"> </div>
       <div class="flex-row-right">
           <v-btn class="create-button" @click="savePosition(), addPositionModal = false">
+            Save
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
+
+
+  <div v-if="editPositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Edit position: {{selectedPosition}}</h3>
+     <v-btn class = "close-button" @click="editPositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+              <div class="dividing-line"> </div>
+    <v-text-field 
+    v-model="positionName"
+    label="Name"></v-text-field>
+
+      <div class="dividing-line"> </div>
+      <div class="flex-row-right">
+          <v-btn class="create-button" @click="editPosition(positionId), editPositionModal = false">
             Save
         </v-btn>
       </div>
