@@ -1,14 +1,21 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import store from "../store/store.js"
 
 const user = ref(null);
+const drawer = ref(true)
+const loggedIn = ref(false)
+
+const userSession = computed(() => store.getters.getLoginUserInfo);
+console.log(userSession);
 
 
-defineProps({
-  drawer: Boolean
-})
 
-defineEmits(['update:drawer'])
+
+
+function toggle(){
+  drawer.value = !drawer.value
+}
 
 const resetMenu = () => {
   user.value = null;
@@ -70,10 +77,11 @@ const taskListOptions = [
 
 <template id="sidebarTemplate">
   <v-navigation-drawer
-    :model-value="drawer"
-    @update:model-value="$emit('update:drawer', $event)"
+    v-model="drawer"
     app
+    class = "drawer"
   >
+   
     <v-list nav>
       <!-- schedule menu items -->
       <v-list-item 
@@ -161,6 +169,14 @@ const taskListOptions = [
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
+
+    <v-btn class="circle-button zero-margin "  @click="toggle()"
+    :class="{ closed: !drawer }"
+    >
+        <v-icon class="ml-3">
+          {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
+        </v-icon>
+    </v-btn>
 </template>
 
 <style scoped>
