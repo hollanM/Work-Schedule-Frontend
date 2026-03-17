@@ -144,9 +144,10 @@ const changeModalContent = (item) => {
                                 <button @click.stop="emit('modal-close')">X</button>
                             </div>
                         </div>
-                        <p>User Log Notes Component is working</p>
+                        <v-textarea label="Comments" v-model="commentData"></v-textarea>
+
                         <div id="buttonDiv">
-                            <button id="addUserButton" type="submit">Add Log Notes</button>
+                            <!-- <button id="addUserButton" type="submit">Add Log Notes</button> -->
                             <div id="footer">
                                 <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
                             </div>
