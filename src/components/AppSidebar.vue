@@ -23,6 +23,8 @@ async function savePosition(){
   })
   message.value = response.data
   console.log(message.value)
+
+  await getPositions();
 }
 
 async function getCurrentUser(){
@@ -114,11 +116,25 @@ const resetMenu = () => {
   <v-expansion-panel title="Positions">
     <v-expansion-panel-text>
       <v-list>
+
+        
         <v-list-item
           v-for="item in positions"
           :key="item.id"
-          :title="item.name"
-        />
+        >
+        <div class ="flex-row">
+        <span>{{ item.name }}</span>
+        <div class = "flex-row-right">
+      <v-icon class="hover-icon">
+        mdi-pencil
+      </v-icon>
+      <v-icon class="hover-icon">
+        mdi-trash-can-outline
+      </v-icon>
+      </div>
+    </div>
+      
+      </v-list-item>
       </v-list>
        <v-list-item style="cursor: pointer;" @click="addPositionModal = true">
       <div style="display: flex; align-items: center; gap: 8px;">
@@ -294,6 +310,19 @@ const resetMenu = () => {
   border-bottom: 5px solid #cfcfcf;
   margin: 10px 0;
   
+}
+
+.clickable {
+  cursor: pointer;
+}
+.hover-icon {
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+ .hover-icon:hover {
+  opacity: 1;
 }
 </style>
 
