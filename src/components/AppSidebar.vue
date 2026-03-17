@@ -12,9 +12,18 @@ const positions = ref([])
 const position_names = ref([])
 const message = ref("")
 const addPositionModal = ref(false)
+const positionName = ref("")
 
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
+
+async function savePosition(){
+  const response = await positionServices.create({
+    name: positionName.value 
+  })
+  message.value = response.data
+  console.log(message.value)
+}
 
 async function getCurrentUser(){
     //this guard is not needed, session works as intended.
@@ -88,58 +97,7 @@ const resetMenu = () => {
   }
 };
 
-// these don't do anything yet, just placeholders for the UI
-const menuItems = [
-  { name: 'Schedule', icon: '', to: '/schedules' },
-  { name: 'View Options', icon: '', to: '' },
-  { name: 'Positions', icon: '', to: '' },
-  { name: 'Tags', icon: '', to: '' },
-  { name: 'Job Sites', icon: '', to: '' },
-  { name: 'Task Lists', icon: '', to: '' },
-]
 
-// Dropdown state for schedule name (UI-only, no behavior yet)
-const selectedSchedule = ref(null)
-const scheduleOptions = [
-  'Default Schedule',
-  'Morning Shift',
-  'Evening Shift',
-]
-
-
-const positionOptionsOpen = ref(false)
-const positionOptions = [
-  'barista',
-  'monke',
-  'ape'
-]
-// View Options collapsible state (UI-only)
-const viewOptionsOpen = ref(false)
-const viewOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-
-const viewTagsOpen = ref(false)
-const tagsOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-
-const viewJobSitesOpen = ref(false)
-const jobSiteOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-const viewTaskListsOpen = ref(false)
-const taskListOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
 
 
 </script>
@@ -202,11 +160,13 @@ const taskListOptions = [
             </div>
 
               <div class="dividing-line"> </div>
-    <v-text-field label="Name"></v-text-field>
+    <v-text-field 
+    v-model="positionName"
+    label="Name"></v-text-field>
 
       <div class="dividing-line"> </div>
       <div class="flex-row-right">
-          <v-btn class="create-button" @click="createShift()">
+          <v-btn class="create-button" @click="savePosition(), addPositionModal = false">
             Save
         </v-btn>
       </div>
