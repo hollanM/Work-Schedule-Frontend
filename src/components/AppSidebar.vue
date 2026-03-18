@@ -22,6 +22,10 @@ const deletePositionModal = ref(false)
 const task_lists = ref([])
 const addTaskListModal = ref(false)
 const task_list_name = ref("")
+const current_step_color = ref("#4CAF50")
+const unfinished_step_color = ref("#cfcfcf")
+const check_mark_color = ref("#71b073")
+const task_list_name_chosen = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -310,17 +314,45 @@ const resetMenu = () => {
     <div class="task-list-flex-row">
 
      <div id ="progress-div" class = "flex-column">
-      <h3 class = "black-modal-text">New Task List</h3>
+      <h3 id="task-list-header" class = "black-modal-text">New Task List</h3>
       <div class ="flex-column align-items-center">
+        <div class="flex-row"> 
+          <v-icon v-if="task_list_name_chosen"
+          :style="{color: check_mark_color}"
+          >
+            mdi-check-circle
+          </v-icon>
+          <v-icon v-if="!task_list_name_chosen"
+          :style="{color: current_step_color}"
+          >
+              mdi-numeric-1-circle
+          </v-icon>
           <span>Name</span>
+        </div>
+          <div class="flex-row"> 
+
+           <v-icon
+          :style="{color: unfinished_step_color}"
+          >
+              mdi-numeric-2-circle
+          </v-icon>
           <span>Tasks</span>
+        </div>
+         
       </div>
    
      </div>
 <div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
 
 <div id = "name-task_list-div" class = "flex-column">
-<h3 class ="modal-text">Name your Task List</h3>
+  <div class="flex-row">
+      <h3 class ="modal-text">Name your Task List</h3>
+        <v-btn class = "close-button" @click="addTaskListModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+  </div>
    <v-text-field 
     v-model="task_list_name"
     label="Name"></v-text-field>
@@ -328,7 +360,7 @@ const resetMenu = () => {
 
     <div class="flex-row-right">
           <v-btn class="create-button" @click="savePosition(), addTaskListModal = false">
-            Save
+            Continue
         </v-btn>
       </div>
 
@@ -535,7 +567,7 @@ const resetMenu = () => {
       color: rgb(0, 0, 0);
     margin: 0;
     padding: 0;
-    font-size: 1.5vw;
+    font-size: 1.3vw;
 }
 
 .align-items-center{
@@ -551,6 +583,10 @@ const resetMenu = () => {
 
 #vertical-task_list-div{
   margin-right: 5%;
+}
+
+#task-list-header{
+  margin-bottom: 5%;
 }
 </style>
 
