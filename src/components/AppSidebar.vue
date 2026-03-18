@@ -37,6 +37,7 @@ const selectedTaskList =ref("")//this ref is repetitive, I just got lazy here.
 const tasks = ref([])
 const tasks_to_delete = ref([])
 const deleteTaskListModal = ref(false)
+const editTaskListModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -200,6 +201,13 @@ await getTasks()
 
 }
 
+function setTaskEditModal(){
+  task_list_name.value = selectedTaskList.value
+  console.log("task_list model: " + task_list_name.value)
+  console.log("task_list_id:  " + taskListId.value)
+  new_tasks.value = tasks.value.filter(task => task.shift_task_list_id === taskListId.value)
+}
+
 </script>
 
 <template>
@@ -259,7 +267,7 @@ await getTasks()
         <div class ="flex-row">
         <span>{{ item.name }}</span>
         <div class = "flex-row-right">
-      <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
+      <v-icon class="hover-icon" @click="editTaskListModal = true, selectedTaskList = item.name, taskListId = item.id, setTaskEditModal()">
         mdi-pencil
       </v-icon>
       <v-icon class="hover-icon" @click="deleteTaskListModal = true, selectedTaskList = item.name, taskListId = item.id">
@@ -406,7 +414,8 @@ await getTasks()
         </div>
          
       </div>
-   
+      </div>
+    </div>
      </div>
 <div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
 
@@ -474,6 +483,107 @@ await getTasks()
 
 
     </div>
+
+
+
+     <div v-if="editTaskListModal" fluid class="modal">
+        
+  <div class = "task-list-modal-content">
+    <div class="task-list-flex-row">
+
+     <div id ="progress-div" class = "flex-column">
+      <h3 id="task-list-header" class = "black-modal-text">Edit Task List {{ selectedTaskList }}</h3>
+      <div class ="flex-column align-items-center">
+        <div class="flex-row"> 
+          <v-icon v-if="task_list_name_chosen"
+          :style="{color: check_mark_color}"
+          >
+            mdi-check-circle
+          </v-icon>
+          <v-icon v-if="!task_list_name_chosen"
+          :style="{color: current_step_color}"
+          >
+              mdi-numeric-1-circle
+          </v-icon>
+          <span>Name</span>
+        </div>
+          <div class="flex-row"> 
+
+           <v-icon
+          :style="{color: unfinished_step_color}"
+          >
+              mdi-numeric-2-circle
+          </v-icon>
+          <span>Tasks</span>
+        </div>
+         
+      </div>
+   
+     </div>
+<div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
+
+<div id = "name-task_list-div" class = "flex-column">
+  <div class="flex-row">
+      <h3 v-if="!task_list_name_chosen" class ="modal-text">Task List name</h3>
+      <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
+        <v-btn class = "close-button" @click="editTaskListModal= false, resetTaskListModal()">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+  </div>
+  <div class="divding-line"></div>
+
+  <div v-if="!task_list_name_chosen" class="flex-column">
+<v-text-field 
+    v-model="task_list_name"
+    label="Name"></v-text-field>
+
+
+    <div class="flex-row-right">
+          <v-btn v-if="task_list_name.length > 0" class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color, saved_task_list_name = task_list_name">
+            Continue
+        </v-btn>
+      </div>
+  </div>
+
+    <div v-if="task_list_name_chosen" class="flex-column">
+      <span id ="no-tasks-span" v-if="new_tasks.length === 0">No Tasks Added</span>
+      <v-list class ="scrollable-list" v-if="new_tasks.length > 0">
+        <v-list-item
+        v-for="task in new_tasks"
+        :key = task.id
+        > 
+
+        <div class ="flex-row">
+        <span>{{ task.name }}</span>
+        <div class = "flex-row-right">
+      <v-icon class="hover-icon" @click="removeTask() = true">
+        mdi-trash-can-outline
+      </v-icon>
+    </div>
+      </div>
+        </v-list-item>
+      </v-list>
+<v-text-field 
+    v-model="task_name"
+    label="Name"></v-text-field>
+
+    <v-btn id="add-task-button" class="create-button" @click="addTask()">
+            Add
+        </v-btn>
+
+
+    <div class="flex-row-right">
+          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="addTaskListModal= false, saved_tasks = new_tasks, resetTaskListModal(), createTaskList()">
+            Finish
+        </v-btn>
+      </div>
+  </div>
+
+
+</div>
+</div>
        
    
   
