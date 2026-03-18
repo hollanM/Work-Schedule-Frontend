@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import store from "../store/store.js"
 import userServices from "../services/userServices"
 import positionServices from "../services/positionServices.js"
+import task_listServices from '../services/task_listServices.js'
 
 
 const user = ref(null);
@@ -18,6 +19,9 @@ const selectedPosition = ref("")
 const positionId = ref("")
 const editPositionModal = ref(false)
 const deletePositionModal = ref(false)
+const task_lists = ref([])
+const addTaskListModal = ref(false)
+const task_list_name = ref("")
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -47,9 +51,16 @@ async function getCurrentUser(){
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
 }
+
+async function getTaskLists(){
+  const response = await task_listServices.getAll();
+  task_lists.value = response.data;
+  console.log(response.data)
+}
 onMounted( async () => {
  await getCurrentUser()
   await getPositions();
+  await getTaskLists();
 });
 
 watch(
@@ -166,6 +177,36 @@ const resetMenu = () => {
    <v-expansion-panel
     title="Task Lists"
   >
+
+      <v-expansion-panel-text>
+      <v-list>
+
+        
+        <v-list-item
+          v-for="item in task_lists"
+          :key="item.id"
+        >
+        <div class ="flex-row">
+        <span>{{ item.name }}</span>
+        <div class = "flex-row-right">
+      <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
+        mdi-pencil
+      </v-icon>
+      <v-icon class="hover-icon" @click="deletePositionModal = true, selectedPosition = item.name, positionId = item.id">
+        mdi-trash-can-outline
+      </v-icon>
+      </div>
+    </div>
+      
+      </v-list-item>
+      </v-list>
+       <v-list-item style="cursor: pointer;" @click="addTaskListModal = true">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <v-icon>mdi-plus</v-icon>
+        <span>Add Task List</span>
+      </div>
+    </v-list-item>
+    </v-expansion-panel-text>
   </v-expansion-panel>
 </v-expansion-panels>
   </v-navigation-drawer>
@@ -261,6 +302,46 @@ const resetMenu = () => {
       
   </div>
   </div>
+
+  
+    <div v-if="addTaskListModal" fluid class="modal">
+        
+  <div class = "task-list-modal-content">
+    <div class="task-list-flex-row">
+
+     <div id ="progress-div" class = "flex-column">
+      <h3 class = "black-modal-text">New Task List</h3>
+      <div class ="flex-column align-items-center">
+          <span>Name</span>
+          <span>Tasks</span>
+      </div>
+   
+     </div>
+<div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
+
+<div id = "name-task_list-div" class = "flex-column">
+<h3 class ="modal-text">Name your Task List</h3>
+   <v-text-field 
+    v-model="task_list_name"
+    label="Name"></v-text-field>
+
+
+    <div class="flex-row-right">
+          <v-btn class="create-button" @click="savePosition(), addTaskListModal = false">
+            Save
+        </v-btn>
+      </div>
+
+
+</div>
+
+    </div>
+       
+   
+  
+      
+  </div>
+  </div>
 </template>
 
 <style scoped>
@@ -340,6 +421,23 @@ const resetMenu = () => {
 
 }
 
+.task-list-modal-content{
+  background-color: #fefefe;
+  display: flex;
+  width: 60%;
+  height:fit-content;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 20px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+}
+
+.task-list-flex-row{
+  display:flex;
+}
+
 .close-button{
     background-color: transparent;
     color: black;
@@ -365,6 +463,11 @@ const resetMenu = () => {
 .flex-row{
     display:flex;
     justify-content: space-between;
+}
+
+.flex-column{
+  display: flex;
+  flex-direction: column;
 }
 .create-button{
     background-color: #4CAF50;
@@ -407,6 +510,10 @@ const resetMenu = () => {
   margin: 10px 0;
   
 }
+.vertical-dividing-line{
+  border-right: 5px solid #cfcfcf;
+  margin: 10px 0;
+}
 
 .clickable {
   cursor: pointer;
@@ -423,6 +530,27 @@ const resetMenu = () => {
 
 .opacity-0{
   opacity: 0;
+}
+.black-modal-text{
+      color: rgb(0, 0, 0);
+    margin: 0;
+    padding: 0;
+    font-size: 1.5vw;
+}
+
+.align-items-center{
+  align-items: center;
+}
+#progress-div{
+  margin-right: 10%;
+}
+
+#name-task_list-div{
+  width: 65% !important;
+}
+
+#vertical-task_list-div{
+  margin-right: 5%;
 }
 </style>
 
