@@ -26,6 +26,10 @@ const current_step_color = ref("#4CAF50")
 const unfinished_step_color = ref("#cfcfcf")
 const check_mark_color = ref("#4CAF50")
 const task_list_name_chosen = ref(false)
+const new_tasks = ref([])
+const latest_task_id= ref(0)
+const task_name = ref("")
+const tasks = ref([])
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -138,6 +142,9 @@ function resetTaskListModal(){
   console.log(unfinished_step_color)
 }
 
+function addTask(){
+  new_tasks.value.push({id: latest_task_id.value, name: task_name.value})
+}
 
 
 </script>
@@ -376,9 +383,21 @@ function resetTaskListModal(){
   </div>
 
     <div v-if="task_list_name_chosen" class="flex-column">
+      <v-list>
+        <v-list-item
+        v-for="task in new_tasks"
+        :key = task.id
+        :title="task.name"
+        > 
+        </v-list-item>
+      </v-list>
 <v-text-field 
-    v-model="task_list_name"
+    v-model="task_name"
     label="Name"></v-text-field>
+
+    <v-btn class="create-button" @click="addTask()">
+            Add
+        </v-btn>
 
 
     <div class="flex-row-right">
