@@ -35,7 +35,9 @@ const latest_task_id= ref(0)
 const task_name = ref("")
 const selectedTaskList =ref("")//this ref is repetitive, I just got lazy here.
 const tasks = ref([])
+const current_tasks = ref([])//this is also a repetitive ref. I'm just lazy again.
 const tasks_to_delete = ref([])
+const tasks_to_add = ref([])//repetitive. I want to be organized.
 const deleteTaskListModal = ref(false)
 const editTaskListModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
@@ -166,8 +168,14 @@ function addTask(){
 }
 
 function removeTask(task_name){
-  const obj={name: task_name}
- new_tasks.value.splice(new_tasks.value.indexOf(obj), 1)
+  console.log(task_name)
+  console.log(new_tasks.value)
+  console.log(new_tasks.value.findIndex(task => task.name === task_name))
+  const index = new_tasks.value.findIndex(task => task.name === task_name)
+  if(index !== -1){
+       new_tasks.value.splice(index, 1)
+  }
+
 }
 
 async function createTaskList() {
@@ -201,8 +209,42 @@ await getTasks()
 
 }
 
+async function updateTaskList(id) {
+  task_listServices.update(id, {name: saved_task_list_name.value})
+
+  //remove any task lists that were removed before
+  //get all current tasks lists
+  current_tasks.value = tasks.value.filter(task => task.shift_task_list_id === id)
+  console.log(current_tasks.value)
+  //compare with new tasks, get tasks we need to delete.
+  tasks_to_delete.value = current_tasks.value.filter(task => !saved_tasks.value.some(saved_task => saved_task.id === task.id))
+  console.log("Tasks to get rid of: " + tasks_to_delete.value)
+  //delete the tasks that they removed.
+  tasks_to_delete.value.forEach( async(task, index) =>{
+  const response = await taskServices.delete(task.id);
+  console.log(response.data)
+})
+  //add any new tasks they added
+
+  const tasks_to_add = saved_tasks.value.filter(
+  saved => !current_tasks.value.some(curr => curr.id === saved.id)
+)
+  tasks_to_add.forEach(async(task, index) =>{
+    console.log("current task: "+ task)
+      const task_add_response = await taskServices.create({name: task.name, shift_task_list_id: id})
+      console.log(task_add_response)
+    })
+
+  await getTaskLists();
+  await getTasks();
+}
+
+
+
+
 function setTaskEditModal(){
   task_list_name.value = selectedTaskList.value
+  latest_task_id.value = tasks.value.length + 1
   console.log("task_list model: " + task_list_name.value)
   console.log("task_list_id:  " + taskListId.value)
   new_tasks.value = tasks.value.filter(task => task.shift_task_list_id === taskListId.value)
@@ -414,9 +456,8 @@ function setTaskEditModal(){
         </div>
          
       </div>
-      </div>
     </div>
-     </div>
+  
 <div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
 
 <div id = "name-task_list-div" class = "flex-column">
@@ -455,7 +496,7 @@ function setTaskEditModal(){
         <div class ="flex-row">
         <span>{{ task.name }}</span>
         <div class = "flex-row-right">
-      <v-icon class="hover-icon" @click="removeTask() = true">
+      <v-icon class="hover-icon" @click="removeTask(task.name)">
         mdi-trash-can-outline
       </v-icon>
     </div>
@@ -476,13 +517,17 @@ function setTaskEditModal(){
             Finish
         </v-btn>
       </div>
+  
   </div>
-
+   </div>
 
 </div>
 
 
+
     </div>
+
+  </div>
 
 
 
@@ -491,8 +536,8 @@ function setTaskEditModal(){
   <div class = "task-list-modal-content">
     <div class="task-list-flex-row">
 
-     <div id ="progress-div" class = "flex-column">
-      <h3 id="task-list-header" class = "black-modal-text">Edit Task List {{ selectedTaskList }}</h3>
+     <div id ="progress-div"-2 class = "flex-column">
+      <h3 id="task-list-header-2" class = "black-modal-text">Edit Task List {{ selectedTaskList }}</h3>
       <div class ="flex-column align-items-center">
         <div class="flex-row"> 
           <v-icon v-if="task_list_name_chosen"
@@ -520,12 +565,12 @@ function setTaskEditModal(){
       </div>
    
      </div>
-<div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
+<div id="vertical-task_list-div-2" class ="vertical-dividing-line"></div>
 
-<div id = "name-task_list-div" class = "flex-column">
+<div id = "name-task_list-div-2" class = "flex-column">
   <div class="flex-row">
       <h3 v-if="!task_list_name_chosen" class ="modal-text">Task List name</h3>
-      <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
+      <h3 v-if="task_list_name_chosen" class ="modal-text">Update your Tasks</h3>
         <v-btn class = "close-button" @click="editTaskListModal= false, resetTaskListModal()">
                 <v-icon
                     color="grey"
@@ -548,7 +593,7 @@ function setTaskEditModal(){
   </div>
 
     <div v-if="task_list_name_chosen" class="flex-column">
-      <span id ="no-tasks-span" v-if="new_tasks.length === 0">No Tasks Added</span>
+      <span id ="no-tasks-span-2" v-if="new_tasks.length === 0">No Tasks Added</span>
       <v-list class ="scrollable-list" v-if="new_tasks.length > 0">
         <v-list-item
         v-for="task in new_tasks"
@@ -558,7 +603,7 @@ function setTaskEditModal(){
         <div class ="flex-row">
         <span>{{ task.name }}</span>
         <div class = "flex-row-right">
-      <v-icon class="hover-icon" @click="removeTask() = true">
+      <v-icon class="hover-icon" @click="removeTask(task.name)">
         mdi-trash-can-outline
       </v-icon>
     </div>
@@ -569,14 +614,14 @@ function setTaskEditModal(){
     v-model="task_name"
     label="Name"></v-text-field>
 
-    <v-btn id="add-task-button" class="create-button" @click="addTask()">
+    <v-btn id="add-task-button-2" class="create-button" @click="addTask()">
             Add
         </v-btn>
 
 
     <div class="flex-row-right">
-          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="addTaskListModal= false, saved_tasks = new_tasks, resetTaskListModal(), createTaskList()">
-            Finish
+          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="editTaskListModal= false, saved_tasks = new_tasks, updateTaskList(taskListId), resetTaskListModal() ">
+            Finish 
         </v-btn>
       </div>
   </div>
@@ -846,6 +891,31 @@ function setTaskEditModal(){
 #add-task-button{
   margin-bottom: 20px;
 }
+
+#progress-div-2{
+  margin-right: 10%;
+}
+
+#name-task_list-div-2{
+  width: 65% !important;
+}
+
+#vertical-task_list-div-2{
+  margin-right: 5%;
+}
+
+#task-list-header-2{
+  margin-bottom: 5%;
+}
+
+#no-tasks-span-2{
+  height: 130px;
+}
+
+#add-task-button-2{
+  margin-bottom: 20px;
+}
+
 </style>
 
 
