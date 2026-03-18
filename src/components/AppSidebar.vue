@@ -18,6 +18,7 @@ const addPositionModal = ref(false)
 const positionName = ref("")
 const selectedPosition = ref("")
 const positionId = ref("")
+const taskListId = ref("")
 const editPositionModal = ref(false)
 const deletePositionModal = ref(false)
 const task_lists = ref([])
@@ -32,7 +33,10 @@ const new_tasks = ref([])
 const saved_tasks = ref([])
 const latest_task_id= ref(0)
 const task_name = ref("")
+const selectedTaskList =ref("")//this ref is repetitive, I just got lazy here.
 const tasks = ref([])
+const tasks_to_delete = ref([])
+const deleteTaskListModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -68,10 +72,17 @@ async function getTaskLists(){
   task_lists.value = response.data;
   console.log(response.data)
 }
+
+async function getTasks(){
+  const response = await taskServices.getAll();
+  tasks.value = response.data
+  console.log(response.data)
+}
 onMounted( async () => {
  await getCurrentUser()
   await getPositions();
   await getTaskLists();
+  await getTasks();
 });
 
 watch(
@@ -150,6 +161,7 @@ function resetTaskListModal(){
 function addTask(){
   new_tasks.value.push({id: latest_task_id.value, name: task_name.value})
   latest_task_id.value = latest_task_id.value + 1;
+  task_name.value = ""
 }
 
 function removeTask(task_name){
@@ -167,7 +179,25 @@ async function createTaskList() {
     const task_response = await taskServices.create({name: task.name, shift_task_list_id: task_list_id})
     console.log(task_response.data)
  })
+
+ await getTaskLists()
+ await getTasks()
   
+}
+
+async function deleteTaskList(id){
+tasks_to_delete.value = tasks.value.filter(task => task.id === id);
+tasks_to_delete.value.forEach( async(task, index) =>{
+  const response = await taskServices.delete(task.id);
+  console.log(response.data)
+})
+
+const task_list_response = await task_listServices.delete(id);
+console.log(task_list_response.data)
+
+await getTaskLists()
+await getTasks()
+
 }
 
 </script>
@@ -232,7 +262,7 @@ async function createTaskList() {
       <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
         mdi-pencil
       </v-icon>
-      <v-icon class="hover-icon" @click="deletePositionModal = true, selectedPosition = item.name, positionId = item.id">
+      <v-icon class="hover-icon" @click="deleteTaskListModal = true, selectedTaskList = item.name, taskListId = item.id">
         mdi-trash-can-outline
       </v-icon>
       </div>
@@ -450,6 +480,34 @@ async function createTaskList() {
       
   </div>
   </div>
+
+
+
+    <div v-if="deleteTaskListModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Delete Task List {{selectedTaskList}} ?</h3>
+     <v-btn class = "close-button" @click="deleteTaskListModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+            <div class ="dividing-line opacity-0"></div>
+      <div class="flex-row"> 
+        <v-btn class="option-button" @click="deleteTaskListModal = false">
+            cancel
+        </v-btn>
+          <v-btn class="delete-button" @click="deleteTaskList(taskListId), deleteTaskListModal = false">
+            delete
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
 </template>
 
 <style scoped>
