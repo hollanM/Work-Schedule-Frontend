@@ -24,7 +24,7 @@ const addTaskListModal = ref(false)
 const task_list_name = ref("")
 const current_step_color = ref("#4CAF50")
 const unfinished_step_color = ref("#cfcfcf")
-const check_mark_color = ref("#71b073")
+const check_mark_color = ref("#4CAF50")
 const task_list_name_chosen = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
@@ -131,6 +131,12 @@ const resetMenu = () => {
   }
 };
 
+function resetTaskListModal(){
+  unfinished_step_color.value = "#cfcfcf"
+  task_list_name_chosen.value = false
+  console.log(task_list_name_chosen)
+  console.log(unfinished_step_color)
+}
 
 
 
@@ -348,7 +354,7 @@ const resetMenu = () => {
   <div class="flex-row">
       <h3 v-if="!task_list_name_chosen" class ="modal-text">Name your Task List</h3>
       <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
-        <v-btn class = "close-button" @click="addTaskListModal= false">
+        <v-btn class = "close-button" @click="addTaskListModal= false, resetTaskListModal()">
                 <v-icon
                     color="grey"
                 >mdi-close</v-icon>
@@ -363,7 +369,7 @@ const resetMenu = () => {
 
 
     <div class="flex-row-right">
-          <v-btn class="create-button" @click="task_list_name_chosen = true">
+          <v-btn class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color">
             Continue
         </v-btn>
       </div>
