@@ -138,14 +138,21 @@ const resetMenu = () => {
 function resetTaskListModal(){
   unfinished_step_color.value = "#cfcfcf"
   task_list_name_chosen.value = false
+  task_list_name.value = ""
+  new_tasks.value = [];
   console.log(task_list_name_chosen)
   console.log(unfinished_step_color)
 }
 
 function addTask(){
   new_tasks.value.push({id: latest_task_id.value, name: task_name.value})
+  latest_task_id.value = latest_task_id.value + 1;
 }
 
+function removeTask(task_name){
+  const obj={name: task_name}
+ new_tasks.value.splice(new_tasks.value.indexOf(obj), 1)
+}
 
 </script>
 
@@ -376,26 +383,35 @@ function addTask(){
 
 
     <div class="flex-row-right">
-          <v-btn class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color">
+          <v-btn v-if="task_list_name.length > 0" class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color">
             Continue
         </v-btn>
       </div>
   </div>
 
     <div v-if="task_list_name_chosen" class="flex-column">
-      <v-list>
+      <span id ="no-tasks-span" v-if="new_tasks.length === 0">No Tasks Added</span>
+      <v-list class ="scrollable-list" v-if="new_tasks.length > 0">
         <v-list-item
         v-for="task in new_tasks"
         :key = task.id
-        :title="task.name"
         > 
+
+        <div class ="flex-row">
+        <span>{{ task.name }}</span>
+        <div class = "flex-row-right">
+      <v-icon class="hover-icon" @click="removeTask() = true">
+        mdi-trash-can-outline
+      </v-icon>
+    </div>
+      </div>
         </v-list-item>
       </v-list>
 <v-text-field 
     v-model="task_name"
     label="Name"></v-text-field>
 
-    <v-btn class="create-button" @click="addTask()">
+    <v-btn id="add-task-button" class="create-button" @click="addTask()">
             Add
         </v-btn>
 
@@ -617,6 +633,12 @@ function addTask(){
 .align-items-center{
   align-items: center;
 }
+.scrollable-list {
+  height: 130px !important;
+  max-height: 130px !important;
+  overflow-y: auto !important;
+}
+
 #progress-div{
   margin-right: 10%;
 }
@@ -631,6 +653,14 @@ function addTask(){
 
 #task-list-header{
   margin-bottom: 5%;
+}
+
+#no-tasks-span{
+  height: 130px;
+}
+
+#add-task-button{
+  margin-bottom: 20px;
 }
 </style>
 
