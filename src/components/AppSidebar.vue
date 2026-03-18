@@ -17,6 +17,7 @@ const positionName = ref("")
 const selectedPosition = ref("")
 const positionId = ref("")
 const editPositionModal = ref(false)
+const deletePositionModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -28,6 +29,12 @@ async function savePosition(){
   console.log(message.value)
 
   await getPositions();
+}
+
+async function deletePosition(id){
+  const response = await positionServices.delete(id);
+  console.log(response.data)
+  await getPositions()
 }
 
 async function getCurrentUser(){
@@ -138,7 +145,7 @@ const resetMenu = () => {
       <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
         mdi-pencil
       </v-icon>
-      <v-icon class="hover-icon">
+      <v-icon class="hover-icon" @click="deletePositionModal = true, selectedPosition = item.name, positionId = item.id">
         mdi-trash-can-outline
       </v-icon>
       </div>
@@ -216,13 +223,39 @@ const resetMenu = () => {
 
               <div class="dividing-line"> </div>
     <v-text-field 
-    v-model="positionName"
+    v-model="selectedPosition"
     label="Name"></v-text-field>
 
       <div class="dividing-line"> </div>
       <div class="flex-row-right">
           <v-btn class="create-button" @click="editPosition(positionId), editPositionModal = false">
             Save
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
+
+  <div v-if="deletePositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Delete Position {{selectedPosition}} ?</h3>
+     <v-btn class = "close-button" @click="deletePositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+            <div class ="dividing-line opacity-0"></div>
+      <div class="flex-row"> 
+        <v-btn class="option-button" @click="deletePositionModal = false">
+            cancel
+        </v-btn>
+          <v-btn class="delete-button" @click="deletePosition(positionId), deletePositionModal = false">
+            delete
         </v-btn>
       </div>
       
@@ -345,6 +378,30 @@ const resetMenu = () => {
     height: fit-content;
 }
 
+.delete-button{
+    background-color: #b93f3f;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.option-button{
+   background-color: #939393;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
 .dividing-line{
   border-bottom: 5px solid #cfcfcf;
   margin: 10px 0;
@@ -362,6 +419,10 @@ const resetMenu = () => {
 
  .hover-icon:hover {
   opacity: 1;
+}
+
+.opacity-0{
+  opacity: 0;
 }
 </style>
 
