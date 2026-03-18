@@ -220,26 +220,33 @@ async function updateTaskList(id) {
   tasks_to_delete.value = current_tasks.value.filter(task => !saved_tasks.value.some(saved_task => saved_task.id === task.id))
   console.log("Tasks to get rid of: " + tasks_to_delete.value)
   //delete the tasks that they removed.
-  tasks_to_delete.value.forEach( async(task, index) =>{
-  const response = await taskServices.delete(task.id);
-  console.log(response.data)
-})
+  for (const task of tasks_to_delete.value) {
+  await taskServices.delete(task.id)
+}
   //add any new tasks they added
 
   const tasks_to_add = saved_tasks.value.filter(
   saved => !current_tasks.value.some(curr => curr.id === saved.id)
 )
-  tasks_to_add.forEach(async(task, index) =>{
-    console.log("current task: "+ task)
-      const task_add_response = await taskServices.create({name: task.name, shift_task_list_id: id})
-      console.log(task_add_response)
-    })
+for (const task of tasks_to_add) {
+  await taskServices.create({
+    name: task.name,
+    shift_task_list_id: id
+  })
+}
 
   await getTaskLists();
   await getTasks();
 }
 
+async function handleUpdateTaskList() {
+  saved_tasks.value = [...new_tasks.value]
 
+  await updateTaskList(taskListId.value) // ✅ wait for everything
+
+  resetTaskListModal()
+  editTaskListModal.value = false
+}
 
 
 function setTaskEditModal(){
@@ -248,6 +255,7 @@ function setTaskEditModal(){
   console.log("task_list model: " + task_list_name.value)
   console.log("task_list_id:  " + taskListId.value)
   new_tasks.value = tasks.value.filter(task => task.shift_task_list_id === taskListId.value)
+  console.log("new tasks to prefill: " + new_tasks.value);
 }
 
 </script>
@@ -620,7 +628,7 @@ function setTaskEditModal(){
 
 
     <div class="flex-row-right">
-          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="editTaskListModal= false, saved_tasks = new_tasks, updateTaskList(taskListId), resetTaskListModal() ">
+          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="editTaskListModal= false, handleUpdateTaskList(taskListId)">
             Finish 
         </v-btn>
       </div>
