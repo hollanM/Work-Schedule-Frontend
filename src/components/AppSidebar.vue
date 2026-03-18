@@ -4,6 +4,7 @@ import store from "../store/store.js"
 import userServices from "../services/userServices"
 import positionServices from "../services/positionServices.js"
 import task_listServices from '../services/task_listServices.js'
+import taskServices from '../services/taskServices.js'
 
 
 const user = ref(null);
@@ -22,11 +23,13 @@ const deletePositionModal = ref(false)
 const task_lists = ref([])
 const addTaskListModal = ref(false)
 const task_list_name = ref("")
+const saved_task_list_name = ref("")
 const current_step_color = ref("#4CAF50")
 const unfinished_step_color = ref("#cfcfcf")
 const check_mark_color = ref("#4CAF50")
 const task_list_name_chosen = ref(false)
 const new_tasks = ref([])
+const saved_tasks = ref([])
 const latest_task_id= ref(0)
 const task_name = ref("")
 const tasks = ref([])
@@ -152,6 +155,19 @@ function addTask(){
 function removeTask(task_name){
   const obj={name: task_name}
  new_tasks.value.splice(new_tasks.value.indexOf(obj), 1)
+}
+
+async function createTaskList() {
+  console.log("task list name:" + saved_task_list_name.value)
+  const response = await task_listServices.create({name: saved_task_list_name.value});
+  const task_list_id = response.data.id;
+  console.log(response.data.id)
+
+ saved_tasks.value.forEach(async(task, index) => {
+    const task_response = await taskServices.create({name: task.name, shift_task_list_id: task_list_id})
+    console.log(task_response.data)
+ })
+  
 }
 
 </script>
@@ -383,7 +399,7 @@ function removeTask(task_name){
 
 
     <div class="flex-row-right">
-          <v-btn v-if="task_list_name.length > 0" class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color">
+          <v-btn v-if="task_list_name.length > 0" class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color, saved_task_list_name = task_list_name">
             Continue
         </v-btn>
       </div>
@@ -417,7 +433,7 @@ function removeTask(task_name){
 
 
     <div class="flex-row-right">
-          <v-btn class="create-button" @click="task_list_name_chosen = true">
+          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="addTaskListModal= false, saved_tasks = new_tasks, resetTaskListModal(), createTaskList()">
             Finish
         </v-btn>
       </div>
