@@ -346,26 +346,45 @@ const resetMenu = () => {
 
 <div id = "name-task_list-div" class = "flex-column">
   <div class="flex-row">
-      <h3 class ="modal-text">Name your Task List</h3>
+      <h3 v-if="!task_list_name_chosen" class ="modal-text">Name your Task List</h3>
+      <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
         <v-btn class = "close-button" @click="addTaskListModal= false">
                 <v-icon
                     color="grey"
                 >mdi-close</v-icon>
             </v-btn>
   </div>
-   <v-text-field 
+  <div class="divding-line"></div>
+
+  <div v-if="!task_list_name_chosen" class="flex-column">
+<v-text-field 
     v-model="task_list_name"
     label="Name"></v-text-field>
 
 
     <div class="flex-row-right">
-          <v-btn class="create-button" @click="savePosition(), addTaskListModal = false">
+          <v-btn class="create-button" @click="task_list_name_chosen = true">
             Continue
         </v-btn>
       </div>
+  </div>
+
+    <div v-if="task_list_name_chosen" class="flex-column">
+<v-text-field 
+    v-model="task_list_name"
+    label="Name"></v-text-field>
+
+
+    <div class="flex-row-right">
+          <v-btn class="create-button" @click="task_list_name_chosen = true">
+            Finish
+        </v-btn>
+      </div>
+  </div>
 
 
 </div>
+
 
     </div>
        
