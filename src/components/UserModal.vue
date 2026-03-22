@@ -17,14 +17,21 @@ const form = ref({
     role: "",
 });
 const currentComponent = ref(props.selectedComponent);
+const selectedSchedules = ref([]);
+const selectedPositions = ref([]);
+const selectedTags = ref([]);
 
-onClickOutside(target, () => { //handles the closing of the user modal
-  //console.log("onClickOutside triggered - closing modal");  //if you cant close the modal use this to check if its firing
+onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
+  const target = event?.target;
+  if (!target) return;
+  // keep popups open when interacting with v-select menu dropdown
+  if (target.closest('.v-menu, .v-overlay, .v-list-item, .v-select')) //ignoring these clickable items
+    return;
   emit('modal-close');
 });
 
 const menuItems = [ //same as Sam's sidebar, but for the user modal
-  { name: 'Profile', component: 'ProfileModal' },
+  { name: 'Profile', component: 'ProfileModal' }, //are the componet pieces needed anymore?
   { name: 'Assignments', component: 'AssignmentsModal' },
   { name: 'Hourly Rates', component: 'HourlyRatesModal' },
   { name: 'Log Notes', component: 'LogNotesModal' },
@@ -38,6 +45,28 @@ watch(() => props.selectedComponent, (value) => {
 const changeModalContent = (item) => {
     //console.log("Changing modal content to:", item);
     currentComponent.value = item;
+};
+
+const scheduleItems = [
+    { title: 'Schedule 1', route: '/schedule1' },
+    { title: 'Schedule 2', route: '/schedule2' },
+    { title: 'Schedule 3', route: '/schedule3' },
+];
+
+const positionItems = [
+    { title: 'Position 1', route: '/position1' },
+    { title: 'Position 2', route: '/position2' },
+    { title: 'Position 3', route: '/position3' },
+];
+
+const tagItems = [
+    { title: 'Tag 1', route: '/tag1' },
+    { title: 'Tag 2', route: '/tag2' },
+    { title: 'Tag 3', route: '/tag3' },
+];
+
+const submit = () => { //having this might prevent some issues, but it does nothing
+    console.log('Form submitted');
 };
 </script>
 
@@ -106,18 +135,27 @@ const changeModalContent = (item) => {
                     </div>
                     <!-- assignments content -->
                     <div v-if="currentComponent == 'AssignmentsModal'"> 
-                        <div id="topBar">
-                            <p id="title">User Assignments</p>
+                        <div id="assignmentsTopBar">
+                            <p id="title">Add User</p>
                             <div id="header">
                                 <button @click.stop="emit('modal-close')">X</button>
                             </div>
                         </div>
-                        <p>User Assignments Component is working</p>
-                        <div id="buttonDiv">
-                            <button id="addUserButton" type="submit">Add Assignments</button>
-                            <div id="footer">
-                                <button id="continueButton" @click="changeModalContent('HourlyRatesModal')"> Continue to Hourly Rates </button>
+                        <hr id="assignmentsPageBreakTop"/>
+                        <form @submit.prevent="submit" id="formContainer"> 
+                            <div id="assignmentsFormDiv">
+                                <p class="dropdown-title"> Schedules </p>
+                                <v-select v-model="selectedSchedules" :items="scheduleItems" item-title="title" item-value="title" label="Select Schedules" class="dropdown" hide-details @click.stop></v-select>
+                                <p class="dropdown-title"> Positions </p>
+                                <v-select v-model="selectedPositions" :items="positionItems" item-title="title" item-value="title" label="Select Positions" class="dropdown" hide-details @click.stop></v-select>
+                                <p class="dropdown-title"> Tags </p>
+                                <v-select v-model="selectedTags" :items="tagItems" item-title="title" item-value="title" label="Select Tags" class="dropdown" hide-details @click.stop></v-select><!-- hide details is require to remove a vue computed spacer -->
                             </div>
+                        </form>
+                        <hr id="assignmentsPageBreakBottom"/>
+                        <div id="assignmentsButtonDiv">
+                            <button id="addAssignmentsButton" type="submit">Add Assignments</button>
+                            <button id="continueButton" @click="changeModalContent('HourlyRatesModal')"> Continue to Hourly Rates </button>
                         </div>
                     </div>
                     <!-- hourly rates content -->
@@ -215,11 +253,8 @@ const changeModalContent = (item) => {
 
 .addUserModalScreen
 {
-    flex: 1;
-    border-radius: 8px;
-    outline-width: 2px;
-    outline-color: black;
-    outline-style: solid;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 #userModalImage
@@ -254,7 +289,7 @@ const changeModalContent = (item) => {
     justify-content: space-between;
     align-items: center;
     padding-top: 15px;
-    padding-right: 15px;
+    padding-right: 23px;
 }
 
 #header
@@ -335,7 +370,6 @@ const changeModalContent = (item) => {
     margin-left: 15px;
     margin-bottom: 11.5px;
     margin-right: 15px;
-    min-width: 47vw; /* also reflected on the top one for some reason */
 }
 
 #formDiv
@@ -382,5 +416,98 @@ const changeModalContent = (item) => {
 /*                             */
 /* end of addUser profile page */
 /*                             */ 
+
+/*                                   */
+/* start of addUser Assignments page */
+/*                                   */ 
+
+#assignmentsTopBar
+{
+    padding-left: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+}
+
+#assignmentsFormDiv
+{
+    padding-left: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 40vh;
+    max-height: 60vh;
+    min-width: 47vw;
+}
+
+.dropdown
+{
+    width: 100%;
+    box-sizing: border-box;
+    background: #fff !important; /* override another background (I've lost track of which one) */
+    border: none !important;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 200px;
+}
+
+.dropdown-menu:hover
+{
+    filter: brightness(60%); 
+}
+
+#assignmentsPageBreakTop
+{
+    margin-left: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    max-width: 47vw;
+}
+
+#assignmentsPageBreakBottom
+{
+    overflow-x: visible;
+    margin-left: 15px;
+    margin-bottom: 11.5px;
+    max-width: 47vw;
+}
+
+#addAssignmentsButton
+{
+    text-align: center;
+    outline-width: 2px;
+    outline-color: black;
+    outline-style: solid;
+    min-width: 150px;
+}
+
+#assignmentsButtonDiv
+{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#addAssignmentsButton 
+{
+    min-width: 150px;
+    outline: 2px solid black;
+}
+
+#continueButton 
+{
+    background-color: rgb(76, 76, 76);
+    color: white;
+    min-width: 150px;
+    outline: 2px solid black;
+}
+
+/*                                 */
+/* end of addUser Assignments page */
+/*                                 */ 
 
 </style>
