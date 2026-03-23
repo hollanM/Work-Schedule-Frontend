@@ -242,7 +242,7 @@ for (const task of tasks_to_add) {
 async function handleUpdateTaskList() {
   saved_tasks.value = [...new_tasks.value]
 
-  await updateTaskList(taskListId.value) // ✅ wait for everything
+  await updateTaskList(taskListId.value)
 
   resetTaskListModal()
   editTaskListModal.value = false
@@ -267,7 +267,11 @@ function setTaskEditModal(){
     app
     class = "drawer"
   >
+
+  <v-btn class = "publish-schedule-button">Publish AND Notify</v-btn>
    
+<div class = "padded-dividing-line"></div>
+
   <v-expansion-panels>
   <v-expansion-panel title="Positions">
     <v-expansion-panel-text>
@@ -810,6 +814,26 @@ function setTaskEditModal(){
     height: fit-content;
 }
 
+.publish-schedule-button{
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border-bottom: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 35px;
+    width: 13.5vw;
+    height: fit-content;
+    font-size: 20px;
+     white-space: normal !important;
+     margin-top: 20px;
+}
+
+.publish-schedule-button :deep(.v-btn__content) {
+    white-space: normal !important;
+    text-align: center;
+    line-height: 1.2;
+}
 .delete-button{
     background-color: #b93f3f;
     color: white;
@@ -837,6 +861,14 @@ function setTaskEditModal(){
 .dividing-line{
   border-bottom: 5px solid #cfcfcf;
   margin: 10px 0;
+  
+}
+
+.padded-dividing-line{
+  border-bottom: 2.5px solid #cfcfcf;
+  margin: 10px 0;
+  margin-left: 20px;
+  margin-right: 20px;
   
 }
 .vertical-dividing-line{
