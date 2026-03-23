@@ -717,7 +717,7 @@ function setTaskEditModal(){
         <v-btn class="option-button" @click="publishAndNotifyConfirmModal = false">
             cancel
         </v-btn>
-          <v-btn class="create-button" @click="deleteTaskListModal = false, publishShifts()">
+          <v-btn class="create-button" @click="publishAndNotifyConfirmModal = false, publishShifts()">
             publish
         </v-btn>
       </div>
@@ -871,8 +871,8 @@ function setTaskEditModal(){
     border-bottom: 20px;
     border-radius: 5px;
     cursor: pointer;
-    margin-left: 35px;
-    width: 13.5vw;
+    margin-left: 30px;
+    width: 200px;
     height: fit-content;
     font-size: 20px;
      white-space: normal !important;
