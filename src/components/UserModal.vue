@@ -71,9 +71,10 @@ const submit = () => { //having this might prevent some issues, but it does noth
 };
 
 const timeZoneOptions = [
-    { title: 'UTC-5', value: 'UTC-5' },
-    { title: 'UTC+0', value: 'UTC+0' },
-    { title: 'UTC+5', value: 'UTC+5' },
+    { title: 'Pacific Time', value: 'UTC-8' },
+    { title: 'Mountain Time', value: 'UTC-7' },
+    { title: 'Central Time', value: 'UTC-6' },
+    { title: 'Eastern Time', value: 'UTC-5' },
 ];
 
 
@@ -212,8 +213,8 @@ const timeZoneOptions = [
                             <input type="checkbox" id="HideInSchedulerCheckbox" v-model="checked" />
                             <label for="HideInSchedulerCheckbox">{{ checked }}</label>
                         </form>
-                        <hr id="pageBreakBottom"/>
-                        <div id="buttonDiv">
+                        <hr id="advancedPageBreakBottom"/>
+                        <div id="advancedButtonDiv">
                             <button id="addUserButton" type="submit">Add Info</button>
                             <button id="continueButton" @click="changeModalContent('ProfileModal')"> Save </button>
                         </div>
@@ -517,4 +518,28 @@ const timeZoneOptions = [
 /* end of addUser Assignments page */
 /*                                 */ 
 
+/*                                */
+/* start of addUser Advanced page */
+/*                                */ 
+
+#advancedPageBreakBottom
+{
+    margin-left: 15px;
+    margin-bottom: 11.5px;
+    margin-right: 15px;
+    margin-top: min(30vh, 18vh); /* dont know what the first number does but the second is min margin */
+}
+
+#advancedButtonDiv
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 30vw;
+    padding-right: 15px;
+}
+
+/*                              */
+/* end of addUser Advanced page */
+/*                              */ 
 </style>
