@@ -20,6 +20,7 @@ const currentComponent = ref(props.selectedComponent);
 const selectedSchedules = ref([]);
 const selectedPositions = ref([]);
 const selectedTags = ref([]);
+const selectedTimeZone = ref([]);
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
@@ -68,6 +69,14 @@ const tagItems = [
 const submit = () => { //having this might prevent some issues, but it does nothing
     console.log('Form submitted');
 };
+
+const timeZoneOptions = [
+    { title: 'UTC-5', value: 'UTC-5' },
+    { title: 'UTC+0', value: 'UTC+0' },
+    { title: 'UTC+5', value: 'UTC+5' },
+];
+
+
 </script>
 
 <template>
@@ -126,9 +135,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 <hr id="pageBreakBottom"/>
                                 <div id="buttonDiv">
                                     <button id="addUserButton" type="submit">Add User</button>
-                                    <div id="footer">
-                                        <button id="continueButton" @click="changeModalContent('AssignmentsModal')"> Continue to Assignments </button>
-                                    </div>
+                                    <button id="continueButton" @click="changeModalContent('AssignmentsModal')"> Continue to Assignments </button>
                                 </div>
                             </form>
                         </div>
@@ -169,9 +176,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         <p>User Hourly Rates Component is working</p>
                         <div id="buttonDiv">
                             <button id="addUserButton" type="submit">Add Hourly Rates</button>
-                            <div id="footer">
-                                <button id="continueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
-                            </div>
+                            <button id="continueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
                         </div>
                     </div>
                     <!-- log notes content -->
@@ -185,9 +190,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         <p>User Log Notes Component is working</p>
                         <div id="buttonDiv">
                             <button id="addUserButton" type="submit">Add Log Notes</button>
-                            <div id="footer">
-                                <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
-                            </div>
+                            <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
                         </div>
                     </div>
                     <!-- advanced content -->
@@ -198,12 +201,21 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 <button @click.stop="emit('modal-close')">X</button>
                             </div>
                         </div>
-                        <p>User Advanced Component is working</p>
+                        <hr id="pageBreakTop"/>
+                        <form @submit.prevent="submit" id="advancedFormContainer">
+                            <input type="checkbox" id="timeZoneCheckbox" v-model="checked" />
+                            <label for="timeZoneCheckbox">{{ checked }}</label>
+                            <p class="dropdown-title"> Time Zone </p>
+                            <v-select v-model="selectedTimeZone" :items="timeZoneOptions" item-title="title" item-value="value" label="Select Time Zone" class="dropdown" hide-details @click.stop></v-select>
+                            <p> Employee Id </p>
+                            <input v-model="employeeId" placeholder={{employeeId}} />
+                            <input type="checkbox" id="HideInSchedulerCheckbox" v-model="checked" />
+                            <label for="HideInSchedulerCheckbox">{{ checked }}</label>
+                        </form>
+                        <hr id="pageBreakBottom"/>
                         <div id="buttonDiv">
                             <button id="addUserButton" type="submit">Add Info</button>
-                            <div id="footer">
-                                <button id="continueButton" @click="changeModalContent('ProfileModal')"> Save </button>
-                            </div>
+                            <button id="continueButton" @click="changeModalContent('ProfileModal')"> Save </button>
                         </div>
                     </div>
                 </div>
@@ -346,6 +358,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
     outline-width: 2px;
     outline-color: black;
     outline-style: solid;
+    margin-right: 10px;
 }
 
 #formContainer 
@@ -490,12 +503,6 @@ const submit = () => { //having this might prevent some issues, but it does noth
     padding: 10px 15px;
     width: 100%;
     box-sizing: border-box;
-}
-
-#addAssignmentsButton 
-{
-    min-width: 150px;
-    outline: 2px solid black;
 }
 
 #continueButton 
