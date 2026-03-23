@@ -5,6 +5,7 @@ import userServices from "../services/userServices"
 import positionServices from "../services/positionServices.js"
 import task_listServices from '../services/task_listServices.js'
 import taskServices from '../services/taskServices.js'
+import shiftServices from '../services/shiftServices.js'
 
 
 const user = ref(null);
@@ -40,6 +41,8 @@ const tasks_to_delete = ref([])
 const tasks_to_add = ref([])//repetitive. I want to be organized.
 const deleteTaskListModal = ref(false)
 const editTaskListModal = ref(false)
+const publishAndNotifyConfirmModal = ref(false)
+const shifts = ref([])
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 
@@ -76,6 +79,20 @@ async function getTaskLists(){
   console.log(response.data)
 }
 
+async function getShifts(){
+  const response = await shiftServices.getAll();
+  shifts.value = response.data;
+  console.log(response.data)
+}
+
+async function publishShifts(){
+
+  shifts.value.forEach(async (shift, index) => {
+    const response = await shiftServices.update(shift.id, {published: true})
+    console.log(response.data)
+  })
+}
+
 async function getTasks(){
   const response = await taskServices.getAll();
   tasks.value = response.data
@@ -86,6 +103,7 @@ onMounted( async () => {
   await getPositions();
   await getTaskLists();
   await getTasks();
+  await getShifts();
 });
 
 watch(
@@ -268,7 +286,7 @@ function setTaskEditModal(){
     class = "drawer"
   >
 
-  <v-btn class = "publish-schedule-button">Publish AND Notify</v-btn>
+  <v-btn class = "publish-schedule-button" @click = "publishAndNotifyConfirmModal = true">Publish AND Notify</v-btn>
    
 <div class = "padded-dividing-line"></div>
 
@@ -669,6 +687,38 @@ function setTaskEditModal(){
         </v-btn>
           <v-btn class="delete-button" @click="deleteTaskList(taskListId), deleteTaskListModal = false">
             delete
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
+
+
+  <div v-if="publishAndNotifyConfirmModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+      <div class = flex-column>
+        <h3 class = "modal-text">Publish and Notify {{selectedTaskList}} ?</h3>
+    <span>All Schedule Employees will be notified of the published schedule.</span>
+  
+  </div>
+    
+     <v-btn class = "close-button" @click="publishAndNotifyConfirmModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+            <div class ="dividing-line opacity-0"></div>
+      <div class="flex-row"> 
+        <v-btn class="option-button" @click="publishAndNotifyConfirmModal = false">
+            cancel
+        </v-btn>
+          <v-btn class="create-button" @click="deleteTaskListModal = false, publishShifts()">
+            publish
         </v-btn>
       </div>
       
