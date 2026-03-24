@@ -20,7 +20,7 @@ const currentComponent = ref(props.selectedComponent);
 const selectedSchedules = ref([]);
 const selectedPositions = ref([]);
 const selectedTags = ref([]);
-const selectedTimeZone = ref([]);
+const employeeId = ref("12345");
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
@@ -69,13 +69,6 @@ const tagItems = [
 const submit = () => { //having this might prevent some issues, but it does nothing
     console.log('Form submitted');
 };
-
-const timeZoneOptions = [
-    { title: 'Pacific Time', value: 'UTC-8' },
-    { title: 'Mountain Time', value: 'UTC-7' },
-    { title: 'Central Time', value: 'UTC-6' },
-    { title: 'Eastern Time', value: 'UTC-5' },
-];
 
 
 </script>
@@ -195,7 +188,7 @@ const timeZoneOptions = [
                         </div>
                     </div>
                     <!-- advanced content -->
-                    <div v-if="currentComponent == 'AdvancedModal'">
+                    <div v-if="currentComponent == 'AdvancedModal'" id="AdvancedModal">
                         <div id="topBar">
                             <p id="title">User Advanced</p>
                             <div id="header">
@@ -203,16 +196,10 @@ const timeZoneOptions = [
                             </div>
                         </div>
                         <hr id="pageBreakTop"/>
-                        <form @submit.prevent="submit" id="advancedFormContainer">
-                            <input type="checkbox" id="timeZoneCheckbox" v-model="checked" />
-                            <label for="timeZoneCheckbox">{{ checked }}</label>
-                            <p class="dropdown-title"> Time Zone </p>
-                            <v-select v-model="selectedTimeZone" :items="timeZoneOptions" item-title="title" item-value="value" label="Select Time Zone" class="dropdown" hide-details @click.stop></v-select>
-                            <p> Employee Id </p>
-                            <input v-model="employeeId" placeholder={{employeeId}} />
-                            <input type="checkbox" id="HideInSchedulerCheckbox" v-model="checked" />
-                            <label for="HideInSchedulerCheckbox">{{ checked }}</label>
-                        </form>
+                        <div id="advancedFormContainer">
+                            <p> Employee ID </p>
+                            <input v-model="employeeId" id="advancedInput"/>
+                        </div>
                         <hr id="advancedPageBreakBottom"/>
                         <div id="advancedButtonDiv">
                             <button id="addUserButton" type="submit">Add Info</button>
@@ -522,21 +509,45 @@ const timeZoneOptions = [
 /* start of addUser Advanced page */
 /*                                */ 
 
+#advancedModal
+{
+    display: flex;
+    width: 100%;
+}
+
 #advancedPageBreakBottom
 {
     margin-left: 15px;
     margin-bottom: 11.5px;
     margin-right: 15px;
-    margin-top: min(30vh, 18vh); /* dont know what the first number does but the second is min margin */
+    margin-top: min(40vh, 33vh); /* dont know what the first number does but the second is min margin */
+    min-width: 46vw;
 }
 
 #advancedButtonDiv
 {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding-left: 30vw;
+    padding-left: 33vw;
     padding-right: 15px;
+    margin-bottom: auto !important;
+}
+
+#advancedFormContainer
+{
+    margin-left: 15px !important;  /* something was keeping this from working */
+    height: 100%;
+    max-width: 50vw;
+}
+
+#advancedInput
+{
+    outline: 1px solid black;
+}
+
+#advancedInput:focus
+{
+    outline: 2px solid black;
 }
 
 /*                              */
