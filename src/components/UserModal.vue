@@ -124,7 +124,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                             <input id="roleForm" type="text" v-model="form.role" />
                                         </div>
                                     </div> <!-- will need to change later to the users google picture -->
-                                    <img id="userModalImage" src="../../public/profileAndSettings.png"/>
+                                    <img id="userModalImage" src=""/>
                                 </div>
                                 <hr id="pageBreakBottom"/>
                                 <div id="buttonDiv">
