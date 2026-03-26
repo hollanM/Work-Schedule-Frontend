@@ -1,16 +1,39 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import store from "../store/store.js"
+import userServices from "../services/userServices"
 
 const user = ref(null);
-const drawer = ref(true)
+const currentUser = ref(null)
+const drawer = ref(false)
 const loggedIn = ref(false)
 
 const userSession = computed(() => store.getters.getLoginUserInfo);
-console.log(userSession);
+console.log(userSession.value);
 
+async function getCurrentUser(){
+    //this guard is not needed, session works as intended.
+    console.log('userSession.value:', userSession.value);
+    if (!userSession.value || !userSession.value.userId) {
+      console.log('No user session or userId');
+      return;
+    }
+    const response = await userServices.get(userSession.value.userId);
+    currentUser.value = response.data;
+}
+onMounted(() => {
+  getCurrentUser()
+});
 
-
+watch(
+  () => userSession.value?.userId,
+  (newId) => {
+    if (newId) {
+      getCurrentUser()
+    }
+  },
+  { immediate: true }
+)
 
 
 function toggle(){
@@ -170,7 +193,7 @@ const taskListOptions = [
     </v-list>
   </v-navigation-drawer>
 
-    <v-btn class="circle-button zero-margin "  @click="toggle()"
+    <v-btn v-if="userSession && userSession.userId" class="circle-button zero-margin "  @click="toggle()"
     :class="{ closed: !drawer }"
     >
         <v-icon class="ml-3">
