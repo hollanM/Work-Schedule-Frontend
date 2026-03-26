@@ -87,7 +87,8 @@ function toggle(){
 }
 
 async function editPosition(id){
-  const obj = {name: positionName.value}
+  const obj = {name: selectedPosition.value}
+  console.log("New name: "+ selectedPosition.value)
   const response = await positionServices.update(id, obj);
   console.log(response.data)
   await getPositions();
