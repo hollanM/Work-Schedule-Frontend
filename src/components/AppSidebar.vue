@@ -200,7 +200,7 @@ const resetMenu = () => {
 
       <div class="dividing-line"> </div>
       <div class="flex-row-right">
-          <v-btn class="create-button" @click="savePosition(), addPositionModal = false">
+          <v-btn class="create-button" @click="savePosition(), addPositionModal = false, positionName = ''">
             Save
         </v-btn>
       </div>
