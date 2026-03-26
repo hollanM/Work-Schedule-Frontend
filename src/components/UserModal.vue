@@ -181,7 +181,8 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 <button @click.stop="emit('modal-close')">X</button>
                             </div>
                         </div>
-                        <p>User Log Notes Component is working</p>
+                        <v-textarea label="Comments" v-model="commentData"></v-textarea>
+
                         <div id="buttonDiv">
                             <button id="addUserButton" type="submit">Add Log Notes</button>
                             <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
