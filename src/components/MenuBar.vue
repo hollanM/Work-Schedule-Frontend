@@ -1,3 +1,5 @@
+
+
 <script setup>
 import ocLogo from "/oc-logo-white.png";
 import Attendance from "/Attendance.png";
@@ -20,6 +22,7 @@ import { ref, onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
 import { useRouter, useRoute } from 'vue-router'
+import store from "../store/store"
 
 const router = useRouter()
 const user = ref(null);
@@ -41,7 +44,7 @@ const resetMenu = () => {
 const logout = () => {
   AuthServices.logoutUser(user.value)
     .then((response) => {
-      
+      store.commit("setLoginUser", null);
       Utils.removeItem("user");
       router.push({ name: "login" });
     })
@@ -57,31 +60,30 @@ onMounted(() => {
 
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Home', route: { name: '' }, photo: Dashboard },
+  { title: 'Home', click: '', photo: Dashboard },
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Work Schedule', route: { name: '' }, photo: Schedule },
-  { title: 'Preferences', route: { name: '' }, photo: Schedule},
+  { title: 'Work Schedule', click: '', photo: Schedule },
+  { title: 'Preferences', click: '', photo: Schedule},
 ]);
 const Attendance_Open = ref(false);
 const Attendance_Items = ref([
-  { title: 'Time Sheets', route: { name: '' }, photo: timesheets },
-  { title: 'Time Tracker', route: { name: '' }, photo: TimeTracker },
-  { title: 'Lock as Terminal', route: { name: '' }, photo: LockAsTerminal },
+  { title: 'Time Sheets', click: '', photo: timesheets },
+  { title: 'Time Tracker', click: '', photo: TimeTracker },
+  { title: 'Lock as Terminal', click: '', photo: LockAsTerminal },
 ]);
 const Inbox_Open = ref(false);
 const Inbox_Items = ref([
-  { title: 'Inbox', route: { name: '' }, photo: Inbox },
+  { title: 'Inbox', click: '', photo: Inbox },
 ]);
 const Settings_Open = ref(false);
 const Settings_Items = ref([
-  { title: 'Profile', route: { name: '' }, photo: Profile },
-  { title: 'Settings', route: { name: '' }, photo: Settings },
-  { title: 'My Schedule', route: { name: '' }, photo: MySchedule },
-  { title: 'My Availability', route: { name: '' }, photo: MyAvailability },
-  { title: 'Switch Workspaces', route: { name: '' }, photo: SwitchWorkplaces },
-  //{ title: 'Logout', route: { name: 'login' }, photo: Logout }, //example
+  { title: 'Profile', click: '',photo: Profile }, //we need to have functions now instead of router links here
+  { title: 'Settings', click: '', photo: Settings },
+  { title: 'My Schedule', click: '', photo: MySchedule },
+  { title: 'My Availability', click: '', photo: MyAvailability },
+  { title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
 ]);
 
 const Profile_Open = ref(false);
@@ -91,6 +93,15 @@ const Profile_Items = ref([
 ]);
 
 
+const handleSettingsItemClick = (item) => {
+  if (item.click === '') 
+  {
+
+  } else if (item.route?.name) 
+  {
+
+  }
+};
 </script>
 
 <template>
@@ -183,13 +194,13 @@ const Profile_Items = ref([
       <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
-            <v-img id="Settings_Image" :class="{ active: isActive, 'text-danger': hasError }" :src="Settings" height="40" width="40" contain/>
+            <v-img id="Settings_Image" :src="Settings" height="40" width="40" contain/>
             <span>Settings</span>
             <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">    
-          <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" :to="Settings_Item.route" class="dropdown-menu">
+          <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" @click="handleSettingsItemClick(Settings_Item)" class="dropdown-menu">
             <template #prepend>
               <v-img :src="Settings_Item.photo" width="24" height="24" contain/>
             </template>
