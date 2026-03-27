@@ -21,6 +21,7 @@ const selectedSchedules = ref([]);
 const selectedPositions = ref([]);
 const selectedTags = ref([]);
 const employeeId = ref("12345");
+const employeePayRate = ref("8.75");
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
@@ -34,7 +35,7 @@ onClickOutside(target, (event) => { //had issues with this one, needed to ignore
 const menuItems = [ //same as Sam's sidebar, but for the user modal
   { name: 'Profile', component: 'ProfileModal' }, //are the componet pieces needed anymore?
   { name: 'Assignments', component: 'AssignmentsModal' },
-  { name: 'Hourly Rates', component: 'HourlyRatesModal' },
+  { name: 'Hourly Rate', component: 'HourlyRatesModal' },
   { name: 'Log Notes', component: 'LogNotesModal' },
   { name: 'Advanced', component: 'AdvancedModal' },
 ]
@@ -167,10 +168,15 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 <button @click.stop="emit('modal-close')">X</button>
                             </div>
                         </div>
-                        <p>User Hourly Rates Component is working</p>
-                        <div id="buttonDiv">
-                            <button id="addUserButton" type="submit">Add Hourly Rates</button>
-                            <button id="continueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
+                        <hr id="pageBreakTop"/>
+                        <div id="advancedFormContainer">
+                            <p> Pay Rate </p>
+                            <input v-model="employeePayRate" id="advancedInput"/>
+                        </div>
+                        <hr id="advancedPageBreakBottom"/>
+                        <div id="hourlyRatesButtonDiv">
+                            <button id="hourlyRatesAddUserButton" type="submit">Add Hourly Rates</button>
+                            <button id="hourlyRatesContinueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
                         </div>
                     </div>
                     <!-- log notes content -->
@@ -418,6 +424,42 @@ const submit = () => { //having this might prevent some issues, but it does noth
 /*                             */
 /* end of addUser profile page */
 /*                             */ 
+
+/*                                    */
+/* start of addUser hourly rates page */
+/*                                    */ 
+
+#hourlyRatesButtonDiv
+{
+    display: flex;
+    align-items: center;
+    padding-left: 28vw;
+    padding-right: 15px;
+    margin-bottom: auto !important;
+}
+
+#hourlyRatesContinueButton 
+{
+    background-color: rgb(76, 76, 76);
+    color: white;
+    min-width: 150px;
+    outline: 2px solid black;
+    min-width: 5vw;
+}
+
+#hourlyRatesAddUserButton
+{
+    padding: 1px;
+    text-align: center;
+    outline-width: 2px;
+    outline-color: black;
+    outline-style: solid;
+    margin-right: 10px;
+}
+
+/*                                  */
+/* end of addUser hourly rates page */
+/*                                  */ 
 
 /*                                   */
 /* start of addUser Assignments page */
