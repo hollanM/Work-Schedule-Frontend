@@ -122,8 +122,7 @@ const resetMenu = () => {
 
 </script>
 
-<template>
-   
+<template id="sidebarTemplate">
   <v-navigation-drawer
     v-model="drawer"
     app
@@ -265,6 +264,7 @@ const resetMenu = () => {
 </template>
 
 <style scoped>
+
 .circle-button{
     background-color: #ff000000;
     color: rgb(148, 148, 148);
@@ -425,6 +425,9 @@ const resetMenu = () => {
 .opacity-0{
   opacity: 0;
 }
+  
+  #sidebarTemplate /* I tried but this did not put the sidebar under the popup */
+  {
+    z-index: 980;
+  }
 </style>
-
-
