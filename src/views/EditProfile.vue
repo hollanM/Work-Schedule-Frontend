@@ -1,94 +1,147 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import EmployeeServices from "../services/employeeServices";
+import NotificationServices from "../services/notificationServices";
+import NotificationListServices from "../services/notificationListServices";
+import UserService from "../services/userServices";
 import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
+
 const router = useRouter();
 const valid = ref(false);
 const message = ref("My Profile");
-const user = Utils.getStore("user");
-
-
-const props = defineProps({
-  id: {
-    required: true,
-  },
-});
-
-const employee = ref({
-  name: "",
-  email: "",
-  phone_num: "",
-});
-
+const user = ref(null);
+const sessionUser = Utils.getStore("user");
 
 const firstName = ref("");
 const lastName = ref("");
-//need to switch to database stuff
+const email = ref("");
+const phone_num = ref("");
+
+const notificationListId = ref(null);
+const notificationRows = ref([]);
+
+
+//need to switch to database stuff?
 const dndStart = ref("");
 const dndEnd = ref("");
 const timezone = ref("");
 
-const alertPrefs = ref({
-  timeOffEmail: true,
-  timeOffMobile: true,
-  swapEmail: true,
-  swapMobile: true,
-  openShiftEmail: true,
-  openShiftMobile: true,
-});
 
 const alertSections = ref([
-  { label: "Time-Off Requests", email: true, mobile: true },
-  { label: "Swap / Drop Requests", email: true, mobile: true },
-  { label: "Open Shift Requests", email: true, mobile: true },
-  { label: "Schedule Updates", email: true, mobile: true },
-  { label: "New User Registrations", email: true, mobile: true },
-  { label: "Availability Change", email: true, mobile: true },
-  { label: "Clock In/Out Reminders", email: true, mobile: true },
-  { label: "Overtime Alerts", email: true, mobile: true },
-  { label: "Payroll Reminders", email: true, mobile: true },
-  { label: "Reports", email: true, mobile: true },
-  { label: "Workplace Alerts", email: true, mobile: true },
-  {label: "Shift Reminders", email: true, mobile: true, type: "shiftReminder", time: "2 hours before shift start"
-  }
+  { key: "timeOffRequests", label: "Time-Off Requests", email: true, mobile: true },
+  { key: "swapDropRequests", label: "Swap / Drop Requests", email: true, mobile: true },
+  { key: "openShiftRequests", label: "Open Shift Requests", email: true, mobile: true },
+  { key: "scheduleUpdates", label: "Schedule Updates", email: true, mobile: true },
+  { key: "newUserRegistrations", label: "New User Registrations", email: true, mobile: true },
+  { key: "availabilityChange", label: "Availability Change", email: true, mobile: true },
+  { key: "clockInOutReminders", label: "Clock In/Out Reminders", email: true, mobile: true },
+  { key: "overtimeAlerts", label: "Overtime Alerts", email: true, mobile: true },
+  { key: "payrollReminders", label: "Payroll Reminders", email: true, mobile: true },
+  { key: "reports", label: "Reports", email: true, mobile: true },
+  { key: "workplaceAlerts", label: "Workplace Alerts", email: true, mobile: true },
+  { key: "shiftReminder", label: "Shift Reminders", email: true, mobile: true, time: "2 hours before shift start"}
 ]);
 
-const retrieveEmployee = async () => {
-  try {
-    const response = await EmployeeServices.get(props.id);
-    employee.value = response.data;
 
-    const parts = employee.value.name?.split(" ") || [];
-    firstName.value = parts[0] || "";
-    lastName.value = parts.slice(1).join(" ") || ""; // lastName.value = parts[1] || "";
-  } catch (e) {
-    message.value = "Error loading profile";
+const loadUser = async () => {
+  if (!sessionUser) {
+    console.log("Session user missing or not loaded:", sessionUser);
+    message.value = "User not found in session.";
+    return;
   }
+
+  const res = await UserService.get(sessionUser.userId);
+  user.value = res.data;
+
+  firstName.value = user.value.fName;
+  lastName.value = user.value.lName;
+  email.value = user.value.email;
+  phone_num.value = user.value.phone_num;
 };
 
-const updateEmployee = async () => {
-  const data = {
-    name: `${firstName.value} ${lastName.value}`,
-    email: employee.value.email,
-    phone_num: employee.value.phone_num,
-    // dnd_start
-    // dnd_end
-    // timezone 
-    // alertPrefs 
-  };
 
+const updateUserProfile = async () => {
   try {
-    await EmployeeServices.update(props.id, data);
+    await UserService.update(user.value.id, {
+      fName: firstName.value,
+      lName: lastName.value,
+      phone_num: phone_num.value
+    });
+
     message.value = "Profile updated successfully";
-  } catch (e) {
+  } catch (err) {
     message.value = "Error updating profile";
   }
 };
 
-onMounted(() => {
-  retrieveEmployee();
+
+const saveAll = async () => {
+  await updateNotificationPreferences();
+  await loadUser();
+};
+
+
+
+const loadNotificationList = async () => {
+  const listRes = await NotificationListServices.getAllForUser(user.value.id);
+  let list = listRes.data[0];
+
+  if (!list) {
+    // Create the notification_list container for this user
+    const createRes = await NotificationListServices.create({
+      user_id: user.value.id,
+      department_id: user.value.department_id
+    });
+
+    list = createRes.data;
+  }
+  notificationListId.value = list.id;
+};
+
+
+
+  const loadNotificationRows = async () => 
+  {
+    const notifRes = await NotificationServices.getAllForList(notificationListId.value);
+    notificationRows.value = notifRes.data;
+
+    alertSections.value.forEach(section => {
+      const row = notificationRows.value.find(n => n.type === section.key);
+      if (row) {
+        section.email = row.email_pref;
+        section.mobile = row.mobile_pref;
+        section.notificationId = row.id;
+
+        if (section.key === "shiftReminder") {
+          section.time = row.time;
+        }
+      }
+    });
+};
+
+
+const updateNotificationPreferences = async () => {
+  try {
+    for (const section of alertSections.value) {
+      await NotificationServices.update(section.notificationId, {
+        email_pref: section.email,
+        mobile_pref: section.mobile,
+        time: section.key === "shiftReminder" ? section.time : null
+      });
+    }
+    message.value = "Notification settings updated successfully";
+
+  } catch (err) {
+    message.value = "Error saving notification settings";
+  }
+};
+
+onMounted(async () => {
+  await loadUser();
+  await loadNotificationList();
+  await loadNotificationRows();
 });
+
 </script>
 
 <template>
@@ -103,7 +156,7 @@ onMounted(() => {
             Change Password
           </v-btn>
 
-          <v-btn color="primary" @click="updateEmployee">
+          <v-btn color="primary" @click="updateUserProfile">
             Save
           </v-btn>
         </div>
@@ -128,14 +181,13 @@ onMounted(() => {
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="employee.email"
-                label="Email Address *"
-                required
+                v-model="email"
+                label="Email Address"
               />
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="employee.phone_num"
+                v-model="phone_num"
                 label="Mobile Number"
               />
             </v-col>
@@ -182,7 +234,7 @@ onMounted(() => {
     <v-card class="pa-8">
         <v-row class="align-center justify-space-between mb-8">
           <h2 class="text-h5"><b>Alert Preferences</b></h2>
-          <v-btn color="primary">Save</v-btn>
+          <v-btn color="primary" @click ="saveAll">Save</v-btn>
         </v-row>
         <template v-for="(section, index) in alertSections" :key="index">
           <v-row class="mb-4 align-center">
@@ -192,7 +244,7 @@ onMounted(() => {
 
             <v-col cols="12" md="8" class="d-flex justify-end gap-8" style="gap: 32px;">
               <v-select
-                v-if="section.type === 'shiftReminder'"
+                v-if="section.key === 'shiftReminder'"
                 v-model="section.time"
                 :items="[
                   '5 minutes before shift start',
