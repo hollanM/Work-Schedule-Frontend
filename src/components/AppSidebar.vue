@@ -2,14 +2,40 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import store from "../store/store.js"
 import userServices from "../services/userServices"
+import positionServices from "../services/positionServices.js"
+
 
 const user = ref(null);
 const currentUser = ref(null)
 const drawer = ref(false)
 const loggedIn = ref(false)
-
+const positions = ref([])
+const position_names = ref([])
+const message = ref("")
+const addPositionModal = ref(false)
+const positionName = ref("")
+const selectedPosition = ref("")
+const positionId = ref("")
+const editPositionModal = ref(false)
+const deletePositionModal = ref(false)
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
+
+async function savePosition(){
+  const response = await positionServices.create({
+    name: positionName.value 
+  })
+  message.value = response.data
+  console.log(message.value)
+
+  await getPositions();
+}
+
+async function deletePosition(id){
+  const response = await positionServices.delete(id);
+  console.log(response.data)
+  await getPositions()
+}
 
 async function getCurrentUser(){
     //this guard is not needed, session works as intended.
@@ -21,8 +47,9 @@ async function getCurrentUser(){
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
 }
-onMounted(() => {
-  getCurrentUser()
+onMounted( async () => {
+ await getCurrentUser()
+  await getPositions();
 });
 
 watch(
@@ -35,9 +62,50 @@ watch(
   { immediate: true }
 )
 
+function toggleDropdown(name) {
+  switch(name) {
+    case 'Positions':
+      positionOptionsOpen.value = !positionOptionsOpen.value
+      break
+    case 'View Options':
+      viewOptionsOpen.value = !viewOptionsOpen.value
+      break
+    case 'Tags':
+      viewTagsOpen.value = !viewTagsOpen.value
+      break
+    case 'Job Sites':
+      viewJobSitesOpen.value = !viewJobSitesOpen.value
+      break
+    case 'Task Lists':
+      viewTaskListsOpen.value = !viewTaskListsOpen.value
+      break
+  }
+}
 
 function toggle(){
   drawer.value = !drawer.value
+}
+
+async function editPosition(id){
+  const obj = {name: selectedPosition.value}
+  console.log("New name: "+ selectedPosition.value)
+  const response = await positionServices.update(id, obj);
+  console.log(response.data)
+  await getPositions();
+}
+
+async function getPositions(){
+  try{
+    const response = await positionServices.getAll();
+    positions.value = response.data;
+    console.log("returned:" + positions.value);
+    position_names.value = positions.value.map(pos => pos.name);
+    console.log("position names:" + position_names.value);
+  }
+  catch(error){
+    message.value = "Error: " + error.code + ":" + error.message;
+    console.log(error);
+  }
 }
 
 const resetMenu = () => {
@@ -49,51 +117,7 @@ const resetMenu = () => {
   }
 };
 
-// these don't do anything yet, just placeholders for the UI
-const menuItems = [
-  { name: 'Schedule', icon: '', to: '/schedules' },
-  { name: 'View Options', icon: '', to: '' },
-  { name: 'Positions', icon: '', to: '' },
-  { name: 'Tags', icon: '', to: '' },
-  { name: 'Job Sites', icon: '', to: '' },
-  { name: 'Task Lists', icon: '', to: '' },
-]
 
-// Dropdown state for schedule name (UI-only, no behavior yet)
-const selectedSchedule = ref(null)
-const scheduleOptions = [
-  'Default Schedule',
-  'Morning Shift',
-  'Evening Shift',
-]
-
-// View Options collapsible state (UI-only)
-const viewOptionsOpen = ref(false)
-const viewOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-
-const viewTagsOpen = ref(false)
-const tagsOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-
-const viewJobSitesOpen = ref(false)
-const jobSiteOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
-const viewTaskListsOpen = ref(false)
-const taskListOptions = [
-  'placeholder',
-  'placeholder',
-  'placeholder',
-]
 
 
 </script>
@@ -105,92 +129,45 @@ const taskListOptions = [
     class = "drawer"
   >
    
-    <v-list nav>
-      <!-- schedule menu items -->
-      <v-list-item 
-        v-for="item in menuItems"
-        :key="item.name"
-        :to="item.to || undefined"
-        v-bind:router="!!item.to"
-        @click="item.name === 'View Options' ? viewOptionsOpen = !viewOptionsOpen : (item.name === 'Tags' ? viewTagsOpen = !viewTagsOpen : (item.name === 'Job Sites' ? viewJobSitesOpen = !viewJobSitesOpen : (item.name === 'Task Lists' ? viewTaskListsOpen = !viewTaskListsOpen : null)))"
-      >
-        <template #prepend>
-          <v-icon :icon="item.icon" />
-        </template>
+  <v-expansion-panels>
+  <v-expansion-panel title="Positions">
+    <v-expansion-panel-text>
+      <v-list>
 
-        <v-list-item-title>
-          {{ item.name }}
-        </v-list-item-title>
-
-        <!-- schedule drop down -->
-        <template v-if="item.name === 'Schedule'">
-          <v-list dense>
-            <v-list-item>
-              <v-select
-                v-model="selectedSchedule"
-                :items="scheduleOptions"
-                label="Schedule Name"
-                dense
-                hide-details
-                solo
-              />
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Options drop down -->
-        <template #append v-if="item.name === 'View Options'">
-          <v-icon :icon="viewOptionsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'View Options'">
-          <v-list v-show="viewOptionsOpen" dense>
-            <v-list-item v-for="opt in viewOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- tags drop down -->
-        <template #append v-if="item.name === 'Tags'">
-          <v-icon :icon="viewTagsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Tags'">
-          <v-list v-show="viewTagsOpen" dense>
-            <v-list-item v-for="opt in tagsOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Job Sites drop down -->
-        <template #append v-if="item.name === 'Job Sites'">
-          <v-icon :icon="viewJobSitesOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Job Sites'">
-          <v-list v-show="viewJobSitesOpen" dense>
-            <v-list-item v-for="opt in jobSiteOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
-
-        <!-- Task Lists drop down -->
-        <template #append v-if="item.name === 'Task Lists'">
-          <v-icon :icon="viewTaskListsOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" />
-        </template>
-
-        <template v-if="item.name === 'Task Lists'">
-          <v-list v-show="viewTaskListsOpen" dense>
-            <v-list-item v-for="opt in taskListOptions" :key="opt">
-              <v-list-item-title>{{ opt }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </template>
+        
+        <v-list-item
+          v-for="item in positions"
+          :key="item.id"
+        >
+        <div class ="flex-row">
+        <span>{{ item.name }}</span>
+        <div class = "flex-row-right">
+      <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
+        mdi-pencil
+      </v-icon>
+      <v-icon class="hover-icon" @click="deletePositionModal = true, selectedPosition = item.name, positionId = item.id">
+        mdi-trash-can-outline
+      </v-icon>
+      </div>
+    </div>
+      
       </v-list-item>
-    </v-list>
+      </v-list>
+       <v-list-item style="cursor: pointer;" @click="addPositionModal = true">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <v-icon>mdi-plus</v-icon>
+        <span>Add Position</span>
+      </div>
+    </v-list-item>
+    </v-expansion-panel-text>
+    
+  </v-expansion-panel>
+
+   <v-expansion-panel
+    title="Task Lists"
+  >
+  </v-expansion-panel>
+</v-expansion-panels>
   </v-navigation-drawer>
 
     <v-btn v-if="userSession && userSession.userId" class="circle-button zero-margin "  @click="toggle()"
@@ -200,9 +177,255 @@ const taskListOptions = [
           {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
         </v-icon>
     </v-btn>
+
+
+
+    <div v-if="addPositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Add position</h3>
+     <v-btn class = "close-button" @click="addPositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+              <div class="dividing-line"> </div>
+    <v-text-field 
+    v-model="positionName"
+    label="Name"></v-text-field>
+
+      <div class="dividing-line"> </div>
+      <div class="flex-row-right">
+          <v-btn class="create-button" @click="savePosition(), addPositionModal = false, positionName = ''">
+            Save
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
+
+
+  <div v-if="editPositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Edit position: {{selectedPosition}}</h3>
+     <v-btn class = "close-button" @click="editPositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+              <div class="dividing-line"> </div>
+    <v-text-field 
+    v-model="selectedPosition"
+    label="Name"></v-text-field>
+
+      <div class="dividing-line"> </div>
+      <div class="flex-row-right">
+          <v-btn class="create-button" @click="editPosition(positionId), editPositionModal = false">
+            Save
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
+
+  <div v-if="deletePositionModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+    <h3 class = "modal-text">Delete Position {{selectedPosition}} ?</h3>
+     <v-btn class = "close-button" @click="deletePositionModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+            <div class ="dividing-line opacity-0"></div>
+      <div class="flex-row"> 
+        <v-btn class="option-button" @click="deletePositionModal = false">
+            cancel
+        </v-btn>
+          <v-btn class="delete-button" @click="deletePosition(positionId), deletePositionModal = false">
+            delete
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
 </template>
 
 <style scoped>
+
+.circle-button{
+    background-color: #ff000000;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 10px !important;
+    height: 30px !important;
+    min-width: 30px;
+    font-size: 20px;
+    z-index: 1001;
+    position: absolute;
+  top: 50%;
+  left: 256px; /* drawer width */
+  transform: translate(-50%, -50%);
+  transition: left 0.25s ease;
+}
+
+.closed{
+    background-color: #ff000000;
+    color: rgb(148, 148, 148);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 10px !important;
+    height: 30px !important;
+    min-width: 30px;
+    font-size: 20px;
+    z-index: 1001;
+    position: absolute;
+  top: 50%;
+  left: 0; /* drawer width */
+  transform: translate(-50%, -50%);
+  transition: left 0.25s ease;
+}
+
+.drawer{
+  overflow: visible;
+}
+
+.zero-margin{
+  margin: 0;
+}
+
+.chevron-top {
+  align-self: flex-start; /* fixes it to top instead of vertically centered */
+}
+
+.modal{
+  position: fixed;
+  top: 0%;
+  background-color: rgba(0, 0, 0, 0.158);
+  opacity: 100%;
+  z-index: 10000;
+  width:100%;
+  height:100%;
+  display: flex;
+  justify-content: center;
+  align-items:center;
+
+}
+
+
+.modal-content{
+  background-color: #fefefe;
+  display: flex;
+  width: 50%;
+  height:fit-content;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 20px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+
+}
+
+.close-button{
+    background-color: transparent;
+    color: black;
+    border: grey solid 1px;
+    cursor: pointer;
+    font-size: 20px;
+    width: 10px;
+    height: fit-content;
+}
+
+.modal-text{
+    color: rgb(134, 134, 134);
+    margin: 0;
+    padding: 0;
+}
+
+
+.flex-row-right{
+    display:flex;
+    justify-content: flex-end;
+}
+
+.flex-row{
+    display:flex;
+    justify-content: space-between;
+}
+.create-button{
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.delete-button{
+    background-color: #b93f3f;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.option-button{
+   background-color: #939393;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.dividing-line{
+  border-bottom: 5px solid #cfcfcf;
+  margin: 10px 0;
+  
+}
+
+.clickable {
+  cursor: pointer;
+}
+.hover-icon {
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+ .hover-icon:hover {
+  opacity: 1;
+}
+
+.opacity-0{
+  opacity: 0;
+}
+  
   #sidebarTemplate /* I tried but this did not put the sidebar under the popup */
   {
     z-index: 980;
