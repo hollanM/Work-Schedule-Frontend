@@ -195,7 +195,8 @@ async function createTaskList() {
 }
 
 async function deleteTaskList(id){
-tasks_to_delete.value = tasks.value.filter(task => task.id === id);
+tasks_to_delete.value = tasks.value.filter(task => task.shift_task_list_id === id);
+console.log("tasks to delete: " + tasks_to_delete.value)
 tasks_to_delete.value.forEach( async(task, index) =>{
   const response = await taskServices.delete(task.id);
   console.log(response.data)
