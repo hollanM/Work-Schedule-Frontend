@@ -238,10 +238,17 @@ for (const task of tasks_to_add) {
 }
 
 async function handleUpdateTaskList() {
+  console.log("top of update function");
   saved_tasks.value = [...new_tasks.value]
 
   await updateTaskList(taskListId.value) 
   console.log("update function ran")
+
+  await task_listServices.get(taskListId.value).then(response => {
+    console.log("fetched updated task list: " + response.data.name)
+  }).catch(error => {
+    console.log("error fetching updated task list: " + error)
+  })
 
   resetTaskListModal()
   editTaskListModal.value = false
