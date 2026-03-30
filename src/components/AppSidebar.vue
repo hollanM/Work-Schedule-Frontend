@@ -240,11 +240,13 @@ for (const task of tasks_to_add) {
 async function handleUpdateTaskList() {
   saved_tasks.value = [...new_tasks.value]
 
-  await updateTaskList(taskListId.value) // ✅ wait for everything
+  await updateTaskList(taskListId.value) 
+  console.log("update function ran")
 
   resetTaskListModal()
   editTaskListModal.value = false
 
+  console.log("updated task lists")
   await getTaskLists();
   await getTasks();
 }
