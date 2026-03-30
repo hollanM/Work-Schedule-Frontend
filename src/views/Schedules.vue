@@ -31,6 +31,7 @@ async function reload(){
 }
 
 const isUserModalOpened = ref(false);
+const userModalAction = ref("add"); // "add" or "edit", can be used to determine if we are adding a new user or editing a user in the addUserModal
 
 /* =====================================================
     GET USER DATA
@@ -44,7 +45,7 @@ const shifts = ref([]);
 const fetchEmployees = async() => {
   console.log("API CALL → fetch users for manager");
   // Simulate API call and update users.value with response
-  const response = await employeeServices.getAll(); // Replace with actual API call
+  const response = await userServices.getAll(); //will need to be changed to getAll(deptId) to get all for a department
  employees.value = response.data; // Assuming the response has a data property with the list of employees
   console.log("Fetched employees:", employees.value);
   for (const employee of employees.value) {
@@ -137,14 +138,15 @@ const goWeek = () => {
 };
 
 const addUser = () => {
-  //apiAddUser();
   isUserModalOpened.value = true;
+  userModalAction.value = "add";
 };
 
 //add user modal functions start
 const openModal = () => 
 {
   isUserModalOpened.value = true;
+  userModalAction.value = "add";
 };
 const closeUserModal = () => 
 {

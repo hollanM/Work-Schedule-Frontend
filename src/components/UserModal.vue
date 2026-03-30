@@ -1,22 +1,29 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, shallowRef, computed } from "vue";
+import { defineProps, defineEmits, ref, watch, shallowRef, computed, onMounted } from "vue";
 import {onClickOutside} from "@vueuse/core";
+import userServices from "../services/userServices"
+import store from "../store/store.js"
 
 const props = defineProps({
   isOpen: Boolean,
+  userModalAction: {type: String},
   selectedComponent: { type: String, default: 'ProfileModal' },
 });
 
 const emit = defineEmits(["modal-close"]);
-const target = ref(null)
+const target = ref(null);
 const currentComponent = ref(props.selectedComponent);
-
+const user = ref(null);
+const userSession = computed(() => store.getters.getLoginUserInfo);
+const department = ref(null); //got from the currentUser, needed for adding users to the correct department
+const userProfilePicture = computed(() => user.value ? user.value.profile_picture : ''); //picture is not being returned yet
+const hasError = false;
 //profile form 
 const userInformation = ref({
     email: "",
     firstName: "",
     lastName: "",
-    phoneNumber: "",
+    phoneNumber: null,
     role: "",
 });
 //assignments form
@@ -24,12 +31,59 @@ const selectedSchedules = ref([]);
 const selectedPositions = ref([]);
 const selectedTags = ref([]);
 //hourly rates form
-const employeePayRate = ref("");
+const employeePayRate = ref(8.75);
 //log notes form
 const commentData = ref("");
 //advanced form
-const employeeId = ref("");
+const employeeId = ref();
 
+onMounted( async () => {
+    //console.log("User Department: ", userSession.value); //google user content, but no department value (since its from google)
+    getUser().then(() => { //get the users department 
+        department.value = user.value.department_id
+
+        //console.log("User Department: ", department.value);
+    }); //needed .then since assignment was too fast for async
+});
+
+const getUser = async() => {
+  //console.log("API CALL → fetch manager");
+  const response = await userServices.get(userSession.value.userId); //get the user, for the department
+  user.value = response.data;
+  //console.log("Fetched user:", user.value);
+};
+
+const createUser = async() => {
+    //console.log("API CALL → create user");
+    const newUser = {
+        department_id: department.value, //need to assign the new user to the same department as the manager creating them
+        fName: userInformation.value.firstName,
+        lName: userInformation.value.lastName,
+        email: userInformation.value.email,
+        role: userInformation.value.role,
+        phone_num: userInformation.value.phoneNumber,
+        oc_id: employeeId.value,
+        pay_rate: employeePayRate.value,
+        clocked_in: false,
+        manager_notes: commentData.value,
+    };
+    console.log("New user data:", newUser);
+    if(!newUser.fName || !newUser.lName || !newUser.email || !newUser.role || !newUser.phone_num || !newUser.oc_id || !newUser.pay_rate || !newUser.manager_notes)
+    {
+        console.log("Missing required fields");
+        return;
+    }
+    else 
+    {
+        try{
+            const response = await userServices.create(newUser);
+            console.log("Created user:", response.data);
+        }
+        catch(error){
+            console.log("Error creating user:", error);
+        }
+    }
+};
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
@@ -54,10 +108,6 @@ watch(() => props.selectedComponent, (value) => {
 
 const changeModalContent = (item) => {
     //console.log("Changing modal content to:", item);
-    if(item=='ProfileModal')
-    {
-        
-    }
     currentComponent.value = item;
 };
 
@@ -146,7 +196,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 </div>
                                 <hr id="pageBreakBottom"/>
                                 <div id="buttonDiv">
-                                    <button id="addUserButton" type="submit">Save User</button>
+                                    <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save User</button>
                                     <button id="continueButton" @click="changeModalContent('AssignmentsModal')"> Continue to Assignments </button>
                                 </div>
                             </div>
@@ -173,7 +223,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </form>
                         <hr id="assignmentsPageBreakBottom"/>
                         <div id="assignmentsButtonDiv">
-                            <button id="addAssignmentsButton" type="submit">Save Assignments</button>
+                            <button id="addAssignmentsButton" type="submit" v-if="userModalAction === 'edit'">Save Assignments</button>
                             <button id="continueButton" @click="changeModalContent('HourlyRatesModal')"> Continue to Hourly Rates </button>
                         </div>
                     </div>
@@ -192,7 +242,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </div>
                         <hr id="advancedPageBreakBottom"/>
                         <div id="hourlyRatesButtonDiv">
-                            <button id="hourlyRatesAddUserButton" type="submit">Save Hourly Rates</button>
+                            <button id="hourlyRatesAddUserButton" type="submit" v-if="userModalAction === 'edit'">Save Hourly Rates</button>
                             <button id="hourlyRatesContinueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
                         </div>
                     </div>
@@ -207,7 +257,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         <v-textarea label="Comments" v-model="commentData"></v-textarea>
 
                         <div id="buttonDiv">
-                            <button id="addUserButton" type="submit">Save Log Notes</button>
+                            <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save Log Notes</button>
                             <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
                         </div>
                     </div>
@@ -226,8 +276,8 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </div>
                         <hr id="advancedPageBreakBottom"/>
                         <div id="advancedButtonDiv">
-                            <button id="addUserButton" type="submit">Save Advanced Info</button>
-                            <button id="continueButton" @click="changeModalContent('ProfileModal')"> Save </button>
+                            <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save Advanced Info</button>
+                            <button id="continueButton" @click="createUser"> Save </button>
                         </div>
                     </div>
                 </div>
