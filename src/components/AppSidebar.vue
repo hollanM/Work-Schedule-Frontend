@@ -241,8 +241,13 @@ async function handleUpdateTaskList() {
   console.log("top of update function");
   saved_tasks.value = [...new_tasks.value]
 
-  await updateTaskList(taskListId.value) 
-  console.log("update function ran")
+  await updateTaskList(taskListId.value).then(async() => {
+    console.log("update task list successful")
+    await getTaskLists();
+    await getTasks();
+  }).catch(error => {
+    console.log("error updating task list: " + error)
+  })
 
   await task_listServices.get(taskListId.value).then(response => {
     console.log("fetched updated task list: " + response.data.name)
