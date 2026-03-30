@@ -235,9 +235,6 @@ for (const task of tasks_to_add) {
     shift_task_list_id: id
   })
 }
-
-  await getTaskLists();
-  await getTasks();
 }
 
 async function handleUpdateTaskList() {
@@ -247,6 +244,9 @@ async function handleUpdateTaskList() {
 
   resetTaskListModal()
   editTaskListModal.value = false
+
+  await getTaskLists();
+  await getTasks();
 }
 
 
