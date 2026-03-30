@@ -2,7 +2,9 @@ import apiClient from "./services.js";
 
 export default {
   getAll() {
-    return apiClient.get("/employees");
+    let response = apiClient.get("/employees");
+    console.log(response);
+    return apiClient.get(response);
   },
   get(id) {
     return apiClient.get(`/employees/${id}`);

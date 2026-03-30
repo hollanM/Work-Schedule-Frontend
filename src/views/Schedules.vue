@@ -87,7 +87,7 @@ function formatShiftTimeFromISO(isoString) {
 
 
 onMounted(() => {
-  fetchEmployees();
+  //fetchEmployees(); //currently erroring, there is no employees table in the backend, recent change? --Austin
   loadShifts();
 });
 /* =====================================================
@@ -153,7 +153,8 @@ const closeUserModal = () =>
 
 const userModalSaveButton = () => //this is for the save button in the user modal, will need to submit froms in the future
 {
-
+  console.log("Save user changes");
+  closeUserModal();
 }
 //add user modal functions end
 
