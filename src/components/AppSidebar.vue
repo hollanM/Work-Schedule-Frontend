@@ -184,10 +184,15 @@ async function createTaskList() {
   const task_list_id = response.data.id;
   console.log(response.data.id)
 
- saved_tasks.value.forEach(async(task, index) => {
-    const task_response = await taskServices.create({name: task.name, shift_task_list_id: task_list_id})
-    console.log(task_response.data)
- })
+//  saved_tasks.value.forEach(async(task, index) => {
+//     const task_response = await taskServices.create({name: task.name, shift_task_list_id: task_list_id})
+//     console.log(task_response.data)
+//  })
+//CHANGES HERE FROM HOLLAN
+for (const task of saved_tasks.value) 
+{
+  await taskServices.create({ name: task.name,shift_task_list_id: task_list_id});
+}
 
  await getTaskLists()
  await getTasks()
@@ -197,10 +202,15 @@ async function createTaskList() {
 async function deleteTaskList(id){
 tasks_to_delete.value = tasks.value.filter(task => task.shift_task_list_id === id);
 console.log("tasks to delete: " + tasks_to_delete.value)
-tasks_to_delete.value.forEach( async(task, index) =>{
-  const response = await taskServices.delete(task.id);
-  console.log(response.data)
-})
+// tasks_to_delete.value.forEach( async(task, index) =>{
+//   const response = await taskServices.delete(task.id);
+//   console.log(response.data)
+// })
+// ONCE AGAIN HOLLAN'S
+for (const task of tasks_to_delete.value) 
+{ 
+  await taskServices.delete(task.id);
+}
 
 const task_list_response = await task_listServices.delete(id);
 console.log(task_list_response.data)
@@ -211,7 +221,7 @@ await getTasks()
 }
 
 async function updateTaskList(id) {
-  task_listServices.update(id, {name: saved_task_list_name.value})
+  await task_listServices.update(id, {name: saved_task_list_name.value})
 
   //remove any task lists that were removed before
   //get all current tasks lists
@@ -237,31 +247,53 @@ for (const task of tasks_to_add) {
 }
 }
 
+// async function handleUpdateTaskList() {
+//   console.log("top of update function");
+//   saved_tasks.value = [...new_tasks.value]
+
+//   await updateTaskList(taskListId.value).then(async() => {
+//     console.log("update task list successful")
+//      await getTaskLists();
+//      await getTasks();
+//   }).catch(error => {
+//     console.log("error updating task list: " + error)
+//   })
+
+//   await task_listServices.get(taskListId.value).then(response => {
+//     console.log("fetched updated task list: " + response.data.name)
+//   }).catch(error => {
+//     console.log("error fetching updated task list: " + error)
+//   })
+
+//   resetTaskListModal()
+//   editTaskListModal.value = false
+
+//   console.log("updated task lists")
+//    await getTaskLists();
+//    await getTasks();
+// }
 async function handleUpdateTaskList() {
   console.log("top of update function");
-  saved_tasks.value = [...new_tasks.value]
+  saved_tasks.value = [...new_tasks.value];
 
-  await updateTaskList(taskListId.value).then(async() => {
-    console.log("update task list successful")
-    await getTaskLists();
-    await getTasks();
-  }).catch(error => {
-    console.log("error updating task list: " + error)
-  })
+  try {
+    await updateTaskList(taskListId.value);
+    console.log("update task list successful");
 
-  await task_listServices.get(taskListId.value).then(response => {
-    console.log("fetched updated task list: " + response.data.name)
-  }).catch(error => {
-    console.log("error fetching updated task list: " + error)
-  })
+    const response = await task_listServices.get(taskListId.value);
+    console.log("fetched updated task list:", response.data.name);
 
-  resetTaskListModal()
-  editTaskListModal.value = false
+    await Promise.all([getTaskLists(), getTasks()]); // Hey julian this helps makes sure that everything is there before resetting instead of calling over the await getTaskLists();await getTasks(); over and over
+  } 
+  catch (error) {
+    console.log("error updating task list:", error);
+  }
 
-  console.log("updated task lists")
-  await getTaskLists();
-  await getTasks();
+  resetTaskListModal();
+  editTaskListModal.value = false;
 }
+
+
 
 
 function setTaskEditModal(){
