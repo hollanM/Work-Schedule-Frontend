@@ -206,7 +206,7 @@ console.log("tasks to delete: " + tasks_to_delete.value)
 //   const response = await taskServices.delete(task.id);
 //   console.log(response.data)
 // })
-// ONCE AGAIN HOLLAN'S
+// HOLLAN'S CHANGE HERE!!!!!!!!!!!
 for (const task of tasks_to_delete.value) 
 { 
   await taskServices.delete(task.id);
@@ -272,6 +272,7 @@ for (const task of tasks_to_add) {
 //    await getTaskLists();
 //    await getTasks();
 // }
+//Revised function
 async function handleUpdateTaskList() {
   console.log("top of update function");
   saved_tasks.value = [...new_tasks.value];
@@ -283,7 +284,7 @@ async function handleUpdateTaskList() {
     const response = await task_listServices.get(taskListId.value);
     console.log("fetched updated task list:", response.data.name);
 
-    await Promise.all([getTaskLists(), getTasks()]); // Hey julian this helps makes sure that everything is there before resetting instead of calling over the await getTaskLists();await getTasks(); over and over
+    await Promise.all([getTaskLists(), getTasks()]); // Hey julian this helps makes sure that everything is there before resettinG, rather calling over the await getTaskLists();await getTasks(); over and over
   } 
   catch (error) {
     console.log("error updating task list:", error);
