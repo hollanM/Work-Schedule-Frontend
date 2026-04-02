@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { startOfWeek, addDays, format } from "date-fns";
 import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 import employeeServices from "../services/employeeServices";
+import userServices from "../services/userServices";
 import shiftServices from "../services/shiftServices";
 import date_timeServices from "../services/date_timeServices";
 import addUserModal from "../components/UserModal.vue";
@@ -17,7 +18,7 @@ const shiftsByUserAndDate = computed(() => {
   const map = {}
 
   for (const shift of shifts.value) {
-    const key = `${shift.employee_id}-${shift.shiftDate}`
+    const key = `${shift.user_id}-${shift.shiftDate}`
     if (!map[key]) map[key] = []
     map[key].push(shift)
   }
@@ -44,14 +45,24 @@ const shifts = ref([]);
 const fetchEmployees = async() => {
   console.log("API CALL → fetch users for manager");
   // Simulate API call and update users.value with response
-  const response = await employeeServices.getAll(); // Replace with actual API call
+  const response = await userServices.getAll(); // Replace with actual API call
  employees.value = response.data; // Assuming the response has a data property with the list of employees
+   for (const emp of employees.value) {
+      if(emp.role !== "Employee"){
+        const index = employees.value.indexOf(emp);
+        if (index > -1) {
+          employees.value.splice(index, 1);
+        }
+      }
+    }
   console.log("Fetched employees:", employees.value);
   for (const employee of employees.value) {
     employee.avatar = `https://i.pravatar.cc/40?u=${employee.id}`; // Generate avatar URL based on employee ID
     employee.hours = 0;
   }
 };
+
+
 
 async function loadShifts() {
   const response = await shiftServices.getAll()
@@ -281,7 +292,7 @@ function apiAssignUser(userId, date) {
               <v-avatar size="28" class="mr-2">
                 <v-img :src="employee.avatar" />
               </v-avatar>
-              {{ employee.name }}
+              {{ employee.fName }}
             </td>
 
             <!-- Assigns user to that day -->
@@ -306,7 +317,7 @@ function apiAssignUser(userId, date) {
                       {{ shift.formattedTime }}
                     </v-btn>
                   </div>
-              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true, date = day.date, employeeName = employee.name">
+              <v-icon v-else size="16" color="success" class="hover-icon" @click.stop="showModal = true, date = day.date, employeeName = employee.fName">
                 mdi-plus
               </v-icon>
             </td>
