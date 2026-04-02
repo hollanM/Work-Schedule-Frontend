@@ -5,6 +5,7 @@ import positionServices from "../services/positionServices";
 import qualification_listServices from "../services/qualification_listServices.js";
 import task_listServices from "../services/task_listServices.js";
 import employeeServices from "../services/employeeServices.js";
+import userServices from "../services/userServices.js";
 import shiftServices from "../services/shiftServices.js";
 import date_timeServices from "../services/date_timeServices.js";
 import Utils from "../config/utils.js";
@@ -184,11 +185,23 @@ async function getTaskLists(){
 }
 
 async function getEmployees(){
+  //this gets users who are "employees.." still needs to be department specific. it is not yet.
   try{
-    const response = await employeeServices.getAll();
+    const response = await userServices.getAll();
     employees.value = response.data;
     console.log("returned:" + employees.value);
-    employee_names.value = employees.value.map(emp => emp.name);
+
+    for (const emp of employees.value) {
+      if(emp.role !== "Employee"){
+        const index = employees.value.indexOf(emp);
+        if (index > -1) {
+          employees.value.splice(index, 1);
+        }
+      }
+    }
+    console.log("filtered employees:" + employees.value);
+
+    employee_names.value = employees.value.map(emp => emp.fName);
     console.log("employee names:" + employee_names.value);
   }
   catch(error){
@@ -222,7 +235,7 @@ async function getShifts() {
 //collecting all form data to send to backend when creating shift.
 function getFormData() {
   return {
-    employee_id: employees.value.find(emp => emp.name === selectedEmployee.value)?.id,
+    employee_id: employees.value.find(emp => emp.fName === selectedEmployee.value)?.id,
     shiftTime: shiftTime.value,
     color: color.value,
     position_id: positions.value.find(pos => pos.name === selectedPosition.value)?.id, // if needed as name or map to id similarly
@@ -287,7 +300,8 @@ async function createShift(){
     end_time.value = await createDateTime(sqlEnd)
 
     const response = await shiftServices.create({
-      employee_id: formData.employee_id,
+      user_id: formData.employee_id,
+      
       start_day_id: start_time.value,
       end_day_id: end_time.value,
       color: formData.color,
@@ -413,7 +427,6 @@ function fillFromTemplate(template){
         <!-- Middle div -->
 
         <v-select
-  v-if="employee_names.length"
   v-model="selectedEmployee"
   :items="employee_names"
   label="Assign to"
@@ -442,14 +455,12 @@ function fillFromTemplate(template){
       ></v-color-picker>    
 </div>
 <v-select
-  v-if="position_names.length"
   v-model="selectedPosition"
   :items="position_names"
   label="Position"
   outlined
 ></v-select>
 <v-select
-v-if="qualification_lists_names.length"
   v-model="selectedTag"
   :items="qualification_lists_names"
   label="Qualifications"
@@ -457,7 +468,6 @@ v-if="qualification_lists_names.length"
 ></v-select>
 <v-select
   v-model="selectedTaskList"
-  v-if="task_lists_names.length"
   :items="task_lists_names"
   label="Task Lists"
   outlined
