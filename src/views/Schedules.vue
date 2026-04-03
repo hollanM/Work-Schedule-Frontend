@@ -5,7 +5,6 @@ import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 import employeeServices from "../services/employeeServices";
 import shiftServices from "../services/shiftServices";
 import date_timeServices from "../services/date_timeServices";
-import addUserModal from "../components/UserModal.vue";
 
 /* =====================================================
    STATE (will eventually come from backend)
@@ -138,24 +137,7 @@ const goWeek = () => {
 
 const addUser = () => {
   //apiAddUser();
-  isUserModalOpened.value = true;
 };
-
-//add user modal functions start
-const openModal = () => 
-{
-  isUserModalOpened.value = true;
-};
-const closeUserModal = () => 
-{
-  isUserModalOpened.value = false;
-};
-
-const userModalSaveButton = () => //this is for the save button in the user modal, will need to submit froms in the future
-{
-
-}
-//add user modal functions end
 
 const assignUser = (userId, date) => {
   apiAssignUser(userId, date);
@@ -343,13 +325,6 @@ function apiAssignUser(userId, date) {
       </v-table>
     </v-card>
   </v-container>
-
-  <!-- add User Modal -->
-  <addUserModal
-  v-if="isUserModalOpened"
-  :isOpen="isUserModalOpened"
-  @modal-close="closeUserModal"/>
-  <!-- add end of User Modal -->
 
   <!-- Julians Form changes start here -->
    <transition name="fade">

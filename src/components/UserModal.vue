@@ -1,14 +1,26 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, shallowRef, computed } from "vue";
+import { defineProps, defineEmits, ref, watch, shallowRef, computed, onMounted } from "vue";
 import {onClickOutside} from "@vueuse/core";
+import userServices from "../services/userServices"
 
 const props = defineProps({
+  passedUser: { type: Object, default: () => ({}) },
   isOpen: Boolean,
   selectedComponent: { type: String, default: 'ProfileModal' },
 });
 
 const emit = defineEmits(["modal-close"]);
-const target = ref(null)
+const target = ref(null);
+const user = ref([]);
+const foundUser = ref([]);
+
+//open window selectors
+const hasChosen = ref(false); //need to be refs, because refs are reactive and normal variables are not
+const exists = ref(false);
+const doesNotExist = ref(false);
+
+const Id = ref("");
+
 const form = ref({
     email: "",
     firstName: "",
@@ -22,6 +34,7 @@ const selectedPositions = ref([]);
 const selectedTags = ref([]);
 const employeeId = ref("12345");
 const employeePayRate = ref("8.75");
+const commentData = ref("");
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
@@ -31,6 +44,19 @@ onClickOutside(target, (event) => { //had issues with this one, needed to ignore
     return;
   emit('modal-close');
 });
+
+const studentExists = () => {
+    //console.log(props.passedUser) 
+    doesNotExist.value = false;
+    exists.value = true; 
+    hasChosen.value = true;
+}
+
+const studentDoesNotExist = () => {
+    exists.value = false;
+    doesNotExist.value = true; 
+    hasChosen.value = true;
+}
 
 const menuItems = [ //same as Sam's sidebar, but for the user modal
   { name: 'Profile', component: 'ProfileModal' }, //are the componet pieces needed anymore?
@@ -68,16 +94,90 @@ const tagItems = [
 ];
 
 const submit = () => { //having this might prevent some issues, but it does nothing
-    console.log('Form submitted');
+    //console.log('Form submitted'); //profile screen add button triggers this
 };
 
+async function quickAdd() {
+    //found the user, will need to go back in later and link it to the new schedule page, and add this result there
+    await getUser(Id.value).then(() => {
+        emit('modal-close'); //close the modal after adding the user
+    });
+}
+
+async function addAndEdit() {
+    await getUser(Id.value);
+
+    //console.log("Found user:", foundUser.value);
+    //console.log("Form before filling:", form.value); //working now
+
+    form.value.firstName = foundUser.value.fName;
+    form.value.lastName = foundUser.value.lName;
+    form.value.email = foundUser.value.email;
+    form.value.phoneNumber = foundUser.value.phone_num;
+    form.value.role = foundUser.value.role;
+
+    //console.log("Form after filling:", form.value);
+    //console.log("id: ", Id.value);
+    employeeId.value = Id.value;
+    //console.log("employeePayRate: ", foundUser.value.pay_rate);
+    employeePayRate.value = foundUser.value.pay_rate ?? "8.75";;
+    //console.log("commentData: ", foundUser.value.manager_notes);
+    commentData.value = foundUser.value.manager_notes ?? "";//at time of writing , manager notes has not been tested to dev, so work-around
+
+    studentDoesNotExist();
+}
+
+async function getUser(id) {
+    console.log("Getting user with ID:", id);
+    try {
+        const response = await userServices.get(id);
+        console.log("User found successfully:", response.data);
+        foundUser.value = response.data;
+    } catch (error) {
+        console.error("Error adding user:", error);
+    }
+}
 
 </script>
 
 <template>
-    <div v-if="isOpen" class="modal-popup">
-        <div class="modal-wrapper">
-            <div class="modal-container" ref="target">
+    <div v-if="isOpen" class="modal-popup" >
+        <div ref="target"> <!-- target of the clicking outside to close function -->
+            <div class="choose-modal-container" v-if="!hasChosen">
+                <!-- beginning of OC student selector window -->
+                <div id="chooseTopBar">
+                    <p id="chooseTitle">Add User</p>
+                    <div id="chooseHeader">
+                        <button @click.stop="emit('modal-close')">X</button>
+                    </div>
+                </div>
+                <p id="chooseQuestion">Has this user logged in before?</p>
+                <div id="selectionContainer">
+                    <button @click="studentExists()">Yes</button>
+                    <button @click="studentDoesNotExist()">No</button>
+                </div>
+            </div>
+            <!-- end of OC student selector window -->
+            <!-- beginning oc OC student version -->
+            <div class="choose-modal-container" v-if="exists">
+                <div id="chooseTopBar">
+                    <p id="chooseTitle">Add User</p>
+                    <div id="chooseHeader">
+                        <button @click.stop="emit('modal-close')">X</button>
+                    </div>
+                </div>
+                <div id="idFormContainer">
+                    <p> User ID: </p>
+                    <input v-model="Id" id="idInput"/>
+                </div>
+                <div id="selectionContainer">
+                    <button @click="quickAdd()">Quick Add</button>
+                    <button @click="addAndEdit()">Add and Edit</button>
+                </div>
+            </div>
+            <!-- end of OC student version -->
+            <!-- beginning of non-OCstudent version -->
+            <div class="modal-container" v-if="doesNotExist">
                 <v-list nav id="userModalNav">
                     <v-list-item v-for="item in menuItems" :key="item.name" @click="changeModalContent(item.component)">
                         <template>
@@ -283,7 +383,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
 #userModalNav 
 {
     min-width: 8vw;
-    min-height: 60vh; /* needs to match the containers height, not a perfect fix and will need to change later */
+    min-height: 60vh;
     height: 100%;
     background-color: rgb(76, 76, 76);
     color: white;
@@ -302,7 +402,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
 #header
 {
     text-align: center;
-    z-index: 999; /* this needs to be above the componets inside of this modal */
+    z-index: 999;
     min-width: 30px;
     min-height: 30px;
     border-radius: 2px;
@@ -314,7 +414,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
 #footer
 {
     text-align: center;
-    z-index: 999; /* this needs to be above the componets inside of this modal */
+    z-index: 999;
     min-width: 200px;
     min-height: 30px;
     border-radius: 2px;
@@ -332,6 +432,107 @@ const submit = () => { //having this might prevent some issues, but it does noth
 /*                      */
 /* end of addUser modal */
 /*                      */ 
+
+/*                              */
+/* start of addUser choose page */
+/*                              */  
+
+
+.choose-modal-container 
+{
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    width: min(90vw, 620px);
+    min-height: 60vh;
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    overflow: hidden;
+    margin: 150px auto;
+}
+
+#chooseTopBar 
+{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+}
+
+#chooseTitle 
+{
+    margin: 0;
+}
+
+#chooseHeader button 
+{
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #4c4c4c;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#chooseQuestion 
+{
+    margin-top: 16vh !important;
+    margin: 24px auto 0;
+    text-align: center;
+}
+
+#selectionContainer 
+{
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    max-height: 5vh;
+    gap: 14px;
+}
+
+#selectionContainer > button 
+{
+    width: clamp(80px, 25%, 120px);
+    min-height: 20px;
+    cursor: pointer;
+    border: 2px solid black;
+}
+
+/*                              */
+/* end of addUser choose screen */
+/*                              */
+
+/*                            */
+/* start of addUser OCId page */
+/*                            */   
+
+#idFormContainer
+{
+    margin-top: 20vh;
+    margin-bottom: 0;
+    align-self: center;
+    top: 50%;
+    transform: translateY(-30%);
+
+}
+
+#idInput
+{
+    width: 100%;
+    padding: 4px;
+    font-size: 16px;
+    outline: 2px solid #000;
+    border-color: #000;
+}
+
+/*                            */
+/* end of addUser OCId screen */
+/*                            */
 
 /*                      */
 /* addUser profile page */
