@@ -22,6 +22,7 @@ import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
 import { useRouter, useRoute } from 'vue-router'
 import store from "../store/store"
+import {computed, watch} from "vue";
 
 const router = useRouter()
 const user = ref(null);
@@ -31,13 +32,16 @@ const name = ref("");
 const logoURL = ref("");
 
 const resetMenu = () => {
+
   user.value = null;
   user.value = Utils.getStore("user");
+  console.log("user in menu bar", user.value);
   if (user.value) {
     initials.value = user.value.fName[0] + user.value.lName[0];
     name.value = user.value.fName + " " + user.value.lName;
   }
 };
+
 
 const logout = () => {
   AuthServices.logoutUser(user.value)
@@ -105,7 +109,7 @@ const handleSettingsItemClick = (item) => {
           </router-link>
         </div>
       </div>
-      <v-menu v-model="Dashboard_Open" transition="slide-y-transition" v-if="user">
+      <v-menu v-if="user && user.role === 'Manager'" v-model="Dashboard_Open" transition="slide-y-transition">
         <template #activator="{ props }">
           <v-btn id="Dashboard_Div" class="container" v-bind="props">
             <v-img id="image" :src="Dashboard" height="40" width="40" contain/>
@@ -124,7 +128,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Schedule_Open" transition="slide-y-transition" v-if="user">
+      <v-menu v-if="user && user.role === 'Manager'" v-model="Schedule_Open" transition="slide-y-transition" >
         <template #activator="{ props }">
           <v-btn id="Schedule_Div" class="container" v-bind="props">
             <v-img id="image" :src="Schedule" height="40" width="40" contain/>
@@ -143,7 +147,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="user">
+      <v-menu v-if="user && user.role === 'Manager'" v-model="Attendance_Open" transition="slide-y-transition">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-img id="image" :src="Attendance" height="40" width="40" contain/>

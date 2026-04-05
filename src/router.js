@@ -9,6 +9,7 @@ import ViewTutorial from "./views/ViewTutorial.vue";
 import AddLesson from "./views/AddLesson.vue";
 import EditLesson from "./views/EditLesson.vue";
 import Schedules from "./views/Schedules.vue";
+import EmployeeDashboard from "./views/EmployeeDashboard.vue";
 
 
 const router = createRouter({
@@ -58,7 +59,13 @@ const router = createRouter({
       path: "/schedules",
       name: "schedules",
       component: Schedules,
+    },
+    {
+      path: "/employee-dashboard",
+      name: "employee-dashboard",
+      component: EmployeeDashboard,
     }
+    
   ],
 });
 

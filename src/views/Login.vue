@@ -1,5 +1,7 @@
 <script setup>
 import SocialLogin from "../components/SocialLogin.vue";
+import { ref } from "vue";
+const employeeLogin = ref(false);
 </script>
 
 <template>
@@ -60,7 +62,9 @@ import SocialLogin from "../components/SocialLogin.vue";
             Or continue with
           </div>
 
-          <SocialLogin />
+          <SocialLogin 
+            :employeeLogin="employeeLogin"
+          />
 
           <!-- Register Link -->
           <div class="text-center mt-6 text-caption">
@@ -69,6 +73,13 @@ import SocialLogin from "../components/SocialLogin.vue";
               Create one
             </a>
           </div>
+
+             <v-checkbox-btn
+            v-model="employeeLogin">
+                <template #label>
+                    <span>Log in as Employee</span>
+                </template>
+            </v-checkbox-btn>
 
         </v-card>
 
