@@ -47,6 +47,9 @@ const handleCredentialResponse = async (response) => {
     });
 };
 
+
+
+
 onMounted(() => {
   loginWithGoogle();
 });
