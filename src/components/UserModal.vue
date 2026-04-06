@@ -1,94 +1,32 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, shallowRef, computed, onMounted } from "vue";
+import { defineProps, defineEmits, ref, watch, shallowRef, computed } from "vue";
 import {onClickOutside} from "@vueuse/core";
-import userServices from "../services/userServices"
-import store from "../store/store.js"
 
 const props = defineProps({
   isOpen: Boolean,
-  userModalAction: {type: String},
   selectedComponent: { type: String, default: 'ProfileModal' },
 });
 
 const emit = defineEmits(["modal-close"]);
-const target = ref(null);
-const currentComponent = ref(props.selectedComponent);
-const user = ref(null);
-const userSession = computed(() => store.getters.getLoginUserInfo);
-const department = ref(null); //got from the currentUser, needed for adding users to the correct department
-const userProfilePicture = computed(() => user.value ? user.value.profile_picture : ''); //picture is not being returned yet
-const hasError = false;
-//profile form 
-const userInformation = ref({
+const target = ref(null)
+const form = ref({
     email: "",
     firstName: "",
     lastName: "",
-    phoneNumber: null,
+    phoneNumber: "",
     role: "",
 });
-//assignments form
+const currentComponent = ref(props.selectedComponent);
 const selectedSchedules = ref([]);
 const selectedPositions = ref([]);
 const selectedTags = ref([]);
-//hourly rates form
-const employeePayRate = ref(8.75);
-//log notes form
-const commentData = ref("");
-//advanced form
-const employeeId = ref();
-
-onMounted( async () => {
-    //console.log("User Department: ", userSession.value); //google user content, but no department value (since its from google)
-    getUser().then(() => { //get the users department 
-        department.value = user.value.department_id
-
-        //console.log("User Department: ", department.value);
-    }); //needed .then since assignment was too fast for async
-});
-
-const getUser = async() => {
-  //console.log("API CALL → fetch manager");
-  const response = await userServices.get(userSession.value.userId); //get the user, for the department
-  user.value = response.data;
-  //console.log("Fetched user:", user.value);
-};
-
-const createUser = async() => {
-    //console.log("API CALL → create user");
-    const newUser = {
-        department_id: department.value, //need to assign the new user to the same department as the manager creating them
-        fName: userInformation.value.firstName,
-        lName: userInformation.value.lastName,
-        email: userInformation.value.email,
-        role: userInformation.value.role,
-        phone_num: userInformation.value.phoneNumber,
-        oc_id: employeeId.value,
-        pay_rate: employeePayRate.value,
-        clocked_in: false,
-        manager_notes: commentData.value,
-    };
-    console.log("New user data:", newUser);
-    if(!newUser.fName || !newUser.lName || !newUser.email || !newUser.role || !newUser.phone_num || !newUser.oc_id || !newUser.pay_rate || !newUser.manager_notes)
-    {
-        console.log("Missing required fields");
-        return;
-    }
-    else 
-    {
-        try{
-            const response = await userServices.create(newUser);
-            console.log("Created user:", response.data);
-        }
-        catch(error){
-            console.log("Error creating user:", error);
-        }
-    }
-};
+const employeeId = ref("12345");
+const employeePayRate = ref("8.75");
 
 onClickOutside(target, (event) => { //had issues with this one, needed to ignore certain clicks
   const target = event?.target;
   if (!target) return;
-  //keep popups open when interacting with v-select menu dropdown
+  // keep popups open when interacting with v-select menu dropdown
   if (target.closest('.v-menu, .v-overlay, .v-list-item, .v-select')) //ignoring these clickable items
     return;
   emit('modal-close');
@@ -111,27 +49,22 @@ const changeModalContent = (item) => {
     currentComponent.value = item;
 };
 
-const roleItems = [
-    { title: 'Employee', value: 'Employee' },
-    { title: 'Manager', value: 'Manager' },
-];
-
 const scheduleItems = [
-    { title: 'Schedule 1', value: '' },
-    { title: 'Schedule 2', value: '' },
-    { title: 'Schedule 3', value: '' },
+    { title: 'Schedule 1', route: '/schedule1' },
+    { title: 'Schedule 2', route: '/schedule2' },
+    { title: 'Schedule 3', route: '/schedule3' },
 ];
 
 const positionItems = [
-    { title: 'Position 1', value: '' },
-    { title: 'Position 2', value: '' },
-    { title: 'Position 3', value: '' },
+    { title: 'Position 1', route: '/position1' },
+    { title: 'Position 2', route: '/position2' },
+    { title: 'Position 3', route: '/position3' },
 ];
 
 const tagItems = [
-    { title: 'Tag 1', value: '' },
-    { title: 'Tag 2', value: '' },
-    { title: 'Tag 3', value: '' },
+    { title: 'Tag 1', route: '/tag1' },
+    { title: 'Tag 2', route: '/tag2' },
+    { title: 'Tag 3', route: '/tag3' },
 ];
 
 const submit = () => { //having this might prevent some issues, but it does nothing
@@ -167,38 +100,38 @@ const submit = () => { //having this might prevent some issues, but it does noth
                                 </div>
                             </div>
                             <hr id="pageBreakTop"/>
-                            <div id="formContainer"> <!-- was a form, but vue3 does not do forms this way-->
+                            <form @submit.prevent="submit" id="formContainer">
                                 <div id="formHolder">
                                     <div id="formDiv">
                                         <div class="field">
                                             <label>First Name</label>
-                                            <input id="firstNameForm" type="text" v-model="userInformation.firstName" />
+                                            <input id="firstNameForm" type="text" v-model="form.firstName" />
                                         </div>
                                         <div class="field">
                                             <label>Last Name</label>
-                                            <input id="lastNameForm" type="text" v-model="userInformation.lastName" />
+                                            <input id="lastNameForm" type="text" v-model="form.lastName" />
                                         </div>
                                         <div class="field">
                                             <label>Email</label>
-                                            <input id="emailForm" type="email" v-model="userInformation.email" />
+                                            <input id="emailForm" type="email" v-model="form.email" />
                                         </div>
                                         <div class="field">
                                             <label>Phone Number</label>
-                                            <input id="phoneNumberForm" type="text" v-model="userInformation.phoneNumber" />
+                                            <input id="phoneNumberForm" type="text" v-model="form.phoneNumber" />
                                         </div>
                                         <div class="field">
-                                            <p class="dropdown-title"> Role </p>
-                                            <v-select v-model="userInformation.role" :items="roleItems" item-value="title" class="dropdown" hide-details @click.stop></v-select>
+                                            <label>Role</label>
+                                            <input id="roleForm" type="text" v-model="form.role" />
                                         </div>
                                     </div> <!-- will need to change later to the users google picture -->
                                     <img id="userModalImage" src=""/>
                                 </div>
                                 <hr id="pageBreakBottom"/>
                                 <div id="buttonDiv">
-                                    <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save User</button>
+                                    <button id="addUserButton" type="submit">Add User</button>
                                     <button id="continueButton" @click="changeModalContent('AssignmentsModal')"> Continue to Assignments </button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
                     <!-- assignments content -->
@@ -222,7 +155,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </form>
                         <hr id="assignmentsPageBreakBottom"/>
                         <div id="assignmentsButtonDiv">
-                            <button id="addAssignmentsButton" type="submit" v-if="userModalAction === 'edit'">Save Assignments</button>
+                            <button id="addAssignmentsButton" type="submit">Add Assignments</button>
                             <button id="continueButton" @click="changeModalContent('HourlyRatesModal')"> Continue to Hourly Rates </button>
                         </div>
                     </div>
@@ -241,7 +174,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </div>
                         <hr id="advancedPageBreakBottom"/>
                         <div id="hourlyRatesButtonDiv">
-                            <button id="hourlyRatesAddUserButton" type="submit" v-if="userModalAction === 'edit'">Save Hourly Rates</button>
+                            <button id="hourlyRatesAddUserButton" type="submit">Add Hourly Rates</button>
                             <button id="hourlyRatesContinueButton" @click="changeModalContent('LogNotesModal')"> Continue to Log Notes </button>
                         </div>
                     </div>
@@ -256,7 +189,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         <v-textarea label="Comments" v-model="commentData"></v-textarea>
 
                         <div id="buttonDiv">
-                            <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save Log Notes</button>
+                            <button id="addUserButton" type="submit">Add Log Notes</button>
                             <button id="continueButton" @click="changeModalContent('AdvancedModal')"> Continue to Advanced </button>
                         </div>
                     </div>
@@ -275,8 +208,8 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </div>
                         <hr id="advancedPageBreakBottom"/>
                         <div id="advancedButtonDiv">
-                            <button id="addUserButton" type="submit" v-if="userModalAction === 'edit'">Save Advanced Info</button>
-                            <button id="continueButton" @click="createUser"> Save </button>
+                            <button id="addUserButton" type="submit">Add Info</button>
+                            <button id="continueButton" @click="changeModalContent('ProfileModal')"> Save </button>
                         </div>
                     </div>
                 </div>
@@ -637,7 +570,7 @@ const submit = () => { //having this might prevent some issues, but it does noth
 {
     display: flex;
     align-items: center;
-    padding-left: 28vw;
+    padding-left: 33vw;
     padding-right: 15px;
     margin-bottom: auto !important;
 }
