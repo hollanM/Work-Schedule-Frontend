@@ -155,7 +155,6 @@ const submit = () => { //having this might prevent some issues, but it does noth
                         </v-list-item-title>
                     </v-list-item>
                 </v-list>
-                <!-- end of sidebar -->
                 <!-- beginning of screens -->
                 <div id="addUserModalScreen"> 
                     <!-- profile content -->
