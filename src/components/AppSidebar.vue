@@ -6,6 +6,7 @@ import positionServices from "../services/positionServices.js"
 import task_listServices from '../services/task_listServices.js'
 import taskServices from '../services/taskServices.js'
 import addUserModal from "../components/UserModal.vue";
+import shiftServices from '../services/shiftServices.js'
 
 
 const user = ref(null);
@@ -41,6 +42,8 @@ const tasks_to_delete = ref([])
 const tasks_to_add = ref([])//repetitive. I want to be organized.
 const deleteTaskListModal = ref(false)
 const editTaskListModal = ref(false)
+const publishAndNotifyConfirmModal = ref(false)
+const shifts = ref([])
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
 const isUserModalOpened = ref(false); //for opening and closing of the add user modal
@@ -78,6 +81,20 @@ async function getTaskLists(){
   console.log(response.data)
 }
 
+async function getShifts(){
+  const response = await shiftServices.getAll();
+  shifts.value = response.data;
+  console.log(response.data)
+}
+
+async function publishShifts(){
+
+  shifts.value.forEach(async (shift, index) => {
+    const response = await shiftServices.update(shift.id, {published: true})
+    console.log(response.data)
+  })
+}
+
 async function getTasks(){
   const response = await taskServices.getAll();
   tasks.value = response.data
@@ -88,6 +105,7 @@ onMounted( async () => {
   await getPositions();
   await getTaskLists();
   await getTasks();
+  await getShifts();
 });
 
 watch(
@@ -318,8 +336,7 @@ async function handleUpdateTaskList() {
     await updateTaskList(taskListId.value);
     console.log("update task list successful");
 
-    const response = await task_listServices.get(taskListId.value);
-    console.log("fetched updated task list:", response.data.name);
+  await updateTaskList(taskListId.value)
 
     await Promise.all([getTaskLists(), getTasks()]); // Hey julian this helps makes sure that everything is there before resettinG, rather calling over the await getTaskLists();await getTasks(); over and over
   } 
@@ -374,7 +391,11 @@ const userModalSaveButton = () => //for the save button in the user modal, might
     app
     class = "drawer"
   >
+
+  <v-btn class = "publish-schedule-button" @click = "publishAndNotifyConfirmModal = true">Publish AND Notify</v-btn>
    
+<div class = "padded-dividing-line"></div>
+
   <v-expansion-panels>
   <v-expansion-panel title="Add User">
     <v-expansion-panel-text>
@@ -798,6 +819,38 @@ const userModalSaveButton = () => //for the save button in the user modal, might
   </div>
   </div>
 
+
+
+  <div v-if="publishAndNotifyConfirmModal" fluid class="modal">
+        
+  <div class = "modal-content">
+    <div class="flex-row">
+      <div class = flex-column>
+        <h3 class = "modal-text">Publish and Notify {{selectedTaskList}} ?</h3>
+    <span>All Schedule Employees will be notified of the published schedule.</span>
+  
+  </div>
+    
+     <v-btn class = "close-button" @click="publishAndNotifyConfirmModal= false">
+                <v-icon
+                    color="grey"
+                >mdi-close</v-icon>
+            </v-btn>
+            </div>
+
+            <div class ="dividing-line opacity-0"></div>
+      <div class="flex-row"> 
+        <v-btn class="option-button" @click="publishAndNotifyConfirmModal = false">
+            cancel
+        </v-btn>
+          <v-btn class="create-button" @click="publishAndNotifyConfirmModal = false, publishShifts()">
+            publish
+        </v-btn>
+      </div>
+      
+  </div>
+  </div>
+
 </template>
 
 <style scoped>
@@ -938,6 +991,26 @@ const userModalSaveButton = () => //for the save button in the user modal, might
     height: fit-content;
 }
 
+.publish-schedule-button{
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border-bottom: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 30px;
+    width: 200px;
+    height: fit-content;
+    font-size: 20px;
+     white-space: normal !important;
+     margin-top: 20px;
+}
+
+.publish-schedule-button :deep(.v-btn__content) {
+    white-space: normal !important;
+    text-align: center;
+    line-height: 1.2;
+}
 .delete-button{
     background-color: #b93f3f;
     color: white;
@@ -965,6 +1038,14 @@ const userModalSaveButton = () => //for the save button in the user modal, might
 .dividing-line{
   border-bottom: 5px solid #cfcfcf;
   margin: 10px 0;
+  
+}
+
+.padded-dividing-line{
+  border-bottom: 2.5px solid #cfcfcf;
+  margin: 10px 0;
+  margin-left: 20px;
+  margin-right: 20px;
   
 }
 .vertical-dividing-line{
