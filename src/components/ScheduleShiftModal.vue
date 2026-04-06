@@ -206,7 +206,6 @@ async function getEmployees(){
   }
   catch(error){
     message.value = "Error: " + error.code + ":" + error.message;
-    //console.log(message.value); //cant believe message is assigned but not used, (its passed to the sidebar)
     console.log(error);
   }
 }
