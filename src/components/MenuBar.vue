@@ -58,12 +58,12 @@ onMounted(() => {
 
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Home', click: '', photo: Dashboard },
+  { title: 'Home', route: { name: 'schedules' }, photo: Dashboard },
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Work Schedule', click: '', photo: Schedule },
-  { title: 'Preferences', click: '', photo: Schedule},
+  { title: 'Work Schedule', route: { name: '' }, photo: Schedule },
+  { title: 'Preferences', route: { name: '' }, photo: Schedule},
 ]);
 const Attendance_Open = ref(false);
 const Attendance_Items = ref([
