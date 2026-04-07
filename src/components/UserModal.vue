@@ -124,13 +124,13 @@ async function addAndEdit() {
     //console.log("commentData: ", foundUser.value.manager_notes);
     commentData.value = foundUser.value.manager_notes ?? "";//at time of writing , manager notes has not been tested to dev, so work-around
 
-    studentDoesNotExist();
+    studentDoesNotExist(); //switch to the other modal screen, for editing
 }
 
-async function getUser(id) {
-    console.log("Getting user with ID:", id);
+async function getUser(oc_id) {
+    console.log("Getting user with ID:", oc_id);
     try {
-        const response = await userServices.get(id);
+        const response = await userServices.getOCid(oc_id);
         console.log("User found successfully:", response.data);
         foundUser.value = response.data;
     } catch (error) {
