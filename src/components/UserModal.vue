@@ -87,21 +87,21 @@ async function putUser() {
             //console.log("pushing user with ID:", foundUser.value.id);
             const response = await userServices.update(foundUser.value.id, {
                 department_id: props.passedUser.department_id,
-                fName: foundUser.value.fName,
-                lName: foundUser.value.lName,
-                email: foundUser.value.email,
+                fName: form.value.firstName,
+                lName: form.value.lastName,
+                email: form.value.email,
                 role: form.value.role || "Employee",
-                phone_num: foundUser.value.phone_num,
-                oc_id: foundUser.value.oc_id,
-                pay_rate: foundUser.value.pay_rate || "8.75",
-                manager_notes: foundUser.value.manager_notes || "",
+                phone_num: form.value.phoneNumber,
+                oc_id: employeeId.value,
+                pay_rate: employeePayRate.value || "8.75",
+                manager_notes:  commentData.value || "",
             });
             console.log("Response: ", response.data);
-            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", foundUser.value.fName, "lname", foundUser.value.lName, "email", foundUser.value.email, "role", form.value.role || "Employee", "phone_num", foundUser.value.phone_num, "oc_id", foundUser.value.oc_id, "pay_rate", foundUser.value.pay_rate || "8.75", "manager_notes", foundUser.value.manager_notes || "");
+            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", form.value.firstName, "lname", form.value.lastName, "email", form.value.email, "role", form.value.role || "Employee", "phone_num", form.value.phoneNumber, "oc_id", foundUser.value.oc_id, "pay_rate", employeePayRate.value || "8.75", "manager_notes", commentData.value || "");
             //emit('modal-close');
         } catch (error) {
             console.error("Error updating user:", error);
-            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", foundUser.value.fName, "lname", foundUser.value.lName, "email", foundUser.value.email, "role", form.value.role || "Employee", "phone_num", foundUser.value.phone_num, "oc_id", foundUser.value.oc_id, "pay_rate", foundUser.value.pay_rate || "8.75", "manager_notes", foundUser.value.manager_notes || "");
+            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", form.value.firstName, "lname", form.value.lastName, "email", form.value.email, "role", form.value.role || "Employee", "phone_num", form.value.phoneNumber, "oc_id", foundUser.value.oc_id, "pay_rate", employeePayRate.value || "8.75", "manager_notes", commentData.value || "");
         }
     }
     else
@@ -114,15 +114,15 @@ async function putUser() {
                 //return;
             }
             const response = await userServices.create({
-                department_id: props.passedUser.value.department_id,
-                fName: foundUser.value.fName,
-                lName: foundUser.value.lName,
-                email: foundUser.value.email,
-                role: form.value.role ?? "Employee",
+                department_id: props.passedUser.department_id,
+                fName: form.value.firstName,
+                lName: form.value.lastName,
+                email: form.value.email,
+                role: form.value.role || "Employee",
                 phone_num: form.value.phoneNumber,
                 oc_id: employeeId.value,
-                pay_rate: employeePayRate.value ?? "8.75",
-                manager_notes: commentData.value ?? "",
+                pay_rate: employeePayRate.value || "8.75",
+                manager_notes:  commentData.value || "",
             });
             console.log("User created successfully:", response.data);
             emit('modal-close');
