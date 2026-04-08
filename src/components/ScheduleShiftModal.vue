@@ -201,9 +201,9 @@ async function getEmployees() {
   const user_id = Utils.getStore("user").userId;
   try{
     //console.log("user: ", user_id);
-    //const response = await getUser(user_id);
+    const response = await getUser(user_id);
     console.log("Getting employees for department id:", response.department_id);
-    //const deptResponse = await userServices.getDept(response.department_id);
+    const deptResponse = await userServices.getDept(response.department_id);
     employees.value = deptResponse.data;
     console.log("returned:" + employees.value);
 
