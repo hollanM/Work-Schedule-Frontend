@@ -89,7 +89,7 @@ const Settings_Items = ref([
 const Profile_Open = ref(false);
 const Profile_Items = ref([
   { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
-  { title: 'Logout', route: { name: 'login' }, photo: Logout },
+  { title: 'Logout', action: 'logout', photo: Logout }, // CHANGED: never actually logged out, instead just redirected to login page.
 ]);
 
 
