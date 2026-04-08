@@ -13,6 +13,7 @@ import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
 
 const props = defineProps({
+  passedUser: { type: Object, default: () => ({}) },
   employee_name: { type: [Number, String], required: true },
   date: { type: String, required: true }
 });
@@ -184,11 +185,26 @@ async function getTaskLists(){
   }
 }
 
-async function getEmployees(){
+async function getUser(id) {
+    //console.log("Getting user with ID:", id);
+    try {
+        const response = await userServices.get(id);
+        user.value = response.data;
+        return user.value;
+    } catch (error) {
+        console.error("Error adding user:", error);
+    }
+}
+
+async function getEmployees() {
   //this gets users who are "employees.." still needs to be department specific. it is not yet.
+  const user_id = Utils.getStore("user").userId;
   try{
-    const response = await userServices.getAll();
-    employees.value = response.data;
+    //console.log("user: ", user_id);
+    //const response = await getUser(user_id);
+    console.log("Getting employees for department id:", response.department_id);
+    //const deptResponse = await userServices.getDept(response.department_id);
+    employees.value = deptResponse.data;
     console.log("returned:" + employees.value);
 
     for (const emp of employees.value) {
