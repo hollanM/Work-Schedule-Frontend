@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
+import store from "./store/store.js";
 
 import Login from "./views/Login.vue";
-
 import TutorialsList from "./views/TutorialsList.vue";
 import EditTutorial from "./views/EditTutorial.vue";
 import AddTutorial from "./views/AddTutorial.vue";
@@ -55,7 +55,6 @@ const router = createRouter({
       props: true,
     },
     {
-
       path: "/schedules",
       name: "schedules",
       component: Schedules,
@@ -67,6 +66,25 @@ const router = createRouter({
       props: true,
     },
   ],
+});
+
+// Checks if user is logged in before letting the user access any other page
+router.beforeEach((to, from, next) => {
+  const loginUser = store.getters.getLoginUserInfo;
+
+  if (to.name === "login") {
+    if (loginUser) {
+      next({ name: "schedules" });
+    } else {
+      next();
+    }
+  } else {
+    if (loginUser) {
+      next();
+    } else {
+      next({ name: "login" });
+    }
+  }
 });
 
 export default router;
