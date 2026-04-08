@@ -16,13 +16,17 @@ import shiftServices from "../services/shiftServices";
 import date_timeServices from "../services/date_timeServices";
 import userServices from "../services/userServices";
 import addUserModal from "../components/UserModal.vue";
-
+import Utils from "../config/utils.js";
+import departmentServices from "../services/departmentSerivces.js";
 const currentDate = ref(new Date());
 const currentView = ref("week");
 const isUserModalOpened = ref(false);
 const employees = ref([]);
 const shifts = ref([]);
 const positions = ref([]);
+
+const user = ref([]);
+const department = ref([]);
 
 const showModal = ref(false);
 const date = ref("");
@@ -349,7 +353,45 @@ function getShiftStartingInHour(employeeId, hourIndex) {
   });
 }
 
+async function getUser() {
+    const user_id = Utils.getStore("user").userId;
+    //console.log("Getting user with ID:", id);
+    try {
+        const response = await userServices.get(user_id);
+        user.value = response.data;
+        console.log("User data retrieved:", user.value);
+    } catch (error) {
+        console.error("Error adding user:", error);
+    }
+}
+
+async function createDept() {
+    try {
+        const newDept = {
+            name: "",
+            break_time_allotted: 15,
+        };
+        const response = await departmentServices.create(newDept);
+        const department = response.data;
+        console.log("Department created:", response.data);
+    } catch (error) {
+        console.error("Error creating department:", error);
+    }
+}
+
+async function checkUserData() {
+    if (!user.value.department_id) {
+      //console.warn("User data is missing department_id:", user.value);
+      await createDept();
+    } else {
+      //console.log("User data is valid:", user.value);
+      await getDepartment(user.value.department_id);
+    }
+}
+
 onMounted(async () => {
+  await getUser();
+  await checkUserData();
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();

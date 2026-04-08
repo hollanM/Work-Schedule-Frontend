@@ -197,11 +197,12 @@ async function getUser(id) {
 }
 
 async function getEmployees() {
-  //this gets users who are "employees.." still needs to be department specific. it is not yet.
+  //this gets users who are "employees.."
   const user_id = Utils.getStore("user").userId;
   try{
     //console.log("user: ", user_id);
     const response = await getUser(user_id);
+    user.value = response;
     console.log("Getting employees for department id:", response.department_id);
     const deptResponse = await userServices.getDept(response.department_id);
     employees.value = deptResponse.data;
@@ -292,16 +293,9 @@ function toSqlDateTime(date) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
 }
 
-
-
-
-
 async function createShift(){
     const formData = getFormData();
     console.log("Form Data to submit:", formData);
-    // Here you would send formData to your backend API to create the shift
-    // Example: await shiftServices.create(formData);
-    
 
     const shiftTime = formData.shiftTime
     const [startStr, endStr] = shiftTime.split(' - ')
@@ -315,9 +309,11 @@ async function createShift(){
     start_time.value = await createDateTime(sqlStart)
     end_time.value = await createDateTime(sqlEnd)
 
+    //console.log("department id:", user.value.department_id); //confirmed working
+
     const response = await shiftServices.create({
       user_id: formData.employee_id,
-      
+      //department_id: user.value.department_id, //need a shift task list first because foreign keys...
       start_day_id: start_time.value,
       end_day_id: end_time.value,
       color: formData.color,
