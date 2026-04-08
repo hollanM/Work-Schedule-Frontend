@@ -72,8 +72,70 @@ watch(() => props.selectedComponent, (value) => {
 
 const changeModalContent = (item) => {
     //console.log("Changing modal content to:", item);
+    if(item == 'ProfileModal' && props.isOpen)
+    {
+        putUser();
+    }
     currentComponent.value = item;
 };
+
+async function putUser() {
+    //console.log("foundUser: " + JSON.stringify(foundUser.value));
+    if(foundUser.value.id != null)
+    {
+        try {
+            //console.log("pushing user with ID:", foundUser.value.id);
+            const response = await userServices.update(foundUser.value.id, {
+                department_id: props.passedUser.department_id,
+                fName: form.value.firstName,
+                lName: form.value.lastName,
+                email: form.value.email,
+                role: form.value.role || "Employee",
+                phone_num: form.value.phoneNumber,
+                oc_id: employeeId.value,
+                pay_rate: employeePayRate.value || "8.75",
+                manager_notes:  commentData.value || "",
+            });
+            console.log("Response: ", response.data);
+            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", form.value.firstName, "lname", form.value.lastName, "email", form.value.email, "role", form.value.role || "Employee", "phone_num", form.value.phoneNumber, "oc_id", foundUser.value.oc_id, "pay_rate", employeePayRate.value || "8.75", "manager_notes", commentData.value || "");
+            //emit('modal-close');
+        } catch (error) {
+            console.error("Error updating user:", error);
+            console.log("user data: ", "id", foundUser.value.id, "department", props.passedUser.department_id, "fname", form.value.firstName, "lname", form.value.lastName, "email", form.value.email, "role", form.value.role || "Employee", "phone_num", form.value.phoneNumber, "oc_id", foundUser.value.oc_id, "pay_rate", employeePayRate.value || "8.75", "manager_notes", commentData.value || "");
+        }
+    }
+    else
+    {
+        try {
+            console.log("pushing user");
+            //if(!newUser.fName || !newUser.lName || !newUser.email || !newUser.role || !newUser.phone_num || !newUser.oc_id || !newUser.pay_rate || !newUser.manager_notes)
+            {
+                //console.log("Missing required fields");
+                //return;
+            }
+            const response = await userServices.create({
+                department_id: props.passedUser.department_id,
+                fName: form.value.firstName,
+                lName: form.value.lastName,
+                email: form.value.email,
+                role: form.value.role || "Employee",
+                phone_num: form.value.phoneNumber,
+                oc_id: employeeId.value,
+                pay_rate: employeePayRate.value || "8.75",
+                manager_notes:  commentData.value || "",
+            });
+            console.log("User created successfully:", response.data);
+            emit('modal-close');
+        } catch (error) {
+            console.error("Error creating user:", error);
+        }
+    }
+}
+
+const roleItems = [
+    { title: 'Employee', value: 'Employee' },
+    { title: 'Manager', value: 'Manager' },
+];
 
 const scheduleItems = [
     { title: 'Schedule 1', route: '/schedule1' },
@@ -102,6 +164,7 @@ async function quickAdd() {
     await getUser(Id.value).then(() => {
         emit('modal-close'); //close the modal after adding the user
     });
+    putUser(); 
 }
 
 async function addAndEdit() {
@@ -124,15 +187,18 @@ async function addAndEdit() {
     //console.log("commentData: ", foundUser.value.manager_notes);
     commentData.value = foundUser.value.manager_notes ?? "";//at time of writing , manager notes has not been tested to dev, so work-around
 
-    studentDoesNotExist();
+    studentDoesNotExist(); //switch to the other modal screen, for editing
 }
 
-async function getUser(id) {
-    console.log("Getting user with ID:", id);
+async function getUser(oc_id) {
+    console.log("Getting user with ID:", oc_id);
     try {
-        const response = await userServices.get(id);
-        console.log("User found successfully:", response.data);
+        const response = await userServices.getOCid(oc_id);
+        //console.log("User found successfully:", response.data);
         foundUser.value = response.data;
+        //console.log("PassedUser: ", props.passedUser);
+        foundUser.value.department_id = props.passedUser.department_id; //change the users department_id to match the managers
+        //console.log("foundUser: ", foundUser.value);
     } catch (error) {
         console.error("Error adding user:", error);
     }
@@ -220,9 +286,8 @@ async function getUser(id) {
                                             <input id="phoneNumberForm" type="text" v-model="form.phoneNumber" />
                                         </div>
                                         <div class="field">
-                                            <label>Role</label>
-                                            <input id="roleForm" type="text" v-model="form.role" />
-                                        </div>
+                                            <p class="dropdown-title"> Role </p>
+                                            <v-select v-model="form.role" :items="roleItems" item-title="title" item-value="title" class="dropdown" hide-details @click.stop></v-select>                                        </div>
                                     </div> <!-- will need to change later to the users google picture -->
                                     <img id="userModalImage" src=""/>
                                 </div>

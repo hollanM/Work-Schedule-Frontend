@@ -7,7 +7,12 @@ export default {
   get(id) {
     return apiClient.get(`/users/${id}`);
   },
-
+  getDept(department) { //get all users within the same department
+    return apiClient.get(`/users/department/${department}`);
+  },
+  getOCid(oc_id) { //get a single user with the requested employee id
+    return apiClient.get(`/users/employee/${oc_id}`);
+  },
   create(data) {
     return apiClient.post("/users", data);
   },
