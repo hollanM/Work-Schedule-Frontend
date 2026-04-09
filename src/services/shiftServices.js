@@ -8,6 +8,9 @@ export default {
     return apiClient.get(`/shifts/${id}`);
   },
 
+   getForUser(id) {
+    return apiClient.get(`/shifts/users/${id}`);
+  },
   create(data) {
     return apiClient.post("/shifts", data);
   },
