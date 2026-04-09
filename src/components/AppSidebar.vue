@@ -5,9 +5,10 @@ import userServices from "../services/userServices"
 import positionServices from "../services/positionServices.js"
 import task_listServices from '../services/task_listServices.js'
 import taskServices from '../services/taskServices.js'
+import addUserModal from "../components/UserModal.vue";
 import shiftServices from '../services/shiftServices.js'
 
-
+//comment.
 const user = ref(null);
 const currentUser = ref(null)
 const drawer = ref(false)
@@ -45,6 +46,7 @@ const publishAndNotifyConfirmModal = ref(false)
 const shifts = ref([])
 const userSession = computed(() => store.getters.getLoginUserInfo);
 console.log(userSession.value);
+const isUserModalOpened = ref(false); //for opening and closing of the add user modal
 
 async function savePosition(){
   const response = await positionServices.create({
@@ -266,6 +268,40 @@ for (const task of tasks_to_add) {
 }
 }
 
+//slot default fixes, since they got so bad I couldent work anymore -Austin
+function openEditPosition(item) {
+  selectedPosition.value = item.name
+  positionId.value = item.id
+  editPositionModal.value = true
+}
+
+function openDeletePosition(item) {
+  selectedPosition.value = item.name
+  positionId.value = item.id
+  deletePositionModal.value = true
+}
+
+function openEditTaskList(item) {
+  selectedTaskList.value = item.name
+  taskListId.value = item.id
+  setTaskEditModal()
+  editTaskListModal.value = true
+}
+
+function openDeleteTaskList(item) {
+  selectedTaskList.value = item.name
+  taskListId.value = item.id
+  deleteTaskListModal.value = true
+}
+
+function finishAddTaskList() {
+  saved_tasks.value = [...new_tasks.value]
+  resetTaskListModal()
+  addTaskListModal.value = false
+  createTaskList()
+}
+//end of new functions
+
 // async function handleUpdateTaskList() {
 //   console.log("top of update function");
 //   saved_tasks.value = [...new_tasks.value]
@@ -312,9 +348,6 @@ async function handleUpdateTaskList() {
   editTaskListModal.value = false;
 }
 
-
-
-
 function setTaskEditModal(){
   task_list_name.value = selectedTaskList.value
   latest_task_id.value = tasks.value.length + 1
@@ -324,9 +357,35 @@ function setTaskEditModal(){
   console.log("new tasks to prefill: " + new_tasks.value);
 }
 
+//add user modal functions start
+const openModal = () => 
+{
+  //console.log("Session: ", currentUser.value);
+  drawer.value = false; //close the drawer when opening the modal
+  isUserModalOpened.value = true;
+};
+const closeUserModal = () =>  //currently unused, but could be later
+{
+  isUserModalOpened.value = false;
+};
+
+const userModalSaveButton = () => //for the save button in the user modal, might need it later
+{
+
+}
+//add user modal functions end
 </script>
 
 <template id="sidebarTemplate">
+
+  <!-- add User Modal -->
+  <addUserModal
+  v-if="isUserModalOpened"
+  :isOpen="isUserModalOpened"
+  :passedUser="currentUser"
+  @modal-close="closeUserModal"/>
+  <!-- add end of User Modal -->
+
   <v-navigation-drawer
     v-model="drawer"
     app
@@ -338,6 +397,19 @@ function setTaskEditModal(){
 <div class = "padded-dividing-line"></div>
 
   <v-expansion-panels>
+  <v-expansion-panel title="Add User">
+    <v-expansion-panel-text>
+      <v-list>
+        <v-list-item @click="openModal()">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <v-icon>mdi-account-plus</v-icon>
+            <span>Add User</span>
+          </div>
+        </v-list-item>
+      </v-list>
+    </v-expansion-panel-text>
+  </v-expansion-panel>
+
   <v-expansion-panel title="Positions">
     <v-expansion-panel-text>
       <v-list>
@@ -349,15 +421,17 @@ function setTaskEditModal(){
         >
         <div class ="flex-row">
         <span>{{ item.name }}</span>
-        <div class = "flex-row-right">
-      <v-icon class="hover-icon" @click="editPositionModal = true, selectedPosition = item.name, positionId = item.id">
-        mdi-pencil
-      </v-icon>
-      <v-icon class="hover-icon" @click="deletePositionModal = true, selectedPosition = item.name, positionId = item.id">
-        mdi-trash-can-outline
-      </v-icon>
-      </div>
-    </div>
+          <div class = "flex-row-right">
+            <!-- slot default fix, removed the inline updates to new functions -->
+            <v-icon class="hover-icon" @click="openEditPosition(item)">
+              mdi-pencil
+            </v-icon>
+            <v-icon class="hover-icon" @click="openDeletePosition(item)">
+              mdi-trash-can-outline
+            </v-icon>
+            <!-- end of fixes here -->
+          </div>
+        </div>
       
       </v-list-item>
       </v-list>
@@ -384,16 +458,18 @@ function setTaskEditModal(){
           :key="item.id"
         >
         <div class ="flex-row">
-        <span>{{ item.name }}</span>
-        <div class = "flex-row-right">
-      <v-icon class="hover-icon" @click="editTaskListModal = true, selectedTaskList = item.name, taskListId = item.id, setTaskEditModal()">
-        mdi-pencil
-      </v-icon>
-      <v-icon class="hover-icon" @click="deleteTaskListModal = true, selectedTaskList = item.name, taskListId = item.id">
-        mdi-trash-can-outline
-      </v-icon>
+          <span>{{ item.name }}</span>
+          <div class = "flex-row-right">
+            <!-- slot default fix, removed the inline updates to new functions -->
+            <v-icon class="hover-icon" @click="openEditTaskList(item)">
+              mdi-pencil
+            </v-icon>
+            <v-icon class="hover-icon" @click="openDeleteTaskList(item)">
+              mdi-trash-can-outline
+            </v-icon>
+            <!-- end of fixes here -->
+          </div>
       </div>
-    </div>
       
       </v-list-item>
       </v-list>
@@ -501,66 +577,66 @@ function setTaskEditModal(){
   </div>
 
   
-    <div v-if="addTaskListModal" fluid class="modal">
+  <div v-if="addTaskListModal" fluid class="modal">
         
-  <div class = "task-list-modal-content">
-    <div class="task-list-flex-row">
+    <div class = "task-list-modal-content">
+      <div class="task-list-flex-row">
 
-     <div id ="progress-div" class = "flex-column">
-      <h3 id="task-list-header" class = "black-modal-text">New Task List</h3>
-      <div class ="flex-column align-items-center">
-        <div class="flex-row"> 
-          <v-icon v-if="task_list_name_chosen"
-          :style="{color: check_mark_color}"
-          >
-            mdi-check-circle
-          </v-icon>
-          <v-icon v-if="!task_list_name_chosen"
-          :style="{color: current_step_color}"
-          >
-              mdi-numeric-1-circle
-          </v-icon>
-          <span>Name</span>
+        <div id ="progress-div" class = "flex-column">
+          <h3 id="task-list-header" class = "black-modal-text">New Task List</h3>
+          <div class ="flex-column align-items-center">
+            <div class="flex-row"> 
+              <v-icon v-if="task_list_name_chosen"
+              :style="{color: check_mark_color}"
+              >
+                mdi-check-circle
+              </v-icon>
+              <v-icon v-if="!task_list_name_chosen"
+              :style="{color: current_step_color}"
+              >
+                  mdi-numeric-1-circle
+              </v-icon>
+              <span>Name</span>
+            </div>
+              <div class="flex-row"> 
+
+              <v-icon
+              :style="{color: unfinished_step_color}"
+              >
+                  mdi-numeric-2-circle
+              </v-icon>
+              <span>Tasks</span>
+            </div>
+            
+          </div>
         </div>
-          <div class="flex-row"> 
+    
+      <div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
 
-           <v-icon
-          :style="{color: unfinished_step_color}"
-          >
-              mdi-numeric-2-circle
-          </v-icon>
-          <span>Tasks</span>
-        </div>
-         
-      </div>
-    </div>
-  
-<div id="vertical-task_list-div" class ="vertical-dividing-line"></div>
-
-<div id = "name-task_list-div" class = "flex-column">
-  <div class="flex-row">
-      <h3 v-if="!task_list_name_chosen" class ="modal-text">Name your Task List</h3>
-      <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
-        <v-btn class = "close-button" @click="addTaskListModal= false, resetTaskListModal()">
-                <v-icon
-                    color="grey"
-                >mdi-close</v-icon>
-            </v-btn>
-  </div>
-  <div class="divding-line"></div>
-
-  <div v-if="!task_list_name_chosen" class="flex-column">
-<v-text-field 
-    v-model="task_list_name"
-    label="Name"></v-text-field>
-
-
-    <div class="flex-row-right">
-          <v-btn v-if="task_list_name.length > 0" class="create-button" @click="task_list_name_chosen = true, unfinished_step_color = current_step_color, saved_task_list_name = task_list_name">
-            Continue
-        </v-btn>
-      </div>
-  </div>
+        <div id = "name-task_list-div" class = "flex-column">
+          <div class="flex-row">
+              <h3 v-if="!task_list_name_chosen" class ="modal-text">Name your Task List</h3>
+              <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
+              <v-btn class = "close-button" @click="addTaskListModal= false, resetTaskListModal(), console.log(task_list_name)">
+                  <v-icon
+                      color="grey"
+                  >mdi-close</v-icon>
+              </v-btn>
+              </div>
+              <div class="divding-line"></div>
+                <div v-if="!task_list_name_chosen" class="flex-column">
+                  <v-text-field 
+                      v-model="task_list_name"
+                      label="Name">
+                  </v-text-field>
+                  <div class="flex-row-right">
+                        <!-- slot default fixes here -->
+                          <v-btn v-if="new_tasks.length > 0" class="create-button" @click="finishAddTaskList()">
+                            Finish
+                          </v-btn>
+                        <!-- end of fixes -->
+                    </div>
+                  </div>
 
     <div v-if="task_list_name_chosen" class="flex-column">
       <span id ="no-tasks-span" v-if="new_tasks.length === 0">No Tasks Added</span>
@@ -589,14 +665,19 @@ function setTaskEditModal(){
         </v-btn>
 
 
-    <div class="flex-row-right">
-          <v-btn v-if="new_tasks.length > 0"class="create-button" @click="addTaskListModal= false, saved_tasks = new_tasks, resetTaskListModal(), createTaskList()">
-            Finish
-        </v-btn>
-      </div>
+    
   
   </div>
+  <div class="flex-row-right">
+          <!-- slot default fixes here -->
+          <v-btn v-if="task_list_name.length > 0" class="create-button" 
+            @click="task_list_name_chosen = true; unfinished_step_color = current_step_color; saved_task_list_name = task_list_name">
+            Continue
+          </v-btn>
+          <!-- end of fixes -->
+      </div>
    </div>
+   
 
 </div>
 
@@ -786,7 +867,7 @@ function setTaskEditModal(){
     height: 30px !important;
     min-width: 30px;
     font-size: 20px;
-    z-index: 1001;
+    z-index: 995;
     position: absolute;
   top: 50%;
   left: 256px; /* drawer width */
@@ -804,7 +885,7 @@ function setTaskEditModal(){
     height: 30px !important;
     min-width: 30px;
     font-size: 20px;
-    z-index: 1001;
+    z-index: 995;
     position: absolute;
   top: 50%;
   left: 0; /* drawer width */
@@ -829,7 +910,7 @@ function setTaskEditModal(){
   top: 0%;
   background-color: rgba(0, 0, 0, 0.158);
   opacity: 100%;
-  z-index: 10000;
+  z-index: 994;
   width:100%;
   height:100%;
   display: flex;

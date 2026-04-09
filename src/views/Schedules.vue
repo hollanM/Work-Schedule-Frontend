@@ -556,22 +556,13 @@ onMounted(async () => {
     </v-card>
   </v-container>
 
-  <addUserModal
-    v-if="isUserModalOpened"
-    :isOpen="isUserModalOpened"
-    @modal-close="closeUserModal"
-  />
-
-  <transition name="fade">
-    <ScheduleShiftModal
-      v-if="showModal"
-      :employee_name="employeeName"
-      :date="date"
-      @close="
-        showModal = false;
-        reload();
-      "
-    />
+  <!-- Julians Form changes start here -->
+   <transition name="fade">
+  <ScheduleShiftModal v-if="showModal"
+  @close="showModal = false; reload()"
+  :employee_name="employeeName"
+  :date="date"
+  ></ScheduleShiftModal>
   </transition>
 </template>
 

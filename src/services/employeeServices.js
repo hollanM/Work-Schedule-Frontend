@@ -7,7 +7,6 @@ export default {
   get(id) {
     return apiClient.get(`/employees/${id}`);
   },
-
   create(data) {
     return apiClient.post("/employees", data);
   },
@@ -17,7 +16,5 @@ export default {
   delete(id) {
     return apiClient.delete(`/employees/${id}`);
   },
-  deleteAll() {
-    return apiClient.delete(`/employees`);
-  },
 };
+
