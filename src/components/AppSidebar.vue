@@ -123,7 +123,8 @@ function toggle(){
 }
 
 async function editPosition(id){
-  const obj = {name: positionName.value}
+  const obj = {name: selectedPosition.value}
+  console.log("New name: "+ selectedPosition.value)
   const response = await positionServices.update(id, obj);
   console.log(response.data)
   await getPositions();
@@ -308,8 +309,7 @@ function setTaskEditModal(){
 
 </script>
 
-<template>
-   
+<template id="sidebarTemplate">
   <v-navigation-drawer
     v-model="drawer"
     app
@@ -416,7 +416,7 @@ function setTaskEditModal(){
 
       <div class="dividing-line"> </div>
       <div class="flex-row-right">
-          <v-btn class="create-button" @click="savePosition(), addPositionModal = false">
+          <v-btn class="create-button" @click="savePosition(), addPositionModal = false, positionName = ''">
             Save
         </v-btn>
       </div>
@@ -722,6 +722,7 @@ function setTaskEditModal(){
 </template>
 
 <style scoped>
+
 .circle-button{
     background-color: #ff000000;
     color: rgb(148, 148, 148);
@@ -908,6 +909,7 @@ function setTaskEditModal(){
 .opacity-0{
   opacity: 0;
 }
+
 .black-modal-text{
       color: rgb(0, 0, 0);
     margin: 0;
@@ -971,7 +973,9 @@ function setTaskEditModal(){
 #add-task-button-2{
   margin-bottom: 20px;
 }
-
+  
+#sidebarTemplate /* I tried but this did not put the sidebar under the popup */
+{
+  z-index: 980;
+}
 </style>
-
-
