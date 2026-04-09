@@ -37,6 +37,14 @@ const retrieveTutorials = () => {
     });
 };
 
+const goToProfile = () => {
+  router.push({
+    name: "editProfile",
+    params: { id: user.userId }
+  });
+};
+
+
 retrieveTutorials();
 </script>
 
@@ -46,7 +54,7 @@ retrieveTutorials();
       <v-toolbar>
         <v-toolbar-title
           >Hello, {{ user.fName }} {{ user.lName }}!</v-toolbar-title
-        >
+        > 
       </v-toolbar>
       <br /><br />
       <v-card>
