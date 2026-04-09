@@ -10,6 +10,8 @@ import AddLesson from "./views/AddLesson.vue";
 import EditLesson from "./views/EditLesson.vue";
 import Schedules from "./views/Schedules.vue";
 import EditProfile from "./views/EditProfile.vue";
+import EmployeeDashboard from "./views/EmployeeDashboard.vue";
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,6 +67,11 @@ const router = createRouter({
       component: EditProfile,
       props: true,
     },
+      path: "/employee-dashboard",
+      name: "employee-dashboard",
+      component: EmployeeDashboard,
+    }
+    
   ],
 });
 
