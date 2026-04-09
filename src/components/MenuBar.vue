@@ -123,7 +123,7 @@ const handleSettingsItemClick = (item) => {
           </router-link>
         </div>
       </div>
-      <v-menu v-if="user && role === 'Manager'" v-model="Dashboard_Open" transition="slide-y-transition">
+      <v-menu v-if="user" v-model="Dashboard_Open" transition="slide-y-transition">
         <template #activator="{ props }">
           <v-btn id="Dashboard_Div" class="container" v-bind="props">
             <v-img id="image" :src="Dashboard" height="40" width="40" contain/>
@@ -142,7 +142,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-if="user && role === 'Manager'" v-model="Schedule_Open" transition="slide-y-transition" >
+      <v-menu v-if="user" v-model="Schedule_Open" transition="slide-y-transition" >
         <template #activator="{ props }">
           <v-btn id="Schedule_Div" class="container" v-bind="props">
             <v-img id="image" :src="Schedule" height="40" width="40" contain/>
@@ -161,7 +161,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-if="user && role === 'Manager'" v-model="Attendance_Open" transition="slide-y-transition">
+      <v-menu v-if="user" v-model="Attendance_Open" transition="slide-y-transition">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-img id="image" :src="Attendance" height="40" width="40" contain/>
