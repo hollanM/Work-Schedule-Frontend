@@ -11,6 +11,7 @@ import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
 
+// merge
 const props = defineProps({
   employee_name: { type: [Number, String], required: true },
   date: { type: String, required: true },
