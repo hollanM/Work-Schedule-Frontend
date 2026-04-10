@@ -89,7 +89,7 @@ function generateTimes() {
     list.push(formatTime(mins))
   }
 
-  // Hi
+  // Hi 
   timeList.value = list
 }
 
