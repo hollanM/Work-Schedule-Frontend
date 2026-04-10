@@ -18,10 +18,11 @@ import SwitchWorkplaces from "/SwitchWorkplaces.png";
 import timesheets from "/timesheets.png";
 import TimeTracker from "/TimeTracker.png";
 
-import { ref, onMounted } from "vue";
+import { ref, computed,onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
 import { useRouter, useRoute } from 'vue-router'
+import userServices from "../services/userServices";
 import store from "../store/store"
 
 const router = useRouter()
@@ -30,6 +31,11 @@ const title = ref("Tutorials");
 const initials = ref("");
 const name = ref("");
 const logoURL = ref("");
+//need for the disablement of parts of the UI
+const userSession = computed(() => store.getters.getLoginUserInfo);
+const currentUser = ref([]);
+const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
+
 
 const resetMenu = () => {
   user.value = null;
@@ -53,37 +59,35 @@ const logout = () => {
     });
 };
 
-onMounted(() => {
-  logoURL.value = ocLogo;
-  resetMenu();
-});
-
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Home', route: { name: 'schedules' }, photo: Dashboard },
+  { title: 'Home', route: { name: 'schedules' }, photo: Dashboard }, //turn into button
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Work Schedule', route: { name: '' }, photo: Schedule },
-  { title: 'Preferences', route: { name: '' }, photo: Schedule},
+  { title: 'Work Schedule', route: { name: '' }, photo: Schedule }, //turn into button
+  //{ title: 'Preferences', route: { name: '' }, photo: Schedule},
 ]);
 const Attendance_Open = ref(false);
-const Attendance_Items = ref([
-  { title: 'Time Sheets', click: '', photo: timesheets },
-  { title: 'Time Tracker', click: '', photo: TimeTracker },
-  { title: 'Lock as Terminal', click: '', photo: LockAsTerminal },
+const Attendance_Items_Employee = ref([
+  { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
+]);
+const Attendance_Items_Manager = ref([
+  { title: 'Time Sheets', click: '', photo: timesheets }, //manager only
+  { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
+  { title: 'Lock as Terminal', click: '', photo: LockAsTerminal }, //manager only
 ]);
 const Inbox_Open = ref(false);
 const Inbox_Items = ref([
-  { title: 'Inbox', click: '', photo: Inbox },
+  { title: 'Inbox', click: '', photo: Inbox }, //merge with the bell icon
 ]);
 const Settings_Open = ref(false);
-const Settings_Items = ref([
-  { title: 'Profile', click: '',photo: Profile }, //we need to have functions now instead of router links here
+const Settings_Items = ref([ //need to merge this with the profile button eventually
+  //{ title: 'Profile', click: '',photo: Profile },
   { title: 'Settings', click: '', photo: Settings },
   { title: 'My Schedule', click: '', photo: MySchedule },
   { title: 'My Availability', click: '', photo: MyAvailability },
-  { title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
+  //{ title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
 ]);
 
 const Profile_Open = ref(false);
@@ -91,6 +95,24 @@ const Profile_Items = ref([
   { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
   { title: 'Logout', action: 'logout', photo: Logout }, // CHANGED: never actually logged out, instead just redirected to login page.
 ]);
+
+async function getCurrentUser(){
+    //this guard is not needed, session works as intended.
+    //console.log('userSession.value:', userSession.value);
+    if (!userSession.value || !userSession.value.userId) {
+      console.log('No user session or userId');
+      return;
+    }
+    const response = await userServices.get(userSession.value.userId);
+    currentUser.value = response.data;
+    console.log('Current user data:', currentUser.value);
+}
+
+onMounted(async () => {
+  await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
+  logoURL.value = ocLogo;
+  resetMenu();
+});
 
 
 const handleSettingsItemClick = (item) => {
@@ -152,7 +174,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="user">
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="!isManager">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-img id="image" :src="Attendance" height="40" width="40" contain/>
@@ -161,7 +183,26 @@ const handleSettingsItemClick = (item) => {
           </v-btn>
         </template>
         <v-list class="dropdown">
-          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items_Employee" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Attendance_Item.photo" width="24" height="24" contain/>
+            </template>
+            <v-list-item-title>
+              {{ Attendance_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="isManager">
+        <template #activator="{ props }">
+          <v-btn id="Attendance_Div" class="container" v-bind="props">
+            <v-img id="image" :src="Attendance" height="40" width="40" contain/>
+            <span>Attendance</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list class="dropdown">
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items_Manager" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
             <template #prepend>
               <v-img :src="Attendance_Item.photo" width="24" height="24" contain/>
             </template>
@@ -172,7 +213,7 @@ const handleSettingsItemClick = (item) => {
         </v-list>
       </v-menu>
       <v-spacer></v-spacer>
-      <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
+      <!-- <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Inbox_Div" class="container" v-bind="props">
             <v-img id="image" :src="Inbox" height="40" width="40" contain/>
@@ -190,7 +231,7 @@ const handleSettingsItemClick = (item) => {
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu>
+      </v-menu> -->
       <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">

@@ -16,6 +16,7 @@ import shiftServices from "../services/shiftServices";
 import date_timeServices from "../services/date_timeServices";
 import userServices from "../services/userServices";
 import addUserModal from "../components/UserModal.vue";
+import store from "../store/store.js"
 
 const currentDate = ref(new Date());
 const currentView = ref("week");
@@ -23,6 +24,9 @@ const isUserModalOpened = ref(false);
 const employees = ref([]);
 const shifts = ref([]);
 const positions = ref([]);
+const userSession = computed(() => store.getters.getLoginUserInfo);
+const currentUser = ref([]);
+const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
 
 const showModal = ref(false);
 const date = ref("");
@@ -193,6 +197,7 @@ function formatShiftTimeFromISO(isoString) {
 }
 
 function openShiftModal(selectedEmployeeName, selectedDate) {
+  if (!isManager.value) return;
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
   showModal.value = true;
@@ -290,7 +295,8 @@ function getWeekShiftStyle(shift) {
 }
 
 function openWeekCell(day) {
-  openShiftModal("", day.date);
+  if(userSession.value.userId && isManager.value) //getting rid of the + icon did not do it I also have to disable the button function for non manaers
+    openShiftModal("", day.date);
 }
 
 function isCompactWeekShift(shift) {
@@ -303,7 +309,8 @@ function isMediumWeekShift(shift) {
 }
 
 function openDayCell() {
-  openShiftModal("", selectedDateKey.value);
+  if(userSession.value.userId && isManager.value)
+    openShiftModal("", selectedDateKey.value);
 }
 
 function getDayShiftStyle(shift) {
@@ -349,7 +356,20 @@ function getShiftStartingInHour(employeeId, hourIndex) {
   });
 }
 
+async function getCurrentUser(){
+    //this guard is not needed, session works as intended.
+    //console.log('userSession.value:', userSession.value);
+    if (!userSession.value || !userSession.value.userId) {
+      console.log('No user session or userId');
+      return;
+    }
+    const response = await userServices.get(userSession.value.userId);
+    currentUser.value = response.data;
+    console.log('Current user data:', currentUser.value);
+}
+
 onMounted(async () => {
+  await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
@@ -450,7 +470,7 @@ onMounted(async () => {
                   class="week-calendar__cell-button"
                   @click="openWeekCell(day)"
                 >
-                  <v-icon size="16" color="success" class="week-calendar__cell-plus">
+                  <v-icon size="16" color="success" class="week-calendar__cell-plus" v-if="userSession.userId && isManager">
                     mdi-plus
                   </v-icon>
                 </button>
@@ -469,7 +489,7 @@ onMounted(async () => {
                   getEmployeeName(shift.user_id),
                   shift.shiftDate,
                 )
-              "
+              ",
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
