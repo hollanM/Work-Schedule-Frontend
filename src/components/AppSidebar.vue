@@ -8,7 +8,7 @@ import taskServices from '../services/taskServices.js'
 import addUserModal from "../components/UserModal.vue";
 import shiftServices from '../services/shiftServices.js'
 
-
+//comment.
 const user = ref(null);
 const currentUser = ref(null)
 const drawer = ref(false)
@@ -617,7 +617,7 @@ const userModalSaveButton = () => //for the save button in the user modal, might
           <div class="flex-row">
               <h3 v-if="!task_list_name_chosen" class ="modal-text">Name your Task List</h3>
               <h3 v-if="task_list_name_chosen" class ="modal-text">Add Tasks</h3>
-              <v-btn class = "close-button" @click="addTaskListModal= false, resetTaskListModal()">
+              <v-btn class = "close-button" @click="addTaskListModal= false, resetTaskListModal(), console.log(task_list_name)">
                   <v-icon
                       color="grey"
                   >mdi-close</v-icon>
@@ -665,7 +665,10 @@ const userModalSaveButton = () => //for the save button in the user modal, might
         </v-btn>
 
 
-    <div class="flex-row-right">
+    
+  
+  </div>
+  <div class="flex-row-right">
           <!-- slot default fixes here -->
           <v-btn v-if="task_list_name.length > 0" class="create-button" 
             @click="task_list_name_chosen = true; unfinished_step_color = current_step_color; saved_task_list_name = task_list_name">
@@ -673,9 +676,8 @@ const userModalSaveButton = () => //for the save button in the user modal, might
           </v-btn>
           <!-- end of fixes -->
       </div>
-  
-  </div>
    </div>
+   
 
 </div>
 
