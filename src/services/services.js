@@ -5,7 +5,7 @@ import Router from "../router.js";
 
 var baseurl = "";
 if (import.meta.env.DEV) {
-  baseurl = "http://localhost:3134/workerscheduling-t4/";
+  baseurl = "http://localhost:3100/workerscheduling-t4/";
 } else {
   baseurl = "/workerscheduling-t4/";
 }

@@ -234,6 +234,7 @@ const handleSettingsItemClick = (item) => {
           </v-card-text>
         </v-card>
       </v-menu> -->
+      <!-- I am added this text here to see if this change will go through for github -->
 
       <v-menu v-model="Profile_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
