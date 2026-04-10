@@ -27,6 +27,7 @@ const positions = ref([]);
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
+const selectedShift = ref(null); // holds the shift being edited
 
 const hourLabels = [
   "12A",
@@ -192,9 +193,10 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-function openShiftModal(selectedEmployeeName, selectedDate) {
+function openShiftModal(selectedEmployeeName, selectedDate, shift = null) {
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
+  selectedShift.value = shift; // sets the shift being edited (null if creating a new shift)
   showModal.value = true;
 }
 
@@ -457,19 +459,13 @@ onMounted(async () => {
               </template>
             </div>
 
-            <button
+            <div
               v-for="shift in weekCalendarShifts"
               :key="'week-shift-' + shift.id"
-              type="button"
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
               :style="getWeekShiftStyle(shift)"
-              @click="
-                openShiftModal(
-                  getEmployeeName(shift.user_id),
-                  shift.shiftDate,
-                )
-              "
+              @click.stop="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
@@ -481,7 +477,7 @@ onMounted(async () => {
               >
                 {{ shift.positionName }}
               </span>
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -530,14 +526,13 @@ onMounted(async () => {
               </button>
             </div>
 
-            <button
+            <div
               v-for="shift in dayCalendarShifts"
               :key="'day-shift-' + shift.id"
-              type="button"
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate)"
+              @click.stop="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -549,7 +544,7 @@ onMounted(async () => {
               >
                 {{ shift.positionName }}
               </span>
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -562,6 +557,7 @@ onMounted(async () => {
   @close="showModal = false; reload()"
   :employee_name="employeeName"
   :date="date"
+  :shift="selectedShift">
   ></ScheduleShiftModal>
   </transition>
 </template>
@@ -728,6 +724,13 @@ onMounted(async () => {
   padding: 10px 12px 12px;
   overflow: hidden;
   line-height: 1.2;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.week-event:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 12px 24px rgba(51, 96, 188, 0.26);
 }
 
 .week-event--compact {
@@ -891,6 +894,13 @@ onMounted(async () => {
   padding: 10px 12px 12px;
   overflow: hidden;
   line-height: 1.2;
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.day-event:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 12px 24px rgba(51, 96, 188, 0.26);
 }
 
 .day-event--compact {
