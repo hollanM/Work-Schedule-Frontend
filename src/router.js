@@ -67,6 +67,7 @@ const router = createRouter({
       component: EditProfile,
       props: true,
     },
+    {
       path: "/employee-dashboard",
       name: "employee-dashboard",
       component: EmployeeDashboard,
