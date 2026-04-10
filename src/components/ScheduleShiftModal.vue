@@ -84,16 +84,42 @@ function generateTimes() {
   for (let mins = 0; mins < 24 * 60; mins += 5) {
     list.push(formatTime(mins));
   }
-  timeList.value = list;
+
+  // Hi 
+  timeList.value = list
 }
 
-const colorSwatches = [
-  ["#D32F2F", "#F57C00", "#FBC02D", "#689F38", "#00897B", "#1976D2"],
-  ["#C2185B", "#E64A19", "#F9A825", "#43A047", "#00ACC1", "#3949AB"],
-  ["#7B1FA2", "#8D6E63", "#9E9D24", "#2E7D32", "#00838F", "#5E35B1"],
-  ["#AD1457", "#6D4C41", "#827717", "#558B2F", "#00695C", "#283593"]
-];
 
+const shiftRanges = ref([])
+const shiftTime = ref('')
+
+function generateShiftRanges() {
+  const ranges = []
+
+  for (let i = 0; i < timeList.value.length; i++) {
+    for (let j = i + 1; j < timeList.value.length; j++) {
+      ranges.push(`${timeList.value[i]} - ${timeList.value[j]}`)
+    }
+  }
+
+  shiftRanges.value = ranges
+}
+
+//Normalizing strings if user don't want to add spaces.
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .replace(/\s+/g, '')   // remove spaces
+    .replace(/-/g, '')     // remove dashes
+    .replace(/:/g, '')     // remove colons
+}
+
+function filterShifts(item, queryText) {
+  return normalize(item).includes(normalize(queryText))
+}
+
+
+//trying to force local time here, since timezones ruin everything. 
 const formattedDate = computed(() =>
   new Date(props.date + 'T00:00:00')
     .toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
