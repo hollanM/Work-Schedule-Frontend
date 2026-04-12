@@ -45,8 +45,9 @@ const editTaskListModal = ref(false)
 const publishAndNotifyConfirmModal = ref(false)
 const shifts = ref([])
 const userSession = computed(() => store.getters.getLoginUserInfo);
-console.log(userSession.value);
+//console.log(userSession.value);
 const isUserModalOpened = ref(false); //for opening and closing of the add user modal
+const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
 
 async function savePosition(){
   const response = await positionServices.create({
@@ -66,13 +67,14 @@ async function deletePosition(id){
 
 async function getCurrentUser(){
     //this guard is not needed, session works as intended.
-    console.log('userSession.value:', userSession.value);
+    //console.log('userSession.value:', userSession.value);
     if (!userSession.value || !userSession.value.userId) {
       console.log('No user session or userId');
       return;
     }
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
+    console.log('Current user data:', currentUser.value);
 }
 
 async function getTaskLists(){
@@ -101,7 +103,7 @@ async function getTasks(){
   console.log(response.data)
 }
 onMounted( async () => {
- await getCurrentUser()
+ //await getCurrentUser() //this was a second trigger since the watch already does this
   await getPositions();
   await getTaskLists();
   await getTasks();
@@ -139,7 +141,14 @@ function toggleDropdown(name) {
 }
 
 function toggle(){
-  drawer.value = !drawer.value
+  // if(currentUser.value.role == 'Manager' || drawer.value == true) //only managers and a bug will allow this drawer to be operated
+  // {
+  //   drawer.value = !drawer.value
+  // }
+  if(isManager.value || drawer.value == true) //only managers and a bug will allow this drawer to be operated
+  {
+    drawer.value = !drawer.value
+  }
 }
 
 async function editPosition(id){
@@ -392,134 +401,116 @@ const userModalSaveButton = () => //for the save button in the user modal, might
     class = "drawer"
   >
 
-  <v-btn class = "publish-schedule-button" @click = "publishAndNotifyConfirmModal = true">Publish AND Notify</v-btn>
+    <v-btn class = "publish-schedule-button" @click = "publishAndNotifyConfirmModal = true">Publish AND Notify</v-btn>
    
-<div class = "padded-dividing-line"></div>
+    <div class = "padded-dividing-line"></div>
 
-  <v-expansion-panels>
-  <v-expansion-panel title="Add User">
-    <v-expansion-panel-text>
-      <v-list>
-        <v-list-item @click="openModal()">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <v-icon>mdi-account-plus</v-icon>
-            <span>Add User</span>
-          </div>
-        </v-list-item>
-      </v-list>
-    </v-expansion-panel-text>
-  </v-expansion-panel>
+    <v-expansion-panels>
+      <v-expansion-panel title="Add User">
+        <v-expansion-panel-text>
+          <v-list>
+            <v-list-item @click="openModal()">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <v-icon>mdi-account-plus</v-icon>
+                <span>Add User</span>
+              </div>
+            </v-list-item>
+          </v-list>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
 
-  <v-expansion-panel title="Positions">
-    <v-expansion-panel-text>
-      <v-list>
+      <v-expansion-panel title="Positions">
+        <v-expansion-panel-text>
+          <v-list>
+            <v-list-item
+              v-for="item in positions"
+              :key="item.id"
+            >
+            <div class ="flex-row">
+            <span>{{ item.name }}</span>
+              <div class = "flex-row-right">
+                <!-- slot default fix, removed the inline updates to new functions -->
+                <v-icon class="hover-icon" @click="openEditPosition(item)">
+                  mdi-pencil
+                </v-icon>
+                <v-icon class="hover-icon" @click="openDeletePosition(item)">
+                  mdi-trash-can-outline
+                </v-icon>
+                <!-- end of fixes here -->
+              </div>
+            </div>
+          </v-list-item>
+          </v-list>
+          <v-list-item style="cursor: pointer;" @click="addPositionModal = true">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <v-icon>mdi-plus</v-icon>
+              <span>Add Position</span>
+            </div>
+          </v-list-item>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
 
-        
-        <v-list-item
-          v-for="item in positions"
-          :key="item.id"
-        >
-        <div class ="flex-row">
-        <span>{{ item.name }}</span>
-          <div class = "flex-row-right">
-            <!-- slot default fix, removed the inline updates to new functions -->
-            <v-icon class="hover-icon" @click="openEditPosition(item)">
-              mdi-pencil
-            </v-icon>
-            <v-icon class="hover-icon" @click="openDeletePosition(item)">
-              mdi-trash-can-outline
-            </v-icon>
-            <!-- end of fixes here -->
-          </div>
-        </div>
-      
-      </v-list-item>
-      </v-list>
-       <v-list-item style="cursor: pointer;" @click="addPositionModal = true">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <v-icon>mdi-plus</v-icon>
-        <span>Add Position</span>
-      </div>
-    </v-list-item>
-    </v-expansion-panel-text>
-    
-  </v-expansion-panel>
-
-   <v-expansion-panel
-    title="Task Lists"
-  >
-
-      <v-expansion-panel-text>
-      <v-list>
-
-        
-        <v-list-item
-          v-for="item in task_lists"
-          :key="item.id"
-        >
-        <div class ="flex-row">
-          <span>{{ item.name }}</span>
-          <div class = "flex-row-right">
-            <!-- slot default fix, removed the inline updates to new functions -->
-            <v-icon class="hover-icon" @click="openEditTaskList(item)">
-              mdi-pencil
-            </v-icon>
-            <v-icon class="hover-icon" @click="openDeleteTaskList(item)">
-              mdi-trash-can-outline
-            </v-icon>
-            <!-- end of fixes here -->
-          </div>
-      </div>
-      
-      </v-list-item>
-      </v-list>
-       <v-list-item style="cursor: pointer;" @click="addTaskListModal = true">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <v-icon>mdi-plus</v-icon>
-        <span>Add Task List</span>
-      </div>
-    </v-list-item>
-    </v-expansion-panel-text>
-  </v-expansion-panel>
-</v-expansion-panels>
-  </v-navigation-drawer>
-
-    <v-btn v-if="userSession && userSession.userId" class="circle-button zero-margin "  @click="toggle()"
+      <v-expansion-panel title="Task Lists">
+        <v-expansion-panel-text>
+          <v-list>
+            <v-list-item v-for="item in task_lists" :key="item.id">
+              <div class ="flex-row">
+                <span>{{ item.name }}</span>
+                <div class = "flex-row-right">
+                  <!-- slot default fix, removed the inline updates to new functions -->
+                  <v-icon class="hover-icon" @click="openEditTaskList(item)">
+                    mdi-pencil
+                  </v-icon>
+                  <v-icon class="hover-icon" @click="openDeleteTaskList(item)">
+                    mdi-trash-can-outline
+                  </v-icon>
+                  <!-- end of fixes here -->
+                </div>
+              </div>
+            </v-list-item>
+          </v-list>
+            <v-list-item style="cursor: pointer;" @click="addTaskListModal = true">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <v-icon>mdi-plus</v-icon>
+                <span>Add Task List</span>
+              </div>
+            </v-list-item>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-navigation-drawer>
+    //disabeling the toggle button fixed the inspect open bug???
+    <v-btn v-if="isManager" class="circle-button zero-margin "  @click="toggle()"
     :class="{ closed: !drawer }"
     >
-        <v-icon class="ml-3">
-          {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
-        </v-icon>
+      <v-icon class="ml-3">
+        {{ drawer ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
+      </v-icon>
     </v-btn>
-
-
-
     <div v-if="addPositionModal" fluid class="modal">
-        
-  <div class = "modal-content">
-    <div class="flex-row">
-    <h3 class = "modal-text">Add position</h3>
-     <v-btn class = "close-button" @click="addPositionModal= false">
-                <v-icon
-                    color="grey"
-                >mdi-close</v-icon>
-            </v-btn>
-            </div>
-
-              <div class="dividing-line"> </div>
-    <v-text-field 
-    v-model="positionName"
-    label="Name"></v-text-field>
-
-      <div class="dividing-line"> </div>
-      <div class="flex-row-right">
-          <v-btn class="create-button" @click="savePosition(), addPositionModal = false, positionName = ''">
-            Save
-        </v-btn>
+      <div class = "modal-content">
+        <div class="flex-row">
+          <h3 class = "modal-text">Add position</h3>
+          <v-btn class = "close-button" @click="addPositionModal= false">
+          <v-icon
+            color="grey"
+            >mdi-close
+          </v-icon>
+          </v-btn>
+        </div>
+        <div class="dividing-line"> </div>
+        <v-text-field 
+          v-model="positionName"
+          label="Name">
+        </v-text-field>
+        <div class="dividing-line"> </div>
+        <div class="flex-row-right">
+            <v-btn class="create-button" @click="savePosition(), addPositionModal = false, positionName = ''">
+              Save
+          </v-btn>
+        </div>
       </div>
-      
-  </div>
-  </div>
+    </div>
 
 
 
