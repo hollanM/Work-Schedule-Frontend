@@ -93,7 +93,10 @@ const Settings_Items = ref([ //need to merge this with the profile button eventu
 const Profile_Open = ref(false);
 const Profile_Items = ref([
   { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
-  { title: 'Logout', action: 'logout', photo: Logout }, // CHANGED: never actually logged out, instead just redirected to login page.
+  { title: 'My Schedule', click: '', photo: MySchedule },
+  { title: 'My Availability', click: '', photo: MyAvailability },
+  { title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
+  { title: 'Logout', action: 'logout', photo: Logout }, 
 ]);
 
 async function getCurrentUser(){
@@ -231,8 +234,8 @@ const handleSettingsItemClick = (item) => {
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu> -->
-      <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
+      </v-menu>
+      <!-- <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
             <v-img id="Settings_Image" :src="Settings" height="40" width="40" contain/>
@@ -250,7 +253,11 @@ const handleSettingsItemClick = (item) => {
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu>
+      </v-menu> -->
+      
+      <!-- @@!!!!!Hollan is hiding the settings dropdown since it is no longer needed!!!!!@@ -->
+
+
       <!-- <v-menu bottom min-width="200px" rounded offset-y v-if="user">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" icon x-large>
@@ -275,6 +282,7 @@ const handleSettingsItemClick = (item) => {
           </v-card-text>
         </v-card>
       </v-menu> -->
+      <!-- This was orginal profile with logout. Hollan has this for a reference -->
 
       <v-menu v-model="Profile_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">

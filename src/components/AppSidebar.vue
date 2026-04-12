@@ -620,13 +620,14 @@ const userModalSaveButton = () => //for the save button in the user modal, might
                       v-model="task_list_name"
                       label="Name">
                   </v-text-field>
-                  <div class="flex-row-right">
-                        <!-- slot default fixes here -->
-                          <v-btn v-if="new_tasks.length > 0" class="create-button" @click="finishAddTaskList()">
-                            Finish
-                          </v-btn>
-                        <!-- end of fixes -->
-                    </div>
+                    <div class="flex-row-right">
+          <!-- slot default fixes here -->
+          <v-btn v-if="task_list_name.length > 0" class="create-button" 
+            @click="task_list_name_chosen = true; unfinished_step_color = current_step_color; saved_task_list_name = task_list_name">
+            Continue
+          </v-btn>
+          <!-- end of fixes -->
+      </div>
                   </div>
 
     <div v-if="task_list_name_chosen" class="flex-column">
@@ -651,22 +652,22 @@ const userModalSaveButton = () => //for the save button in the user modal, might
     v-model="task_name"
     label="Name"></v-text-field>
 
-    <v-btn id="add-task-button" class="create-button" @click="addTask()">
+    <div class = "flex-row">
+<v-btn id="add-task-button" class="create-button" @click="addTask()">
             Add
         </v-btn>
+                        <!-- slot default fixes here -->
+                          <v-btn v-if="new_tasks.length > 0" class="create-button" @click="finishAddTaskList()">
+                            Finish
+                          </v-btn>
+                        <!-- end of fixes -->
+    </div>
+    
 
 
     
   
   </div>
-  <div class="flex-row-right">
-          <!-- slot default fixes here -->
-          <v-btn v-if="task_list_name.length > 0" class="create-button" 
-            @click="task_list_name_chosen = true; unfinished_step_color = current_step_color; saved_task_list_name = task_list_name">
-            Continue
-          </v-btn>
-          <!-- end of fixes -->
-      </div>
    </div>
    
 
