@@ -480,7 +480,7 @@ const userModalSaveButton = () => //for the save button in the user modal, might
       </v-expansion-panels>
     </v-navigation-drawer>
     //disabeling the toggle button fixed the inspect open bug???
-    <v-btn v-if="userSession.userId && isManager" class="circle-button zero-margin "  @click="toggle()"
+    <v-btn v-if="isManager" class="circle-button zero-margin "  @click="toggle()"
     :class="{ closed: !drawer }"
     >
       <v-icon class="ml-3">

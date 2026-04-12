@@ -7,7 +7,9 @@ export default {
   get(id) {
     return apiClient.get(`/shifts/${id}`);
   },
-
+  getAllDept(id) {
+    return apiClient.get(`/shifts/${id}`);
+  },
   create(data) {
     return apiClient.post("/shifts", data);
   },

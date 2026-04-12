@@ -30,7 +30,8 @@ const selectedEmployee = ref(props.employee_name)
 const router = useRouter();
 const fName = ref("");
 const lName = ref("");
-const user = ref({});
+const user = ref({}); //the user fron the store
+const currentUser = ref({}); //the user from the database
 const message = ref("");
 const shifts = ref([]);
 const employees = ref([]);
@@ -200,22 +201,23 @@ async function getEmployees() {
   //this gets users who are "employees.." still needs to be department specific. it is not yet.
   const user_id = Utils.getStore("user").userId;
   try{
-    //console.log("user: ", user_id);
+    console.log("user: ", user_id);
     const response = await getUser(user_id);
+    currentUser.value = response;
     console.log("Getting employees for department id:", response.department_id);
     const deptResponse = await userServices.getDept(response.department_id);
     employees.value = deptResponse.data;
     console.log("returned:" + employees.value);
 
-    for (const emp of employees.value) {
-      if(emp.role !== "Employee"){
-        const index = employees.value.indexOf(emp);
-        if (index > -1) {
-          employees.value.splice(index, 1);
-        }
-      }
-    }
-    console.log("filtered employees:" + employees.value);
+    // for (const emp of employees.value) { //managers should be in this list, though they might need an extra identifier
+    //   if(emp.role !== "Employee"){
+    //     const index = employees.value.indexOf(emp);
+    //     if (index > -1) {
+    //       employees.value.splice(index, 1);
+    //     }
+    //   }
+    // }
+    //console.log("filtered employees:" + employees.value);
 
     employee_names.value = employees.value.map(emp => emp.fName);
     console.log("employee names:" + employee_names.value);
@@ -254,6 +256,7 @@ function getFormData() {
     employee_id: employees.value.find(emp => emp.fName === selectedEmployee.value)?.id,
     shiftTime: shiftTime.value,
     color: color.value,
+    department_id: currentUser.value.department_id,
     position_id: positions.value.find(pos => pos.name === selectedPosition.value)?.id, // if needed as name or map to id similarly
     qualification_list_id: qualification_lists.value.find(q => q.qualification_description === selectedTag.value)?.id,
     shift_task_list_id: task_lists.value.find(t => t.name === selectedTaskList.value)?.id,
@@ -317,7 +320,7 @@ async function createShift(){
 
     const response = await shiftServices.create({
       user_id: formData.employee_id,
-      
+      department_id: currentUser.value.department_id,
       start_day_id: start_time.value,
       end_day_id: end_time.value,
       color: formData.color,
