@@ -79,15 +79,16 @@ const shiftsByUserAndDate = computed(() => {
 
 const hasUserShifts = computed(() => {
   //console.log("checking found shifts");
-  shifts.value.forEach(shift => {
-    console.log("Checking shift for user:", {
-      shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
-      sessionUserId: userSession.value.userId,
-      shiftStartDate: shift.startDate,
-      currentDate: currentDate.value,
-      isSameWeek: isSameWeek(shift.startDate, currentDate.value),
-    })
-  });
+  // shifts.value.forEach(shift => {
+  //   console.log("Checking shift for user:", {
+  //     shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
+  //     sessionUserId: userSession.value.id ?? false, //will error on login screen
+  //     shiftStartDate: shift.startDate,
+  //     currentDate: currentDate.value,
+  //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
+  //     currentUser: currentUser.value.role,
+  //   })
+  // });
   return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria
     !shift.is_template &&
     shift.user_id === userSession.value.userId &&
@@ -499,7 +500,7 @@ onMounted(async () => {
     <v-card v-if="currentView === 'week'" class="week-calendar-card">
     <div>
       <v-alert
-        v-if="!hasUserShifts"
+        v-if="!hasUserShifts && !isManager"
         type="info"
         title="No Shifts Assigned"
         text="You don't have any shifts scheduled for this week."
@@ -608,7 +609,7 @@ onMounted(async () => {
     <v-card v-else class="day-calendar-card">
     <div>
       <v-alert
-        v-if="!hasUserShifts"
+        v-if="!hasUserShifts && !isManager"
         type="info"
         title="No Shifts Assigned"
         text="No shifts scheduled for this week."

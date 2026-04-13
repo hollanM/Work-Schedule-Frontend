@@ -141,10 +141,6 @@ function toggleDropdown(name) {
 }
 
 function toggle(){
-  // if(currentUser.value.role == 'Manager' || drawer.value == true) //only managers and a bug will allow this drawer to be operated
-  // {
-  //   drawer.value = !drawer.value
-  // }
   if(isManager.value || drawer.value == true) //only managers and a bug will allow this drawer to be operated
   {
     drawer.value = !drawer.value
@@ -480,7 +476,7 @@ const userModalSaveButton = () => //for the save button in the user modal, might
       </v-expansion-panels>
     </v-navigation-drawer>
     //disabeling the toggle button fixed the inspect open bug???
-    <v-btn v-if="isManager" class="circle-button zero-margin "  @click="toggle()"
+    <v-btn v-if="isManager && user" class="circle-button zero-margin "  @click="toggle()"
     :class="{ closed: !drawer }"
     >
       <v-icon class="ml-3">

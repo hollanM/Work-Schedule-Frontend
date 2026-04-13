@@ -177,7 +177,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="!isManager">
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="!isManager && user">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-img id="image" :src="Attendance" height="40" width="40" contain/>
@@ -196,7 +196,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="isManager">
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="isManager && user">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-img id="image" :src="Attendance" height="40" width="40" contain/>
