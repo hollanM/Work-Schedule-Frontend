@@ -11,6 +11,7 @@ const valid = ref(false);
 const message = ref("My Profile");
 const user = ref(null);
 const sessionUser = Utils.getStore("user");
+const role = ref("");
 
 const firstName = ref("");
 const lastName = ref("");
@@ -57,6 +58,7 @@ const loadUser = async () => {
   lastName.value = user.value.lName;
   email.value = user.value.email;
   phone_num.value = user.value.phone_num;
+  role.value = user.value.role;
 };
 
 
@@ -65,8 +67,11 @@ const updateUserProfile = async () => {
     await UserService.update(user.value.id, {
       fName: firstName.value,
       lName: lastName.value,
-      phone_num: phone_num.value
+      phone_num: phone_num.value,
+      role: role.value
     });
+    
+      role.value === "Employee" ? router.push({ name: "employee-dashboard" }) : router.push({ name: "schedules" });
 
     message.value = "Profile updated successfully";
   } catch (err) {
@@ -215,6 +220,14 @@ onMounted(async () => {
                 v-model="timezone"
                 label="Timezone"
                 :items="['CT', 'ET', 'PT', 'MT']"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="role"
+                label="Role"
+                :items="['Manager', 'Employee']"
               />
             </v-col>
 

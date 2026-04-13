@@ -11,6 +11,7 @@ import EditLesson from "./views/EditLesson.vue";
 import Schedules from "./views/Schedules.vue";
 import EditProfile from "./views/EditProfile.vue";
 import EmployeeDashboard from "./views/EmployeeDashboard.vue";
+import SetRole from "./views/SetRole.vue";
 
 
 const router = createRouter({
@@ -67,9 +68,15 @@ const router = createRouter({
       component: EditProfile,
       props: true,
     },
+    {
       path: "/employee-dashboard",
       name: "employee-dashboard",
       component: EmployeeDashboard,
+    },
+    {
+      path: "/set-role",
+      name: "set-role",
+      component: SetRole,
     }
     
   ],

@@ -1,7 +1,10 @@
 <script setup>
 import SocialLogin from "../components/SocialLogin.vue";
 import { ref } from "vue";
-const employeeLogin = ref(false);
+import store from "../store/store"
+import { useRouter } from "vue-router";
+
+
 </script>
 
 <template>
@@ -63,7 +66,6 @@ const employeeLogin = ref(false);
           </div>
 
           <SocialLogin 
-            :employeeLogin="employeeLogin"
           />
 
           <!-- Register Link -->
@@ -74,12 +76,6 @@ const employeeLogin = ref(false);
             </a>
           </div>
 
-             <v-checkbox-btn
-            v-model="employeeLogin">
-                <template #label>
-                    <span>Log in as Employee</span>
-                </template>
-            </v-checkbox-btn>
 
         </v-card>
 

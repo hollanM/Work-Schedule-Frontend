@@ -46,7 +46,9 @@ const handleCredentialResponse = async (response) => {
       fName.value = user.value.fName;
       lName.value = user.value.lName;
       role.value = user.value.role;
-      props.employeeLogin ? router.push({ name: "employee-dashboard" }): router.push({ name: "schedules" });
+      console.log("role", role.value);
+      role.value === "Unset" ? router.push({ name: "set-role" }) : role.value === "Employee" ? router.push({ name: "employee-dashboard" }) : router.push({ name: "schedules" });
+
     })
     .catch((error) => {
       console.log("error", error);
