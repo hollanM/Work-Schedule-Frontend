@@ -576,14 +576,6 @@ onMounted(async () => {
               </template>
             </div>
 
-            <div
-              v-for="shift in weekCalendarShifts"
-              :key="'week-shift-' + shift.id"
-              class="week-event"
-              :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
-              :style="getWeekShiftStyle(shift)"
-              @click.stop="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
-
             <!-- Added v-show to only show a shift for a user when the user enables to show only my shifts-->
             <button
               v-for="shift in weekCalendarShifts"
@@ -602,7 +594,7 @@ onMounted(async () => {
 
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
-              <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
+              <span v-if="!isCompactWeekShift(shift)" class="week-event__time">S
                 {{ shift.formattedTime }}
               </span>
               <span
@@ -611,10 +603,10 @@ onMounted(async () => {
               >
                 {{ shift.positionName }}
               </span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
     </v-card>
 
     <v-card v-else class="day-calendar-card">
@@ -691,10 +683,10 @@ onMounted(async () => {
               >
                 {{ shift.positionName }}
               </span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
     </v-card>
   </v-container>
 
