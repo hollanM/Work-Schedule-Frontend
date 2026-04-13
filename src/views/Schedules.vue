@@ -466,6 +466,7 @@ onMounted(async () => {
       <div class="d-flex align-center ga-3 flex-wrap">
         <!-- a switch component that enables or disables the view to see shifts -->
         <v-switch
+          v-if="currentUser.role === 'Employee'"
           v-model="showMyShifts"
           label="My Shifts"
           color="primary"
