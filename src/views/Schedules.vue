@@ -30,6 +30,7 @@ const positions = ref([]);
 const userSession = computed(() => store.getters.getLoginUserInfo);
 const currentUser = ref([]);
 const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
+const showMyShifts = ref(false); // track when the user wants to show only their shifts.
 
 const showModal = ref(false);
 const date = ref("");
@@ -460,6 +461,15 @@ onMounted(async () => {
       <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
 
       <div class="d-flex align-center ga-3 flex-wrap">
+        <!-- a switch component that enables or disables the view to see shifts -->
+        <v-switch
+          v-model="showMyShifts"
+          label="My Shifts"
+          color="primary"
+          hide-details
+          density="compact"
+        />
+
         <v-btn-group divided>
           <v-btn icon="mdi-chevron-left" @click="prevPeriod" />
           <v-btn icon="mdi-calendar-month" />
@@ -563,9 +573,11 @@ onMounted(async () => {
               </template>
             </div>
 
+            <!-- Added v-show to only show a shift for a user when the user enables to show only my shifts-->
             <button
               v-for="shift in weekCalendarShifts"
               :key="'week-shift-' + shift.id"
+              v-show="!showMyShifts || shift.user_id === userSession.userId"
               type="button"
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
@@ -645,9 +657,11 @@ onMounted(async () => {
               </button>
             </div>
 
+            <!-- Added v-show to only show a shift for a user when the user enables to show only my shifts-->
             <button
               v-for="shift in dayCalendarShifts"
               :key="'day-shift-' + shift.id"
+              v-show="!showMyShifts || shift.user_id === userSession.userId"
               type="button"
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
