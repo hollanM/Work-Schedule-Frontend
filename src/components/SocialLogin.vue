@@ -47,7 +47,7 @@ const handleCredentialResponse = async (response) => {
       lName.value = user.value.lName;
       role.value = user.value.role;
       console.log("role", role.value);
-      role.value === "Unset" ? router.push({ name: "set-role" }) : role.value === "Employee" ? router.push({ name: "employee-dashboard" }) : router.push({ name: "schedules" });
+     role.value === "Employee" ? router.push({ name: "employee-dashboard" }) : router.push({ name: "schedules" });
 
     })
     .catch((error) => {
