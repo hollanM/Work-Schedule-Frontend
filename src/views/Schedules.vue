@@ -164,15 +164,15 @@ async function loadShifts() {
   for (const shift of shifts.value) {
     if (shift.is_template) continue;
 
-    const start = await date_timeServices.get(shift.start_day_id);
-    const end = await date_timeServices.get(shift.end_day_id);
-    const startDate = new Date(start.data.first_date_time);
-    const endDate = new Date(end.data.first_date_time);
+    const start = shift.start_day
+    const end = shift.end_day
+    const startDate = new Date(start);
+    const endDate = new Date(end);
 
     shift.startDate = startDate;
     shift.endDate = endDate;
     shift.shiftDate = format(startDate, "yyyy-MM-dd");
-    shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
+    shift.formattedTime = `${formatShiftTimeFromISO(start)} - ${formatShiftTimeFromISO(end)}`;
     shift.positionName =
       positions.value.find((position) => position.id === shift.position_id)?.name || "";
   }
