@@ -97,6 +97,7 @@ function generateTimes() {
 
 const shiftStartTime = ref("")
 const shiftEndTime = ref("")
+const shiftTime = ref("")
 const colorSwatches = [
   ["#D32F2F", "#F57C00", "#FBC02D", "#689F38", "#00897B", "#1976D2"],
   ["#C2185B", "#E64A19", "#F9A825", "#43A047", "#00ACC1", "#3949AB"],
@@ -160,7 +161,7 @@ async function populateFormFromShift(shift) {
   // for the things below, we find the stuffs by id from the shift and set the selected value to the name 
   selectedPosition.value = positions.value.find(pos => pos.id === shift.position_id)?.name || ""; // 
   selectedTaskList.value = task_lists.value.find(t => t.id === shift.shift_task_list_id)?.name || ""; 
-
+  template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
   saveAsTemplate.value = shift.is_template === true || shift.is_template === 1;
 }
 
