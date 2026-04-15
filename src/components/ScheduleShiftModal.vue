@@ -22,7 +22,6 @@ const props = defineProps({
 const start_time = ref("");
 const end_time = ref("");
 const selectedPosition = ref(null);
-const selectedTag = ref(null);
 const selectedTaskList = ref(null); 
 const color = ref("#000000");
 const saveAsTemplate = ref(false);
@@ -97,6 +96,21 @@ function generateTimes() {
 
 const shiftStartTime = ref("")
 const shiftEndTime = ref("")
+const shiftTime = ref("")
+
+function convertTo24Hour(timeStr) {
+  if (!timeStr) return ""
+  const [time, modifier] = timeStr.split(" ")
+  let [hours, minutes] = time.split(":")
+  if (hours === "12") {
+    hours = "00"
+  }
+  if (modifier.toLowerCase() === "pm") {
+    hours = parseInt(hours, 10) + 12
+  }
+  return `${hours}:${minutes}`
+}
+
 const colorSwatches = [
   ["#D32F2F", "#F57C00", "#FBC02D", "#689F38", "#00897B", "#1976D2"],
   ["#C2185B", "#E64A19", "#F9A825", "#43A047", "#00ACC1", "#3949AB"],
@@ -149,12 +163,26 @@ async function populateFormFromShift(shift) {
   shiftTime.value = shift.formattedTime;
   color.value = shift.color;
 
+  // Populate start/end times for the inputs
+  if (shift.startDate) {
+    shiftStartTime.value = formatTimeInputFromDate(shift.startDate);
+  }
+  if (shift.endDate) {
+    shiftEndTime.value = formatTimeInputFromDate(shift.endDate);
+  }
+
   // for the things below, we find the stuffs by id from the shift and set the selected value to the name 
   selectedPosition.value = positions.value.find(pos => pos.id === shift.position_id)?.name || ""; // 
-  selectedTag.value = qualification_lists.value.find(q => q.id === shift.qualification_list_id)?.qualification_description || "";
   selectedTaskList.value = task_lists.value.find(t => t.id === shift.shift_task_list_id)?.name || ""; 
 
   saveAsTemplate.value = shift.is_template === true || shift.is_template === 1;
+}
+
+// formatting the time for the inputs when editing a shift, since they come in as ISO strings and need to be converted to "HH:MM" format for the time inputs.
+function formatTimeInputFromDate(date) {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 // this function gets the employees name from the employee list based on user id
@@ -338,12 +366,13 @@ async function createShift(){
 // function that updates a shift which is like creating a shift, but it just updates the existing one instead
 async function updateShift() {
     const formData = getFormData();
-    const shiftTime = formData.shiftTime
-    const [startStr, endStr] = shiftTime.split(' - ')
-    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
-    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+    
+    // Convert current selected times to SQL format
+    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
+    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
     const sqlStart = toSqlDateTime(startDateTime)
     const sqlEnd = toSqlDateTime(endDateTime)
+    
     console.log("Form Data to update:", formData);
 
 
