@@ -3,10 +3,11 @@ import ocLogo from "/oc-logo-white.png";
 import Bell from "/Bell.png";
 import Dropdown_Arrow from "/Dropdown-arrow.png";
 
-import { ref, onMounted } from "vue";
+import { ref, computed,onMounted } from "vue";
 import Utils from "../config/utils";
 import AuthServices from "../services/authServices";
 import { useRouter, useRoute } from 'vue-router'
+import userServices from "../services/userServices";
 import store from "../store/store"
 
 const router = useRouter()
@@ -15,6 +16,11 @@ const title = ref("Tutorials");
 const initials = ref("");
 const name = ref("");
 const logoURL = ref("");
+//need for the disablement of parts of the UI
+const userSession = computed(() => store.getters.getLoginUserInfo);
+const currentUser = ref([]);
+const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
+
 
 const resetMenu = () => {
   user.value = null;
@@ -38,44 +44,64 @@ const logout = () => {
     });
 };
 
-onMounted(() => {
-  logoURL.value = ocLogo;
-  resetMenu();
-});
-
 const Dashboard_Open = ref(false);
 const Dashboard_Items = ref([
-  { title: 'Home', route: { name: 'schedules' }, icon: 'mdi-home' },
+  { title: 'Home', route: { name: 'schedules' }, photo: Dashboard }, //turn into button
 ]);
 const Schedule_Open = ref(false);
 const Schedule_Items = ref([
-  { title: 'Work Schedule', route: { name: '' }, icon: 'mdi-calendar' },
-  { title: 'Preferences', route: { name: '' }, icon: 'mdi-cog' },
+  { title: 'Work Schedule', route: { name: '' }, photo: Schedule }, //turn into button
+  //{ title: 'Preferences', route: { name: '' }, photo: Schedule},
 ]);
 const Attendance_Open = ref(false);
-const Attendance_Items = ref([
-  { title: 'Time Sheets', click: '', icon: 'mdi-file-document' },
-  { title: 'Time Tracker', click: '', icon: 'mdi-clock' },
-  { title: 'Lock as Terminal', click: '', icon: 'mdi-lock' },
+const Attendance_Items_Employee = ref([
+  { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
+]);
+const Attendance_Items_Manager = ref([
+  { title: 'Time Sheets', click: '', photo: timesheets }, //manager only
+  { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
+  { title: 'Lock as Terminal', click: '', photo: LockAsTerminal }, //manager only
 ]);
 const Inbox_Open = ref(false);
 const Inbox_Items = ref([
-  { title: 'Inbox', click: '', icon: 'mdi-inbox' },
+  { title: 'Inbox', click: '', photo: Inbox }, //merge with the bell icon
 ]);
 const Settings_Open = ref(false);
-const Settings_Items = ref([
-  { title: 'Profile', click: '', icon: 'mdi-account' },
-  { title: 'Settings', click: '', icon: 'mdi-cog' },
-  { title: 'My Schedule', click: '', icon: 'mdi-calendar-check' },
-  { title: 'My Availability', click: '', icon: 'mdi-clock-check' },
-  { title: 'Switch Workspaces', click: '', icon: 'mdi-swap-horizontal' },
+const Settings_Items = ref([ //need to merge this with the profile button eventually
+  //{ title: 'Profile', click: '',photo: Profile },
+  { title: 'Settings', click: '', photo: Settings },
+  { title: 'My Schedule', click: '', photo: MySchedule },
+  { title: 'My Availability', click: '', photo: MyAvailability },
+  //{ title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
 ]);
 
 const Profile_Open = ref(false);
 const Profile_Items = ref([
-  { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, icon: 'mdi-pencil' },
-  { title: 'Logout', action: 'logout', icon: 'mdi-logout' },
+  { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
+  { title: 'My Schedule', click: '', photo: MySchedule },
+  { title: 'My Availability', click: '', photo: MyAvailability },
+  { title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
+  { title: 'Logout', action: 'logout', photo: Logout }, 
 ]);
+
+async function getCurrentUser(){
+    //this guard is not needed, session works as intended.
+    //console.log('userSession.value:', userSession.value);
+    if (!userSession.value || !userSession.value.userId) {
+      console.log('No user session or userId');
+      return;
+    }
+    const response = await userServices.get(userSession.value.userId);
+    currentUser.value = response.data;
+    console.log('Current user data:', currentUser.value);
+}
+
+onMounted(async () => {
+  await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
+  logoURL.value = ocLogo;
+  resetMenu();
+});
+
 
 const handleSettingsItemClick = (item) => {
   if (item.click === '') 
@@ -130,7 +156,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="user">
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="!isManager">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
             <v-icon icon="mdi-clipboard-list"></v-icon>
@@ -139,7 +165,26 @@ const handleSettingsItemClick = (item) => {
           </v-btn>
         </template>
         <v-list class="dropdown">
-          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items_Employee" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
+            <template #prepend>
+              <v-img :src="Attendance_Item.photo" width="24" height="24" contain/>
+            </template>
+            <v-list-item-title>
+              {{ Attendance_Item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+      <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="isManager">
+        <template #activator="{ props }">
+          <v-btn id="Attendance_Div" class="container" v-bind="props">
+            <v-img id="image" :src="Attendance" height="40" width="40" contain/>
+            <span>Attendance</span>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
+          </v-btn>
+        </template>
+        <v-list class="dropdown">
+          <v-list-item v-for="(Attendance_Item, index) in Attendance_Items_Manager" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
             <template #prepend>
               <v-icon :icon="Attendance_Item.icon" size="small"></v-icon>
             </template>
@@ -150,7 +195,7 @@ const handleSettingsItemClick = (item) => {
         </v-list>
       </v-menu>
       <v-spacer></v-spacer>
-      <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
+      <!-- <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Inbox_Div" class="container" v-bind="props">
             <v-icon icon="mdi-inbox"></v-icon>
@@ -169,7 +214,7 @@ const handleSettingsItemClick = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
+      <!-- <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
             <v-icon icon="mdi-cog"></v-icon>
@@ -187,7 +232,36 @@ const handleSettingsItemClick = (item) => {
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu>
+      </v-menu> -->
+      
+      <!-- @@!!!!!Hollan is hiding the settings dropdown since it is no longer needed!!!!!@@ -->
+
+
+      <!-- <v-menu bottom min-width="200px" rounded offset-y v-if="user">
+        <template v-slot:activator="{ props }">
+          <v-btn v-bind="props" icon x-large>
+            <v-avatar v-if="user" color="secondary">
+              <span class="accent--text font-weight-bold">{{ initials }}</span>
+            </v-avatar>
+          </v-btn>
+        </template>
+        <v-card>
+          <v-card-text>
+            <div class="mx-auto text-center">
+              <v-avatar color="secondary" class="mt-2 mb-2">
+                <span class="accent--text font-weight-bold">{{  initials  }}</span>
+              </v-avatar>
+              <h3>{{ name }}</h3>
+              <p class="text-caption mt-1">
+                {{ user.email }}
+              </p>
+              <v-divider class="my-3"></v-divider>
+              <v-btn depressed rounded text @click="logout"> Logout </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-menu> -->
+      <!-- This was orginal profile with logout. Hollan has this for a reference -->
 
       <v-menu v-model="Profile_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
