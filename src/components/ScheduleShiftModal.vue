@@ -97,6 +97,7 @@ function generateTimes() {
 
 const shiftStartTime = ref("")
 const shiftEndTime = ref("")
+const shiftTime = ref("")
 const colorSwatches = [
   ["#D32F2F", "#F57C00", "#FBC02D", "#689F38", "#00897B", "#1976D2"],
   ["#C2185B", "#E64A19", "#F9A825", "#43A047", "#00ACC1", "#3949AB"],
@@ -149,11 +150,17 @@ async function populateFormFromShift(shift) {
   shiftTime.value = shift.formattedTime;
   color.value = shift.color;
 
+  // Populate start/end times for the inputs
+  if (shift.startDate) {
+    shiftStartTime.value = formatTimeInputFromDate(shift.startDate);
+  }
+  if (shift.endDate) {
+    shiftEndTime.value = formatTimeInputFromDate(shift.endDate);
+  }
+
   // for the things below, we find the stuffs by id from the shift and set the selected value to the name 
   selectedPosition.value = positions.value.find(pos => pos.id === shift.position_id)?.name || ""; // 
-  selectedTag.value = qualification_lists.value.find(q => q.id === shift.qualification_list_id)?.qualification_description || "";
   selectedTaskList.value = task_lists.value.find(t => t.id === shift.shift_task_list_id)?.name || ""; 
-
   saveAsTemplate.value = shift.is_template === true || shift.is_template === 1;
 }
 
@@ -178,6 +185,8 @@ async function getPositions(){
     console.log(error);
   }
 }
+
+
 
 
 
@@ -338,10 +347,12 @@ async function createShift(){
 // function that updates a shift which is like creating a shift, but it just updates the existing one instead
 async function updateShift() {
     const formData = getFormData();
-    const shiftTime = formData.shiftTime
-    const [startStr, endStr] = shiftTime.split(' - ')
-    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
-    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+   if (!formData.start_time || !formData.end_time) {
+      message.value = "Start time and end time are required.";
+      return;
+    }
+    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
+    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
     const sqlStart = toSqlDateTime(startDateTime)
     const sqlEnd = toSqlDateTime(endDateTime)
     console.log("Form Data to update:", formData);
@@ -395,6 +406,13 @@ function getTextColor(bgColor) {
   const luminance = 0.299 * r + 0.587 * g + 0.114 * b
   return luminance > 186 ? 'black' : 'white'
 }
+
+function formatTimeInputFromDate(date) {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 
 //this is formatting the time for the templates.
 function formatShiftTimeFromISO(isoString) {
