@@ -190,6 +190,7 @@ async function getEmployees() {
   }
 }
 
+//merge
 //getting the times to display for templates was getting... annoying.
 async function getShifts() {
   try {
