@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import {
   startOfWeek,
   addDays,
@@ -35,6 +35,10 @@ const showMyShifts = ref(false); // track when the user wants to show only their
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
+
+const showShiftDialog = ref(false);
+const selectedShift = ref([]);
+const hasTakeError = ref(false);
 
 const hourLabels = [
   "12A",
@@ -79,15 +83,15 @@ const shiftsByUserAndDate = computed(() => {
 
 const hasUserShifts = computed(() => {
   //console.log("checking found shifts");
-  shifts.value.forEach(shift => {
-    console.log("Checking shift for user:", {
-      shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
-      sessionUserId: userSession.value.userId,
-      shiftStartDate: shift.startDate,
-      currentDate: currentDate.value,
-      isSameWeek: isSameWeek(shift.startDate, currentDate.value),
-    })
-  });
+  // shifts.value.forEach(shift => {
+  //   console.log("Checking shift for user:", {
+  //     shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
+  //     sessionUserId: userSession.value.userId,
+  //     shiftStartDate: shift.startDate,
+  //     currentDate: currentDate.value,
+  //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
+  //   })
+  // });
   return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria
     !shift.is_template &&
     shift.user_id === userSession.value.userId &&
@@ -222,7 +226,7 @@ function formatShiftTimeFromISO(isoString) {
 }
 
 function openShiftModal(selectedEmployeeName, selectedDate) {
-  if (!isManager.value) return;
+  //if (!isManager.value) return; //this check is now handeled by v-ifss
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
   showModal.value = true;
@@ -390,12 +394,12 @@ async function getCurrentUser() {
     }
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
-    console.log('Current user data:', currentUser.value);
+    //console.log('Current user data:', currentUser.value);
     if(currentUser.value.department_id === null) { //will add a department for new users but many users will change their departmetns later
       response.value = await createDepartment();
-      console.log("Department created and assigned to user:", response.data);
+      //console.log("Department created and assigned to user:", response.data);
       response.value = await updateUser(); //then add the new department to the user
-      console.log("User updated with new department:", response.data);
+      //console.log("User updated with new department:", response.data);
     }
 }
 
@@ -422,28 +426,84 @@ async function updateUser() {
     currentUser.value.role = "Manager"; //backend has been updated and now the frontend needs to see the change
 }
 
-async function getTaskLists() {
-  const response = await taskListServices.getAll();
-  console.log("Fetched task lists:", response.data);  
-  let departmentTaskList = false;
-  response.data.forEach(element => {
-    if(element.department_id === currentUser.value.department_id){
-      departmentTaskList = true;
-    }
-  });
-  if(departmentTaskList)
-  {
-    //do nothing since the check passed
-  } 
-  else 
-  { //create a task list for the department
-    //console.log(false);
-  //   taskListServices.create({ //if the department does not have a task list make one, this is only needed for creating shifts because of FK
-  //     name: "Task List for Department " + currentUser.value.department_id,
-  //     department_id: currentUser.value.department_id,
-  //   });
-  }
+// async function getTaskLists() { //currently unused
+//   const response = await taskListServices.getAll();
+//   console.log("Fetched task lists:", response.data);  
+//   let departmentTaskList = false;
+//   response.data.forEach(element => {
+//     if(element.department_id === currentUser.value.department_id){
+//       departmentTaskList = true;
+//     }
+//   });
+// }
 
+async function updateShift() { //currently only used by the takeShift() function so it updates only the person assigned to the shift
+    const response = await shiftServices.update(selectedShift.value.id, {
+      user_id: currentUser.value.id,
+    })
+    console.log("Shift update response:", response.data, currentUser.value);
+}
+
+async function getShift() { 
+    const response = await shiftServices.get(selectedShift.value.id)
+    console.log("Shift get response:", response.data);
+    return response;
+}
+
+function hasShiftConflict(userId, startDateTime, endDateTime) {
+  const tempShift = getShift(); //get updated in case of race condition
+  if (tempShift != selectedShift);
+  {
+
+  }
+  const start = new Date(startDateTime);
+  const end = new Date(endDateTime);
+
+  const userShifts = shifts.value.filter(shift => 
+    !shift.is_template && shift.user_id === userId && shift.startDate && shift.endDate
+  );
+
+  return userShifts.some(shift => 
+    start < shift.endDate && end > shift.startDate
+  );
+}
+
+function openShiftDialog(shift) {
+  selectedShift.value = shift;
+  console.log("selectedShift: ", selectedShift.value);
+  //console.log(!selectedShift?.value?.user_id) //working correctly
+  showShiftDialog.value = true;
+}
+
+async function editShift() {
+  showShiftDialog.value = false;
+  await nextTick(); //had an issue where the changes here were too fast for vue to work with
+  openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate);
+}
+
+async function takeShift() {
+  //console.log('Taking shift:', selectedShift.value);
+  if(hasShiftConflict(currentUser.value.user_id, selectedShift.value.startDate, selectedShift.value.endDate))
+  {
+    //hilight the box or display a notice somehow
+    hasTakeError.value = true;
+  }
+  else
+  {
+    await updateShift();
+    showShiftDialog.value = false;
+    reload();
+  }
+}
+
+function dropShift() {
+  //console.log('Dropping shift:', selectedShift.value);
+  showShiftDialog.value = false;
+}
+
+function deleteShift() {
+  //console.log('Deleting shift:', selectedShift.value);
+  showShiftDialog.value = false;
 }
 
 onMounted(async () => {
@@ -451,7 +511,6 @@ onMounted(async () => {
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
-  //await getTaskLists();
 });
 </script>
 
@@ -582,12 +641,7 @@ onMounted(async () => {
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
               :style="getWeekShiftStyle(shift)"
-              @click="
-                openShiftModal(
-                  getEmployeeName(shift.user_id),
-                  shift.shiftDate,
-                )
-              ",
+              @click="openShiftDialog(shift)",
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
@@ -600,6 +654,26 @@ onMounted(async () => {
                 {{ shift.positionName }}
               </span>
             </button>
+            <v-dialog v-model="showShiftDialog" max-width="480">
+              <v-card>
+                <v-card-title>Shift Options</v-card-title>
+                <v-card-text>
+                  
+                </v-card-text>
+                <v-alert v-if="hasTakeError"
+                  color="warning"
+                  icon="$warning"
+                  title="Warning"
+                  text="You cannot take a shift if it conflicts with your schedule, or someone else is already working it"
+                ></v-alert>
+                <v-card-actions>
+                  <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
+                  <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn>
+                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </div>
       </div>
@@ -666,7 +740,7 @@ onMounted(async () => {
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate)"
+              @click="openShiftDialog(shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -691,6 +765,7 @@ onMounted(async () => {
   @close="showModal = false; reload()"
   :employee_name="employeeName"
   :date="date"
+  :shift="selectedShift"
   ></ScheduleShiftModal>
   </transition>
 </template>
