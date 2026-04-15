@@ -73,7 +73,7 @@ const Attendance_Items_Employee = ref([
   { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
 ]);
 const Attendance_Items_Manager = ref([
-  { title: 'Time Sheets', click: '', photo: timesheets }, //manager only
+  { title: 'Time Sheets', route: { name: 'timesheets' }, photo: timesheets }, //manager only
   { title: 'Time Tracker', click: '', photo: TimeTracker }, //alwase visible
   { title: 'Lock as Terminal', click: '', photo: LockAsTerminal }, //manager only
 ]);
