@@ -13,9 +13,9 @@ import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
 
 const props = defineProps({
-  passedUser: { type: Object, default: () => ({}) },
   employee_name: { type: [Number, String], required: true },
-  date: { type: String, required: true }
+  date: { type: String, required: true },
+  shift: { type: Object, default: null }
 });
 
 
@@ -48,6 +48,9 @@ const emit = defineEmits(["close"]);
 const shiftTemplates = computed(() =>
   shifts.value.filter(shift => shift.is_template === true || shift.is_template === 1 || shift.is_template === "1")
 )
+
+const isEditing = computed(() => !!props.shift); // if shift prop is passed, we're editing, otherwise creating
+
 watch(
   () => props.employee_name,
   (newVal) => {
@@ -139,8 +142,33 @@ onMounted( async () => {
   await getShifts();
   await populateShiftTemplates();
   generateTimes();
-  generateShiftRanges(); 
+  generateShiftRanges();
+
+  if (props.shift) {
+    populateFormFromShift(props.shift);
+    form_content.value = true;
+  }
 });
+
+// populating theform with editing shift data
+async function populateFormFromShift(shift) {
+  selectedEmployee.value = getEmployeeName(shift.user_id);
+  shiftTime.value = shift.formattedTime;
+  color.value = shift.color;
+
+  // for the things below, we find the stuffs by id from the shift and set the selected value to the name 
+  selectedPosition.value = positions.value.find(pos => pos.id === shift.position_id)?.name || ""; // 
+  selectedTag.value = qualification_lists.value.find(q => q.id === shift.qualification_list_id)?.qualification_description || "";
+  selectedTaskList.value = task_lists.value.find(t => t.id === shift.shift_task_list_id)?.name || ""; 
+
+  saveAsTemplate.value = shift.is_template === true || shift.is_template === 1;
+}
+
+// this function gets the employees name from the employee list based on user id
+function getEmployeeName(userId) {
+  const emp = employees.value.find(e => e.id === userId);
+  return emp ? [emp.fName, emp.lName].filter(Boolean).join(" ") : props.employee_name;
+}
 
 
 //backend calls for populating dropdowns, etc.
@@ -186,29 +214,17 @@ async function getTaskLists(){
   }
 }
 
-async function getUser(id) {
-    //console.log("Getting user with ID:", id);
-    try {
-        const response = await userServices.get(id);
-        user.value = response.data;
-        return user.value;
-    } catch (error) {
-        console.error("Error adding user:", error);
-    }
-}
-
-async function getEmployees() {
+async function getEmployees(){
   //this gets users who are "employees.." still needs to be department specific. it is not yet.
   const user_id = Utils.getStore("user").userId;
   try{
-    console.log("user: ", user_id);
+console.log("user: ", user_id);
     const response = await getUser(user_id);
     currentUser.value = response;
     console.log("Getting employees for department id:", response.department_id);
     const deptResponse = await userServices.getDept(response.department_id);
     employees.value = deptResponse.data;
     console.log("returned:" + employees.value);
-
     // for (const emp of employees.value) { //managers should be in this list, though they might need an extra identifier
     //   if(emp.role !== "Employee"){
     //     const index = employees.value.indexOf(emp);
@@ -219,7 +235,8 @@ async function getEmployees() {
     // }
     //console.log("filtered employees:" + employees.value);
 
-    employee_names.value = employees.value.map(emp => emp.fName);
+
+    employee_names.value = employees.value.map(emp => emp.name);
     console.log("employee names:" + employee_names.value);
   }
   catch(error){
@@ -239,7 +256,7 @@ async function getShifts() {
       rawShifts.map(async shift => {
         const start = await date_timeServices.get(shift.start_day_id);
         const end = await date_timeServices.get(shift.end_day_id);
-        return { ...shift, startObj: start.first_date_time, endObj: end.first_date_time };
+        return { ...shift, startObj: start.data.first_date_time, endObj: end.data.first_date_time };
       })
     );
 
@@ -253,7 +270,7 @@ async function getShifts() {
 //collecting all form data to send to backend when creating shift.
 function getFormData() {
   return {
-    employee_id: employees.value.find(emp => emp.fName === selectedEmployee.value)?.id,
+    employee_id: employees.value.find(emp => emp.name === selectedEmployee.value)?.id,
     shiftTime: shiftTime.value,
     color: color.value,
     department_id: currentUser.value.department_id,
@@ -295,9 +312,14 @@ function toSqlDateTime(date) {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`
 }
 
-
-
-
+// a function to save the shift... enough said
+async function saveShift() {
+    if (isEditing.value) {
+        await updateShift();
+    } else {
+        await createShift();
+    }
+}
 
 async function createShift(){
     const formData = getFormData();
@@ -332,6 +354,46 @@ async function createShift(){
     console.log("Shift creation response:", response.data);
     emit('close'); // Close the modal after creating the shift
 
+}
+
+// function that updates a shift which is like creating a shift, but it just updates the existing one instead
+async function updateShift() {
+    const formData = getFormData();
+    const shiftTime = formData.shiftTime
+    const [startStr, endStr] = shiftTime.split(' - ')
+    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
+    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+    const sqlStart = toSqlDateTime(startDateTime)
+    const sqlEnd = toSqlDateTime(endDateTime)
+    console.log("Form Data to update:", formData);
+
+
+    // update existing date_time records
+    await date_timeServices.update(props.shift.start_day_id, { first_date_time: sqlStart });
+    await date_timeServices.update(props.shift.end_day_id, { first_date_time: sqlEnd });
+
+    const response = await shiftServices.update(props.shift.id, {
+      user_id: formData.employee_id,
+      color: formData.color,
+      position_id: formData.position_id,
+      qualification_list_id: formData.qualification_list_id,
+      shift_task_list_id: formData.shift_task_list_id,
+      is_template: formData.is_template
+    })
+    console.log("Shift update response:", response.data);
+    emit('close');
+}
+
+// function to delete a shift with confirmation
+async function deleteShift(shiftId) {
+  if (confirm("Are you sure you want to delete this shift?")) {
+    try {
+      await shiftServices.delete(shiftId);
+      emit('close'); // Close the modal after deleting the shift
+    } catch (error) {
+      console.error("Error deleting shift:", error);
+    }
+  }
 }
 
 //date times will have to be made for each shift that gets created.
@@ -371,7 +433,6 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-
 // Call this after you fetch shifts
 async function populateShiftTemplates() {
   // Filter out templates from all shifts
@@ -384,15 +445,26 @@ async function populateShiftTemplates() {
     const startObj = await date_timeServices.get(template.start_day_id);
     const endObj = await date_timeServices.get(template.end_day_id);
     const position = await positionServices.get(template.position_id);
-    const task_list = await task_listServices.get(template.shift_task_list_id);
-    const qualification_list = await qualification_listServices.get(template.qualification_list_id);
+    
+    // get the task list name if there is one
+    let task_list_name = "";
+    if (template.shift_task_list_id) {
+        const task_list = await task_listServices.get(template.shift_task_list_id);
+        task_list_name = task_list.data.name;
+    }
 
-    // Add a new property just for frontend display
+    // get the qualification list name (if there is one)
+    let qualification_list_name = "";
+    if (template.qualification_list_id) {
+        const qualification_list = await qualification_listServices.get(template.qualification_list_id);
+        qualification_list_name = qualification_list.data.qualification_description;
+    }
+
     console.log("StartObj:", startObj, "EndObj:", endObj);
     template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
     template.position_name = position.data.name;
-    template.task_list_name = task_list.data.name;
-    template.qualification_list_name = qualification_list.data.qualification_description;
+    template.task_list_name = task_list_name;
+    template.qualification_list_name = qualification_list_name;
   }
 
   // Now shiftTemplates can just point to this array
@@ -415,7 +487,8 @@ function fillFromTemplate(template){
   <div class = "modal-content">
     <div>
         <div class="flex-row">
-            <h3 class="modal-text">Create Shift for {{ selectedEmployee }} on {{ formattedDate }}</h3>
+          <!-- changes the text from "Create Shift" to "Edit Shift" if editing -->
+            <h3 class="modal-text">{{ isEditing ? 'Edit' : 'Create' }} Shift for {{ selectedEmployee }} on {{ formattedDate }}</h3>
             <v-btn class = "close-button" @click="$emit('close'), form_content = false">
                 <v-icon
                     color="grey"
@@ -494,7 +567,7 @@ function fillFromTemplate(template){
 
 <div class="flex-row-baseline">
 
-<v-checkbox-btn
+<v-checkbox-btn v-if="!isEditing"
 v-model="saveAsTemplate">
     <template #label>
         <span>Save Shift as Template</span>
@@ -518,12 +591,9 @@ v-model="saveAsTemplate">
         </div>
 
         <div v-if="form_content" class="flex-row-right">
-            <v-btn class="create-button">
-            Save and Publish
-        </v-btn>
-        <v-btn class="create-button" @click="createShift()">
-            Save
-        </v-btn>
+            <v-btn v-if="!isEditing" class="create-button">Save and Publish</v-btn>
+            <v-btn v-if="isEditing" class="delete-button" @click.stop="deleteShift(props.shift.id)">Delete</v-btn>
+            <v-btn class="create-button" @click="saveShift()">{{ isEditing ? 'Update' : 'Save' }}</v-btn>    
         </div>
         
     </div>
@@ -591,6 +661,17 @@ v-model="saveAsTemplate">
 
 .create-button{
     background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 50px;
+    width: fit-content;
+    height: fit-content;
+}
+.delete-button{
+    background-color: #f44336;
     color: white;
     padding: 5px 10px;
     border: none;
