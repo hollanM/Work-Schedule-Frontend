@@ -461,11 +461,15 @@ async function getShift() {
 
 async function hasShiftConflict(userId, startDateTime, endDateTime) {
   const tempShift = await getShift(); //get updated shift in case of race condition
-  if (tempShift.user_id != null)//if the user is still null, race condition check is satisfied
+  if(tempShift.user_id != null)//if the user is still null, race condition check is satisfied
   {
     console.log(tempShift);
     //console.log("shift was updated after this page loaded it");
     return true;//using the same error prompt is ok here
+  }
+  if(userId != selectedShift.value.user_id && currentUser.value.role != "Manager")
+  {
+    return true;
   }
   const start = new Date(startDateTime);
   const end = new Date(endDateTime);
