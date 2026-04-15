@@ -1,7 +1,22 @@
+
+
 <script setup>
 import ocLogo from "/oc-logo-white.png";
+import Attendance from "/Attendance.png";
 import Bell from "/Bell.png";
+import Dashboard from "/Dashboard.png";
+import Inbox from "/Inbox.png";
+import Schedule from "/Schedule.png";
+import Settings from "/Settings.png";
 import Dropdown_Arrow from "/Dropdown-arrow.png";
+import LockAsTerminal from "/LockAsTerminal.png";
+import Logout from "/Logout.png";
+import MyAvailability from "/MyAvailability.png";
+import MySchedule from "/MySchedule.png";
+import Profile from "/ProfileAndSettings.png";
+import SwitchWorkplaces from "/SwitchWorkplaces.png";
+import timesheets from "/timesheets.png";
+import TimeTracker from "/TimeTracker.png";
 
 import { ref, computed,onMounted } from "vue";
 import Utils from "../config/utils";
@@ -78,10 +93,7 @@ const Settings_Items = ref([ //need to merge this with the profile button eventu
 const Profile_Open = ref(false);
 const Profile_Items = ref([
   { title: 'Edit Profile', route: { name: 'editProfile', params: { id: user.value?.userId } }, photo: Profile },
-  { title: 'My Schedule', click: '', photo: MySchedule },
-  { title: 'My Availability', click: '', photo: MyAvailability },
-  { title: 'Switch Workspaces', click: '', photo: SwitchWorkplaces },
-  { title: 'Logout', action: 'logout', photo: Logout }, 
+  { title: 'Logout', action: 'logout', photo: Logout }, // CHANGED: never actually logged out, instead just redirected to login page.
 ]);
 
 async function getCurrentUser(){
@@ -117,19 +129,25 @@ const handleSettingsItemClick = (item) => {
 <template>
   <div app>
     <v-app-bar id="app-bar">
-      
+      <div id="Bell_Div" v-if="user" class="container">
+        <div>
+          <router-link :to="{ name: '' }">
+            <v-img class="image" id="Bell_img" :src="Bell" height="40" width="40" contain></v-img>
+          </router-link>
+        </div>
+      </div>
       <v-menu v-model="Dashboard_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Dashboard_Div" class="container" v-bind="props">
-            <v-icon icon="mdi-view-dashboard"></v-icon>
+            <v-img id="image" :src="Dashboard" height="40" width="40" contain/>
             <span>Dashboard</span>
-            <v-icon icon="mdi-chevron-right" :style="{transform: Dashboard_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"></v-icon>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Dashboard_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">
           <v-list-item v-for="(Dashboard_Item, index) in Dashboard_Items" :key="index" :to="Dashboard_Item.route" class="dropdown-menu">
             <template #prepend>
-              <v-icon :icon="Dashboard_Item.icon" size="small"></v-icon>
+              <v-img :src="Dashboard_Item.photo" width="24" height="24" contain/>
             </template>
             <v-list-item-title>
               {{ Dashboard_Item.title }}
@@ -140,15 +158,15 @@ const handleSettingsItemClick = (item) => {
       <v-menu v-model="Schedule_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Schedule_Div" class="container" v-bind="props">
-            <v-icon icon="mdi-calendar-month"></v-icon>
+            <v-img id="image" :src="Schedule" height="40" width="40" contain/>
             <span>Schedule</span>
-            <v-icon icon="mdi-chevron-right" :style="{transform: Schedule_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"></v-icon>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Schedule_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">
           <v-list-item v-for="(Schedule_Item, index) in Schedule_Items" :key="index" :to="Schedule_Item.route" class="dropdown-menu">
             <template #prepend>
-              <v-icon :icon="Schedule_Item.icon" size="small"></v-icon>
+              <v-img :src="Schedule_Item.photo" width="24" height="24" contain/>
             </template>
             <v-list-item-title>
               {{ Schedule_Item.title }}
@@ -159,9 +177,9 @@ const handleSettingsItemClick = (item) => {
       <v-menu v-model="Attendance_Open" transition="slide-y-transition" v-if="!isManager">
         <template #activator="{ props }">
           <v-btn id="Attendance_Div" class="container" v-bind="props">
-            <v-icon icon="mdi-clipboard-list"></v-icon>
+            <v-img id="image" :src="Attendance" height="40" width="40" contain/>
             <span>Attendance</span>
-            <v-icon icon="mdi-chevron-right" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"></v-icon>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Attendance_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">
@@ -186,7 +204,7 @@ const handleSettingsItemClick = (item) => {
         <v-list class="dropdown">
           <v-list-item v-for="(Attendance_Item, index) in Attendance_Items_Manager" :key="index" :to="Attendance_Item.route" class="dropdown-menu">
             <template #prepend>
-              <v-icon :icon="Attendance_Item.icon" size="small"></v-icon>
+              <v-img :src="Attendance_Item.photo" width="24" height="24" contain/>
             </template>
             <v-list-item-title>
               {{ Attendance_Item.title }}
@@ -198,45 +216,41 @@ const handleSettingsItemClick = (item) => {
       <!-- <v-menu v-model="Inbox_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Inbox_Div" class="container" v-bind="props">
-            <v-icon icon="mdi-inbox"></v-icon>
+            <v-img id="image" :src="Inbox" height="40" width="40" contain/>
             <span>Inbox</span>
-            <v-icon icon="mdi-chevron-right" :style="{transform: Inbox_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"></v-icon>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Inbox_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">
           <v-list-item v-for="(Inbox_Item, index) in Inbox_Items" :key="index" :to="Inbox_Item.route" class="dropdown-menu">
             <template #prepend>
-              <v-icon :icon="Inbox_Item.icon" size="small"></v-icon>
+              <v-img :src="Inbox_Item.photo" width="24" height="24" contain/>
             </template>
             <v-list-item-title>
               {{ Inbox_Item.title }}
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu>
-      <!-- <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
+      </v-menu> -->
+      <v-menu class="v-menu" v-model="Settings_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Settings_Div" class="container" v-bind="props">
-            <v-icon icon="mdi-cog"></v-icon>
+            <v-img id="Settings_Image" :src="Settings" height="40" width="40" contain/>
             <span>Settings</span>
-            <v-icon icon="mdi-chevron-right" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"></v-icon>
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{transform: Settings_Open ? 'rotate(0deg)' : 'rotate(90deg)',transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
         <v-list class="dropdown">    
           <v-list-item v-for="(Settings_Item, index) in Settings_Items" :key="index" @click="handleSettingsItemClick(Settings_Item)" class="dropdown-menu">
             <template #prepend>
-              <v-icon :icon="Settings_Item.icon" size="small"></v-icon>
+              <v-img :src="Settings_Item.photo" width="24" height="24" contain/>
             </template>
             <v-list-item-title>
               {{ Settings_Item.title }}
             </v-list-item-title>
           </v-list-item>
         </v-list>
-      </v-menu> -->
-      
-      <!-- @@!!!!!Hollan is hiding the settings dropdown since it is no longer needed!!!!!@@ -->
-
-
+      </v-menu>
       <!-- <v-menu bottom min-width="200px" rounded offset-y v-if="user">
         <template v-slot:activator="{ props }">
           <v-btn v-bind="props" icon x-large>
@@ -261,19 +275,14 @@ const handleSettingsItemClick = (item) => {
           </v-card-text>
         </v-card>
       </v-menu> -->
-      <!-- This was orginal profile with logout. Hollan has this for a reference -->
 
       <v-menu v-model="Profile_Open" transition="slide-y-transition" v-if="user">
         <template #activator="{ props }">
           <v-btn id="Profile_Div" class="container" v-bind="props">
-            <v-avatar v-if="user.profileImage" size="40" class="profile-avatar">
-              <v-img :src="user.profileImage" cover/>
-            </v-avatar>
-            <v-avatar v-else size="40" class="profile-avatar">
-              <span>{{ initials }}</span>
-            </v-avatar>
+            <v-img id="Profile_Image" :src="user.profileImage" height="40" width="40" cover class="profile-round"/>
             <span>Profile</span>
-            <v-icon icon="mdi-chevron-right" :style="{ transform: Profile_Open ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.2s ease'}"></v-icon>
+
+            <img :src="Dropdown_Arrow" height="25" width="25" :style="{ transform: Profile_Open ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.2s ease'}"/>
           </v-btn>
         </template>
 
@@ -286,7 +295,7 @@ const handleSettingsItemClick = (item) => {
             @click="Profile_Item.action === 'logout' ? logout() : null"
           >
             <template #prepend>
-              <v-icon :icon="Profile_Item.icon" size="small"></v-icon>
+              <v-img :src="Profile_Item.photo" width="24" height="24" contain />
             </template>
 
             <v-list-item-title>{{ Profile_Item.title }}</v-list-item-title>
@@ -307,19 +316,24 @@ const handleSettingsItemClick = (item) => {
   cursor: pointer; 
   height: 100%;
   padding: .1vw;
-  min-height: 64px;
+  min-height: 64px; /*might need to be dynamic later but works for now (height of the app-bar)*/
+}
+
+.dropbtn
+{
+  transform: rotate(90deg); /*arrow is initally on its side, and will rotate when clicked on*/
 }
 
 .dropdown {
-  padding: 0;
+  padding-top: 0;
   position: relative;
   display: inline-block;
-  background-color:  rgb(17, 26, 37)  !important;
+  background-color: rgb(76, 76, 76) !important; /*this is the color behind the buttons (not the button background)*/
 }
 
 .dropdown-menu {
-  background-color: rgb(17, 26, 37) !important;
-  color: rgb(193, 193, 193) !important;
+  background-color: rgb(40, 40, 40) !important; /*!important is the difference between this working and not*/
+  color: rgb(193, 193, 193) !important; /*at this point i think it is overwriting the list when the other normally happens*/
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
   padding: 0.1vw;
   display: flex;
@@ -340,13 +354,13 @@ const handleSettingsItemClick = (item) => {
 
 #app-bar 
 {
-  background-color: rgb(32, 46, 62);
-  overflow: visible;
+  background-color: rgb(60, 60, 60);
+  overflow: visible; /*lets the dropdown extend over the bottom of the app bar*/
 }
 
 #Bell_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -357,7 +371,7 @@ const handleSettingsItemClick = (item) => {
 
 #Dashboard_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -368,7 +382,7 @@ const handleSettingsItemClick = (item) => {
 
 #Schedule_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -379,7 +393,7 @@ const handleSettingsItemClick = (item) => {
 
 #Attendance_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -390,7 +404,7 @@ const handleSettingsItemClick = (item) => {
 
 #Inbox_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
 }
 
@@ -401,7 +415,7 @@ const handleSettingsItemClick = (item) => {
 
 #Settings_Div
 {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193); 
 }
 
@@ -411,16 +425,19 @@ const handleSettingsItemClick = (item) => {
 }
 
 #Profile_Div {
-  background-color: rgb(32, 46, 62);
+  background-color: rgb(60, 60, 60);
   color: rgb(193, 193, 193);
+}
+
+#Profile_Image {
+  flex-shrink: 0;
 }
 
 #Profile_Div:hover {
   filter: brightness(50%);
 }
 
-.profile-avatar {
-  flex-shrink: 0;
+.profile-round {
   border-radius: 50%;
 }
 
