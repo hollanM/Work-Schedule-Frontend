@@ -78,7 +78,11 @@ const shiftsByUserAndDate = computed(() => {
 });
 
 const hasUserShifts = computed(() => {
-  //console.log("checking found shifts");
+  if(!shifts)
+  {
+    return false;
+  }
+  // console.log("checking found shifts");
   // shifts.value.forEach(shift => {
   //   console.log("Checking shift for user:", {
   //     shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
@@ -86,7 +90,6 @@ const hasUserShifts = computed(() => {
   //     shiftStartDate: shift.startDate,
   //     currentDate: currentDate.value,
   //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
-  //     currentUser: currentUser.value.role,
   //   })
   // });
   return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria

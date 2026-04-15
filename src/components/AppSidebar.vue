@@ -9,7 +9,7 @@ import addUserModal from "../components/UserModal.vue";
 import shiftServices from '../services/shiftServices.js'
 
 //comment.
-const user = ref(null);
+//const user = ref(null); //never populated?
 const currentUser = ref(null)
 const drawer = ref(false)
 const loggedIn = ref(false)
@@ -476,7 +476,7 @@ const userModalSaveButton = () => //for the save button in the user modal, might
       </v-expansion-panels>
     </v-navigation-drawer>
     //disabeling the toggle button fixed the inspect open bug???
-    <v-btn v-if="isManager && user" class="circle-button zero-margin "  @click="toggle()"
+    <v-btn v-if="isManager && userSession" class="circle-button zero-margin "  @click="toggle()"
     :class="{ closed: !drawer }"
     >
       <v-icon class="ml-3">
