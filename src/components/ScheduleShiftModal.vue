@@ -149,9 +149,16 @@ async function populateFormFromShift(shift) {
   shiftTime.value = shift.formattedTime;
   color.value = shift.color;
 
+  // Populate start/end times for the inputs
+  if (shift.startDate) {
+    shiftStartTime.value = formatTimeInputFromDate(shift.startDate);
+  }
+  if (shift.endDate) {
+    shiftEndTime.value = formatTimeInputFromDate(shift.endDate);
+  }
+
   // for the things below, we find the stuffs by id from the shift and set the selected value to the name 
   selectedPosition.value = positions.value.find(pos => pos.id === shift.position_id)?.name || ""; // 
-  selectedTag.value = qualification_lists.value.find(q => q.id === shift.qualification_list_id)?.qualification_description || "";
   selectedTaskList.value = task_lists.value.find(t => t.id === shift.shift_task_list_id)?.name || ""; 
 
   saveAsTemplate.value = shift.is_template === true || shift.is_template === 1;
