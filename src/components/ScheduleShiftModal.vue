@@ -47,6 +47,10 @@ const shiftTemplates = computed(() =>
   shifts.value.filter(shift => shift.is_template === true || shift.is_template === 1 || shift.is_template === "1")
 )
 
+function buildEmployeeName(employee) {
+  return [employee?.fName, employee?.lName].filter(Boolean).join(" ").trim();
+}
+
 const isEditing = computed(() => !!props.shift); // if shift prop is passed, we're editing, otherwise creating
 
 watch(
@@ -156,7 +160,7 @@ async function populateFormFromShift(shift) {
 // this function gets the employees name from the employee list based on user id
 function getEmployeeName(userId) {
   const emp = employees.value.find(e => e.id === userId);
-  return emp ? [emp.fName, emp.lName].filter(Boolean).join(" ") : props.employee_name;
+  return emp ? buildEmployeeName(emp) : props.employee_name;
 }
 
 
@@ -211,20 +215,13 @@ async function getEmployees() {
     currentUser.value = response;
     console.log("Getting employees for department id:", response.department_id);
     const deptResponse = await userServices.getDept(response.department_id);
-    employees.value = deptResponse.data;
+    employees.value = Array.isArray(deptResponse.data) ? deptResponse.data : [];
     console.log("returned:" + employees.value);
 
-    for (const emp of employees.value) {
-      if(emp.role !== "Employee"){
-        const index = employees.value.indexOf(emp);
-        if (index > -1) {
-          employees.value.splice(index, 1);
-        }
-      }
-    }
+    employees.value = employees.value.filter(emp => emp.role === "Employee");
     console.log("filtered employees:" + employees.value);
 
-    employee_names.value = employees.value.map(emp => emp.name);
+    employee_names.value = employees.value.map(buildEmployeeName).filter(Boolean);
     console.log("employee names:" + employee_names.value);
   }
   catch(error){
@@ -261,8 +258,12 @@ async function getShifts() {
 
 //collecting all form data to send to backend when creating shift.
 function getFormData() {
+  const selectedEmployeeRecord = employees.value.find(
+    emp => buildEmployeeName(emp) === selectedEmployee.value
+  );
+
   return {
-    employee_id: employees.value.find(emp => emp.fName === selectedEmployee.value)?.id,
+    employee_id: selectedEmployeeRecord?.id,
     start_time: shiftStartTime.value,
     end_time: shiftEndTime.value,
     color: color.value,
