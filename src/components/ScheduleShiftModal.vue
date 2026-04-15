@@ -189,6 +189,8 @@ async function getPositions(){
 
 
 
+
+
 async function getTaskLists(){
   try{
     const response = await task_listServices.getAll();
@@ -346,10 +348,12 @@ async function createShift(){
 // function that updates a shift which is like creating a shift, but it just updates the existing one instead
 async function updateShift() {
     const formData = getFormData();
-    const shiftTime = formData.shiftTime
-    const [startStr, endStr] = shiftTime.split(' - ')
-    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
-    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+   if (!formData.start_time || !formData.end_time) {
+      message.value = "Start time and end time are required.";
+      return;
+    }
+    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
+    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
     const sqlStart = toSqlDateTime(startDateTime)
     const sqlEnd = toSqlDateTime(endDateTime)
     console.log("Form Data to update:", formData);
@@ -403,6 +407,13 @@ function getTextColor(bgColor) {
   const luminance = 0.299 * r + 0.587 * g + 0.114 * b
   return luminance > 186 ? 'black' : 'white'
 }
+
+function formatTimeInputFromDate(date) {
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 
 //this is formatting the time for the templates.
 function formatShiftTimeFromISO(isoString) {
