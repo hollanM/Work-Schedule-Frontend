@@ -389,6 +389,14 @@ onMounted(async () => {
     </div>
 
     <v-card v-if="currentView === 'week'" class="week-calendar-card">
+    <div>
+      <v-alert
+        v-if="!hasUserShifts && !isManager"
+        type="info"
+        title="No Shifts Assigned"
+        text="You don't have any shifts scheduled for this week."
+      ></v-alert>
+    </div>
       <div class="week-calendar">
         <div class="week-calendar__header">
           <div class="week-calendar__days">
