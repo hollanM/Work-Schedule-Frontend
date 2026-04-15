@@ -27,6 +27,7 @@ const positions = ref([]);
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
+const selectedShift = ref(null);
 
 const hourLabels = [
   "12A",
@@ -192,9 +193,10 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-function openShiftModal(selectedEmployeeName, selectedDate) {
+function openShiftModal(selectedEmployeeName, selectedDate, shift = null) {
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
+  selectedShift.value = shift;
   showModal.value = true;
 }
 
@@ -476,6 +478,7 @@ onMounted(async () => {
                 openShiftModal(
                   getEmployeeName(shift.user_id),
                   shift.shiftDate,
+                  shift
                 )
               "
             >
@@ -545,7 +548,7 @@ onMounted(async () => {
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate)"
+              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -567,9 +570,10 @@ onMounted(async () => {
   <!-- Julians Form changes start here -->
    <transition name="fade">
   <ScheduleShiftModal v-if="showModal"
-  @close="showModal = false; reload()"
+  @close="showModal = false; selectedShift = null; reload()"
   :employee_name="employeeName"
   :date="date"
+  :shift="selectedShift"
   ></ScheduleShiftModal>
   </transition>
 </template>
