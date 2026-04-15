@@ -19,6 +19,8 @@ import userServices from "../services/userServices";
 import addUserModal from "../components/UserModal.vue";
 import taskListServices from "../services/task_listServices";
 import departmentServices from "../services/departmentServices";
+import notificationListServices from "../services/notificationListServices";
+import notificationServices from "../services/notificationServices";
 import store from "../store/store.js"
 
 const currentDate = ref(new Date());
@@ -36,7 +38,8 @@ const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
 
-const showShiftDialog = ref(false);
+const showWeekShiftDialog = ref(false);
+const showDayShiftDialog = ref(false);
 const selectedShift = ref([]);
 const hasTakeError = ref(false);
 
@@ -441,20 +444,28 @@ async function updateShift() { //currently only used by the takeShift() function
     const response = await shiftServices.update(selectedShift.value.id, {
       user_id: currentUser.value.id,
     })
-    console.log("Shift update response:", response.data, currentUser.value);
+    //console.log("Shift update response:", response.data, currentUser.value);
 }
 
 async function getShift() { 
-    const response = await shiftServices.get(selectedShift.value.id)
-    console.log("Shift get response:", response.data);
+    const response = await shiftServices.get(selectedShift.value.id) //regression - get defaults to getDept
+    //console.log("Shift get response:", response.data);
     return response;
+
+    //previous way of getting it to work, when I had to get be department and then filter
+    //const response = await shiftServices.get(currentUser.value.department_id); //instead get all department shifts
+    ///const foundShift = response.data.find(item => item.id == selectedShift.value.id);
+    //console.log("shift found: ", foundShift);
+    //return foundShift;
 }
 
-function hasShiftConflict(userId, startDateTime, endDateTime) {
-  const tempShift = getShift(); //get updated in case of race condition
-  if (tempShift != selectedShift);
+async function hasShiftConflict(userId, startDateTime, endDateTime) {
+  const tempShift = await getShift(); //get updated shift in case of race condition
+  if (tempShift.user_id != null)//if the user is still null, race condition check is satisfied
   {
-
+    console.log(tempShift);
+    //console.log("shift was updated after this page loaded it");
+    return true;//using the same error prompt is ok here
   }
   const start = new Date(startDateTime);
   const end = new Date(endDateTime);
@@ -468,22 +479,59 @@ function hasShiftConflict(userId, startDateTime, endDateTime) {
   );
 }
 
-function openShiftDialog(shift) {
+async function sendNoticeOfShiftTake() { 
+  const response = await notificationListServices.getAll(); //gets all for now, since I cant get by department
+  const notificationLists = response.data;
+  //console.log(notificationLists.value);
+  //const filteredNotificationLists = await notificationListServices.get(); //should be how it works
+  for(const employee of employees.value) //for each employee
+  {
+    if(employee.role == "Manager") //if they are a manager, send a notice of shift take
+    {
+      console.log("employee tested: ", employee, employee.id)
+      const notificationList = notificationLists.find((item) => item.user_id == employee.id); //get the managers notification list
+      if (!notificationList) continue; //dont know if this is needed or not but it could help in an edge case
+      const response = await notificationServices.create({ //send a notice of the shift take action
+        title: "Shift taken by user: " + currentUser.value.fName + " " + currentUser.value.lName,
+        description: currentUser.value.fName + " has taken the shift: " + selectedShift.value.positionName + " at " + selectedShift.value.startDate,
+        type: "scheduleUpdates",
+        email_pref: false,
+        mobile_pref: true,
+        is_read: false,
+        date_time_sent: new Date(), //built in method I hope
+        notification_list_id: notificationList.id,
+      });
+      console.log("Notice sent:", response.data);
+    }
+  }
+}
+
+function openWeekShiftDialog(shift) {
+  hasTakeError.value = false; //clear the errors when this function starts
   selectedShift.value = shift;
   console.log("selectedShift: ", selectedShift.value);
   //console.log(!selectedShift?.value?.user_id) //working correctly
-  showShiftDialog.value = true;
+  showWeekShiftDialog.value = true;
+}
+
+function openDayShiftDialog(shift) {
+  hasTakeError.value = false; //clear the errors when this function starts
+  selectedShift.value = shift;
+  console.log("selectedShift: ", selectedShift.value);
+  //console.log(!selectedShift?.value?.user_id) //working correctly
+  showDayShiftDialog.value = true;
 }
 
 async function editShift() {
-  showShiftDialog.value = false;
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
   await nextTick(); //had an issue where the changes here were too fast for vue to work with
   openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate);
 }
 
 async function takeShift() {
   //console.log('Taking shift:', selectedShift.value);
-  if(hasShiftConflict(currentUser.value.user_id, selectedShift.value.startDate, selectedShift.value.endDate))
+  if(await hasShiftConflict(currentUser.value.user_id, selectedShift.value.startDate, selectedShift.value.endDate))
   {
     //hilight the box or display a notice somehow
     hasTakeError.value = true;
@@ -491,19 +539,26 @@ async function takeShift() {
   else
   {
     await updateShift();
-    showShiftDialog.value = false;
+    if(currentUser.value.role != "Manager") //only send notices if a manager is not taking shifts
+    {
+      await sendNoticeOfShiftTake();
+    }
+    showWeekShiftDialog.value = false;
+    showDayShiftDialog.value = false;
     reload();
   }
 }
 
 function dropShift() {
   //console.log('Dropping shift:', selectedShift.value);
-  showShiftDialog.value = false;
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
 }
 
 function deleteShift() {
   //console.log('Deleting shift:', selectedShift.value);
-  showShiftDialog.value = false;
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
 }
 
 onMounted(async () => {
@@ -641,7 +696,7 @@ onMounted(async () => {
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
               :style="getWeekShiftStyle(shift)"
-              @click="openShiftDialog(shift)",
+              @click="openWeekShiftDialog(shift)",
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
@@ -654,12 +709,12 @@ onMounted(async () => {
                 {{ shift.positionName }}
               </span>
             </button>
-            <v-dialog v-model="showShiftDialog" max-width="480">
+            <v-dialog v-model="showWeekShiftDialog" max-width="480">
               <v-card>
                 <v-card-title>Shift Options</v-card-title>
-                <v-card-text>
+                <!-- <v-card-text> dont enable unless there needs to be text here
                   
-                </v-card-text>
+                </v-card-text> -->
                 <v-alert v-if="hasTakeError"
                   color="warning"
                   icon="$warning"
@@ -740,7 +795,7 @@ onMounted(async () => {
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftDialog(shift)"
+              @click="openDayShiftDialog(shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -753,6 +808,26 @@ onMounted(async () => {
                 {{ shift.positionName }}
               </span>
             </button>
+            <v-dialog v-model="showDayShiftDialog" max-width="480">
+              <v-card>
+                <v-card-title>Shift Options</v-card-title>
+                <!-- <v-card-text> dont enable unless there needs to be text here
+                  
+                </v-card-text> -->
+                <v-alert v-if="hasTakeError"
+                  color="warning"
+                  icon="$warning"
+                  title="Warning"
+                  text="You cannot take a shift if it conflicts with your schedule, or someone else is already working it"
+                ></v-alert>
+                <v-card-actions>
+                  <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
+                  <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn>
+                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </div>
       </div>
