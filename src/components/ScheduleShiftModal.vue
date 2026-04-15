@@ -2,7 +2,6 @@
 import { ref, onMounted, computed, reactive, watch } from "vue";
 import AuthServices from "../services/authServices";
 import positionServices from "../services/positionServices";
-import qualification_listServices from "../services/qualification_listServices.js";
 import task_listServices from "../services/task_listServices.js";
 import employeeServices from "../services/employeeServices.js";
 import userServices from "../services/userServices.js";
@@ -13,6 +12,7 @@ import { useRouter } from "vue-router";
 import { VBtn } from "vuetify/components";
 
 const props = defineProps({
+  passedUser: { type: Object, default: () => ({}) },
   employee_name: { type: [Number, String], required: true },
   date: { type: String, required: true },
   shift: { type: Object, default: null }
@@ -36,8 +36,6 @@ const message = ref("");
 const shifts = ref([]);
 const employees = ref([]);
 const employee_names = ref([]);
-const qualification_lists = ref([]);
-const qualification_lists_names = ref([]);
 const task_lists = ref([]);
 const task_lists_names = ref([]);
 const positions = ref([]);
@@ -48,6 +46,10 @@ const emit = defineEmits(["close"]);
 const shiftTemplates = computed(() =>
   shifts.value.filter(shift => shift.is_template === true || shift.is_template === 1 || shift.is_template === "1")
 )
+
+function buildEmployeeName(employee) {
+  return [employee?.fName, employee?.lName].filter(Boolean).join(" ").trim();
+}
 
 const isEditing = computed(() => !!props.shift); // if shift prop is passed, we're editing, otherwise creating
 
@@ -93,20 +95,14 @@ function generateTimes() {
 }
 
 
-const shiftRanges = ref([])
-const shiftTime = ref('')
-
-function generateShiftRanges() {
-  const ranges = []
-
-  for (let i = 0; i < timeList.value.length; i++) {
-    for (let j = i + 1; j < timeList.value.length; j++) {
-      ranges.push(`${timeList.value[i]} - ${timeList.value[j]}`)
-    }
-  }
-
-  shiftRanges.value = ranges
-}
+const shiftStartTime = ref("")
+const shiftEndTime = ref("")
+const colorSwatches = [
+  ["#D32F2F", "#F57C00", "#FBC02D", "#689F38", "#00897B", "#1976D2"],
+  ["#C2185B", "#E64A19", "#F9A825", "#43A047", "#00ACC1", "#3949AB"],
+  ["#7B1FA2", "#8D6E63", "#9E9D24", "#2E7D32", "#00838F", "#5E35B1"],
+  ["#AD1457", "#6D4C41", "#827717", "#558B2F", "#00695C", "#283593"]
+]
 
 //Normalizing strings if user don't want to add spaces.
 function normalize(str) {
@@ -120,7 +116,6 @@ function normalize(str) {
 function filterShifts(item, queryText) {
   return normalize(item).includes(normalize(queryText))
 }
-
 
 //trying to force local time here, since timezones ruin everything. 
 const formattedDate = computed(() =>
@@ -136,13 +131,11 @@ const form = reactive({
 onMounted( async () => {
   console.log("onMounted ran")
   await getPositions();
-  await getQualificationLists();
   await getTaskLists();
   await getEmployees();
   await getShifts();
   await populateShiftTemplates();
   generateTimes();
-  generateShiftRanges();
 
   if (props.shift) {
     populateFormFromShift(props.shift);
@@ -167,7 +160,7 @@ async function populateFormFromShift(shift) {
 // this function gets the employees name from the employee list based on user id
 function getEmployeeName(userId) {
   const emp = employees.value.find(e => e.id === userId);
-  return emp ? [emp.fName, emp.lName].filter(Boolean).join(" ") : props.employee_name;
+  return emp ? buildEmployeeName(emp) : props.employee_name;
 }
 
 
@@ -186,19 +179,7 @@ async function getPositions(){
   }
 }
 
-async function getQualificationLists(){
-  try{
-    const response = await qualification_listServices.getAll();
-    qualification_lists.value = response.data;
-    console.log("returned:" + qualification_lists.value);
-    qualification_lists_names.value = qualification_lists.value.map(ql => ql.qualification_description);
-    console.log("qualification list names:" + qualification_lists_names.value);
-  }
-  catch(error){
-    message.value = "Error: " + error.code + ":" + error.message;
-    console.log(error);
-  }
-}
+
 
 async function getTaskLists(){
   try{
@@ -214,29 +195,33 @@ async function getTaskLists(){
   }
 }
 
-async function getEmployees(){
+async function getUser(id) {
+    //console.log("Getting user with ID:", id);
+    try {
+        const response = await userServices.get(id);
+        user.value = response.data;
+        return user.value;
+    } catch (error) {
+        console.error("Error adding user:", error);
+    }
+}
+
+async function getEmployees() {
   //this gets users who are "employees.." still needs to be department specific. it is not yet.
   const user_id = Utils.getStore("user").userId;
   try{
-console.log("user: ", user_id);
+    //console.log("user: ", user_id);
     const response = await getUser(user_id);
     currentUser.value = response;
     console.log("Getting employees for department id:", response.department_id);
     const deptResponse = await userServices.getDept(response.department_id);
-    employees.value = deptResponse.data;
+    employees.value = Array.isArray(deptResponse.data) ? deptResponse.data : [];
     console.log("returned:" + employees.value);
-    // for (const emp of employees.value) { //managers should be in this list, though they might need an extra identifier
-    //   if(emp.role !== "Employee"){
-    //     const index = employees.value.indexOf(emp);
-    //     if (index > -1) {
-    //       employees.value.splice(index, 1);
-    //     }
-    //   }
-    // }
-    //console.log("filtered employees:" + employees.value);
 
+    employees.value = employees.value.filter(emp => emp.role === "Employee");
+    console.log("filtered employees:" + employees.value);
 
-    employee_names.value = employees.value.map(emp => emp.name);
+    employee_names.value = employees.value.map(buildEmployeeName).filter(Boolean);
     console.log("employee names:" + employee_names.value);
   }
   catch(error){
@@ -256,7 +241,11 @@ async function getShifts() {
       rawShifts.map(async shift => {
         const start = await date_timeServices.get(shift.start_day_id);
         const end = await date_timeServices.get(shift.end_day_id);
-        return { ...shift, startObj: start.data.first_date_time, endObj: end.data.first_date_time };
+        return {
+          ...shift,
+          startObj: start.data.first_date_time,
+          endObj: end.data.first_date_time
+        };
       })
     );
 
@@ -269,36 +258,26 @@ async function getShifts() {
 
 //collecting all form data to send to backend when creating shift.
 function getFormData() {
+  const selectedEmployeeRecord = employees.value.find(
+    emp => buildEmployeeName(emp) === selectedEmployee.value
+  );
+
   return {
-    employee_id: employees.value.find(emp => emp.name === selectedEmployee.value)?.id,
-    shiftTime: shiftTime.value,
+    employee_id: selectedEmployeeRecord?.id,
+    start_time: shiftStartTime.value,
+    end_time: shiftEndTime.value,
     color: color.value,
     department_id: currentUser.value.department_id,
     position_id: positions.value.find(pos => pos.name === selectedPosition.value)?.id, // if needed as name or map to id similarly
-    qualification_list_id: qualification_lists.value.find(q => q.qualification_description === selectedTag.value)?.id,
     shift_task_list_id: task_lists.value.find(t => t.name === selectedTaskList.value)?.id,
     is_template: saveAsTemplate.value
   }
 }
 
-//the times need to be converted into sql times to be stored. annoying, but necessary.
-function convertTo24Hour(timeStr) {
-  // timeStr example: "12:15 am" or "4:30 pm"
-  const [time, modifier] = timeStr.split(' ')
-  let [hours, minutes] = time.split(':').map(Number)
+function normalizeTimeForSql(timeStr) {
+  if (!timeStr) return ""
 
-  if (modifier.toLowerCase() === 'pm' && hours !== 12) {
-    hours += 12
-  }
-  if (modifier.toLowerCase() === 'am' && hours === 12) {
-    hours = 0
-  }
-
-  // pad to 2 digits
-  const hh = String(hours).padStart(2, '0')
-  const mm = String(minutes).padStart(2, '0')
-
-  return `${hh}:${mm}:00` // seconds optional
+  return timeStr.length === 5 ? `${timeStr}:00` : timeStr
 }
 
 function toSqlDateTime(date) {
@@ -326,13 +305,14 @@ async function createShift(){
     console.log("Form Data to submit:", formData);
     // Here you would send formData to your backend API to create the shift
     // Example: await shiftServices.create(formData);
-    
 
-    const shiftTime = formData.shiftTime
-    const [startStr, endStr] = shiftTime.split(' - ')
+    if (!formData.start_time || !formData.end_time) {
+      message.value = "Start time and end time are required.";
+      return;
+    }
 
-    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
-    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
+    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
 
     const sqlStart = toSqlDateTime(startDateTime)  // "2026-03-03 00:00:00"
     const sqlEnd = toSqlDateTime(endDateTime)      // "2026-03-03 00:15:00"
@@ -347,7 +327,6 @@ async function createShift(){
       end_day_id: end_time.value,
       color: formData.color,
       position_id: formData.position_id,
-      qualification_list_id: formData.qualification_list_id,
       shift_task_list_id: formData.shift_task_list_id,
       is_template: formData.is_template
     })
@@ -376,7 +355,6 @@ async function updateShift() {
       user_id: formData.employee_id,
       color: formData.color,
       position_id: formData.position_id,
-      qualification_list_id: formData.qualification_list_id,
       shift_task_list_id: formData.shift_task_list_id,
       is_template: formData.is_template
     })
@@ -433,6 +411,19 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
+function formatTimeInputFromISO(isoString) {
+  if (!isoString) return "";
+
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "";
+
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+
 // Call this after you fetch shifts
 async function populateShiftTemplates() {
   // Filter out templates from all shifts
@@ -449,22 +440,14 @@ async function populateShiftTemplates() {
     // get the task list name if there is one
     let task_list_name = "";
     if (template.shift_task_list_id) {
-        const task_list = await task_listServices.get(template.shift_task_list_id);
+    const task_list = await task_listServices.get(template.shift_task_list_id);
         task_list_name = task_list.data.name;
-    }
-
-    // get the qualification list name (if there is one)
-    let qualification_list_name = "";
-    if (template.qualification_list_id) {
-        const qualification_list = await qualification_listServices.get(template.qualification_list_id);
-        qualification_list_name = qualification_list.data.qualification_description;
     }
 
     console.log("StartObj:", startObj, "EndObj:", endObj);
     template.formattedTime = `${formatShiftTimeFromISO(startObj.data.first_date_time)} - ${formatShiftTimeFromISO(endObj.data.first_date_time)}`;
     template.position_name = position.data.name;
-    template.task_list_name = task_list_name;
-    template.qualification_list_name = qualification_list_name;
+    template.task_list_name = task_list.data.name;
   }
 
   // Now shiftTemplates can just point to this array
@@ -473,9 +456,9 @@ async function populateShiftTemplates() {
 
 function fillFromTemplate(template){
     selectedPosition.value = template.position_name
-    shiftTime.value = template.formattedTime
+    shiftStartTime.value = formatTimeInputFromISO(template.startObj)
+    shiftEndTime.value = formatTimeInputFromISO(template.endObj)
     selectedTaskList.value = template.task_list_name
-    selectedTag.value = template.qualification_list_name
     color.value = template.color
 }
 
@@ -525,37 +508,44 @@ function fillFromTemplate(template){
   outlined
 ></v-select>
 
-<div class="flex-row">
-<v-autocomplete
-  v-model="shiftTime"
-  :items="shiftRanges"
-  label="Time"
+<div class="flex-row time-color-row">
+<v-text-field
+  v-model="shiftStartTime"
+  label="Start Time"
+  type="time"
   clearable
-  :custom-filter="filterShifts"
-  @update:modelValue="val => shiftTime = val"
-></v-autocomplete>
-    <v-btn class="circle-button" v-if="!color_picker" @click="color_picker = true">
-        <v-icon class="ml-3">mdi-format-color-fill</v-icon>
+></v-text-field>
+<v-text-field
+  v-model="shiftEndTime"
+  label="End Time"
+  type="time"
+  clearable
+></v-text-field>
+<div class="color-picker-wrapper">
+    <v-btn
+      class="circle-button color-preview-button"
+      v-if="!color_picker"
+      @click="color_picker = true"
+      :style="{ backgroundColor: color, color: getTextColor(color) }"
+    >
+        <v-icon>mdi-format-color-fill</v-icon>
     </v-btn>
-    <v-color-picker class = "modal-color-picker" v-if="color_picker" @click="color_picker = false"
+    <v-color-picker class = "modal-color-picker" v-if="color_picker"
         v-model="color"
         mode="swatches"
+        :swatches="colorSwatches"
         hide-inputs
         hide-sliders
         hide-canvas
         show-swatches
-      ></v-color-picker>    
+        @update:modelValue="color_picker = false"
+      ></v-color-picker>
+</div>
 </div>
 <v-select
   v-model="selectedPosition"
   :items="position_names"
   label="Position"
-  outlined
-></v-select>
-<v-select
-  v-model="selectedTag"
-  :items="qualification_lists_names"
-  label="Qualifications"
   outlined
 ></v-select>
 <v-select
@@ -644,6 +634,12 @@ v-model="saveAsTemplate">
     justify-content: space-between;
 }
 
+.time-color-row {
+    position: relative;
+    align-items: flex-start;
+    gap: 12px;
+}
+
 .flex-row-baseline{
     display:flex;
 }
@@ -719,7 +715,29 @@ v-model="saveAsTemplate">
 
 
 .modal-color-picker{
-    height: 80px;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    flex-shrink: 0;
+}
+
+.color-picker-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.color-preview-button {
+  min-width: 72px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.modal-color-picker :deep(.v-color-picker-swatches) {
+  max-height: none;
+  overflow: visible;
 }
 
 .modal-header{
