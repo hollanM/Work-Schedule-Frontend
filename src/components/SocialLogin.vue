@@ -5,9 +5,14 @@ import Utils from "../config/utils.js";
 import { useRouter } from "vue-router";
 import store from "../store/store"
 
+const props = defineProps({
+  employeeLogin: { type: Boolean, required: true }
+});
+
 const router = useRouter();
 const fName = ref("");
 const lName = ref("");
+const role = ref("");
 const user = ref({});
 
 const loginWithGoogle = () => {
@@ -40,7 +45,10 @@ const handleCredentialResponse = async (response) => {
       Utils.setStore("user", user.value);
       fName.value = user.value.fName;
       lName.value = user.value.lName;
-      router.push({ name: "schedules" });
+      role.value = user.value.role;
+      console.log("role", role.value);
+     role.value === "Employee" ? router.push({ name: "employee-dashboard" }) : router.push({ name: "schedules" });
+
     })
     .catch((error) => {
       console.log("error", error);
@@ -53,6 +61,9 @@ const handleCredentialResponse = async (response) => {
 onMounted(() => {
   loginWithGoogle();
 });
+
+
+
 </script>
 
 <template>

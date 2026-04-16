@@ -7,8 +7,8 @@ export default {
   get(id) {
     return apiClient.get(`/shifts/${id}`);
   },
-  getAllDept(id) {
-    return apiClient.get(`/shifts/${id}`);
+   getForUser(id) {
+    return apiClient.get(`/shifts/users/${id}`);
   },
   create(data) {
     return apiClient.post("/shifts", data);

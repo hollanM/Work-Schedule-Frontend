@@ -1,5 +1,10 @@
 <script setup>
 import SocialLogin from "../components/SocialLogin.vue";
+import { ref } from "vue";
+import store from "../store/store"
+import { useRouter } from "vue-router";
+
+
 </script>
 
 <template>
@@ -60,7 +65,8 @@ import SocialLogin from "../components/SocialLogin.vue";
             Or continue with
           </div>
 
-          <SocialLogin />
+          <SocialLogin 
+          />
 
           <!-- Register Link -->
           <div class="text-center mt-6 text-caption">
@@ -69,6 +75,7 @@ import SocialLogin from "../components/SocialLogin.vue";
               Create one
             </a>
           </div>
+
 
         </v-card>
 
