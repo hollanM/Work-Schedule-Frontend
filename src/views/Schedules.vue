@@ -35,7 +35,7 @@ const showMyShifts = ref(false); // track when the user wants to show only their
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
-// const selectedShift = ref(null);
+const selectedShift = ref(null);
 
 const hourLabels = [
   "12A",
@@ -109,7 +109,7 @@ const employeeLookup = computed(() => {
 const selectedDateKey = computed(() => format(currentDate.value, "yyyy-MM-dd"));
 
 const weekStart = computed(() =>
-  startOfWeek(currentDate.value, { weekStartsOn: 1 }), 
+  startOfWeek(currentDate.value, { weekStartsOn: 0 }), //0 is start of Sunday, Monday start was messing with the .isSameWeek import
 );
 
 const weekDays = computed(() =>
@@ -191,15 +191,15 @@ async function loadShifts() {
   for (const shift of shifts.value) {
     if (shift.is_template) continue;
 
-    const start = shift.start_day
-    const end = shift.end_day
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+    const start = await date_timeServices.get(shift.start_day_id);
+    const end = await date_timeServices.get(shift.end_day_id);
+    const startDate = new Date(start.data.first_date_time);
+    const endDate = new Date(end.data.first_date_time);
 
     shift.startDate = startDate;
     shift.endDate = endDate;
     shift.shiftDate = format(startDate, "yyyy-MM-dd");
-    shift.formattedTime = `${formatShiftTimeFromISO(start)} - ${formatShiftTimeFromISO(end)}`;
+    shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
     shift.positionName =
       positions.value.find((position) => position.id === shift.position_id)?.name || "";
   }
@@ -219,7 +219,7 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-function openShiftModal(selectedEmployeeName, selectedDate) {
+function openShiftModal(selectedEmployeeName, selectedDate, shift = null) {
   if (!isManager.value) return;
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
@@ -319,6 +319,7 @@ function getWeekShiftStyle(shift) {
 }
 
 function openWeekCell(day) {
+  if(userSession.value.userId && isManager.value) //getting rid of the + icon did not do it I also have to disable the button function for non manaers
     openShiftModal("", day.date);
 }
 
@@ -445,7 +446,7 @@ async function getTaskLists() {
 }
 
 onMounted(async () => {
-  await getCurrentUser();
+  await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
@@ -458,6 +459,16 @@ onMounted(async () => {
       <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
 
       <div class="d-flex align-center ga-3 flex-wrap">
+        <!-- a switch component that enables or disables the view to see shifts -->
+        <v-switch
+          v-if="currentUser.role === 'Employee'"
+          v-model="showMyShifts"
+          label="My Shifts"
+          color="primary"
+          hide-details
+          density="compact"
+        />
+
         <v-btn-group divided>
           <v-btn icon="mdi-chevron-left" @click="prevPeriod" />
           <v-btn icon="mdi-calendar-month" />
@@ -554,16 +565,18 @@ onMounted(async () => {
                   class="week-calendar__cell-button"
                   @click="openWeekCell(day)"
                 >
-                  <v-icon size="16" color="success" class="week-calendar__cell-plus">
+                  <v-icon size="16" color="success" class="week-calendar__cell-plus" v-if="userSession.userId && isManager">
                     mdi-plus
                   </v-icon>
                 </button>
               </template>
             </div>
 
+            <!-- Added v-show to only show a shift for a user when the user enables to show only my shifts-->
             <button
               v-for="shift in weekCalendarShifts"
               :key="'week-shift-' + shift.id"
+              v-show="!showMyShifts || shift.user_id === userSession.userId"
               type="button"
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
@@ -572,6 +585,7 @@ onMounted(async () => {
                 openShiftModal(
                   getEmployeeName(shift.user_id),
                   shift.shiftDate,
+                  shift
                 )
               ",
             >
@@ -642,14 +656,16 @@ onMounted(async () => {
               </button>
             </div>
 
+            <!-- Added v-show to only show a shift for a user when the user enables to show only my shifts-->
             <button
               v-for="shift in dayCalendarShifts"
               :key="'day-shift-' + shift.id"
+              v-show="!showMyShifts || shift.user_id === userSession.userId"
               type="button"
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate)"
+              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -671,9 +687,10 @@ onMounted(async () => {
   <!-- Julians Form changes start here -->
    <transition name="fade">
   <ScheduleShiftModal v-if="showModal"
-  @close="showModal = false; reload()"
+  @close="showModal = false; selectedShift = null; reload()"
   :employee_name="employeeName"
   :date="date"
+  :shift="selectedShift"
   ></ScheduleShiftModal>
   </transition>
 </template>
