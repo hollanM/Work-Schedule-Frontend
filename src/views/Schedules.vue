@@ -608,7 +608,7 @@ onMounted(async () => {
     <v-card v-else class="day-calendar-card">
     <div>
       <v-alert
-        v-if="!hasUserShifts && !isManager"
+        v-if="!hasUserShifts"
         type="info"
         title="No Shifts Assigned"
         text="No shifts scheduled for this week."
