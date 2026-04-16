@@ -20,6 +20,8 @@ import addUserModal from "../components/UserModal.vue";
 // import taskListServices from "../services/task_listServices";
 // import departmentServices from "../services/departmentServices";
 // import store from "../store/store.js"
+import weekly_scheduleServices from "../services/weekly_scheduleServices";
+
 
 const currentDate = ref(new Date());
 const currentView = ref("week");
@@ -36,6 +38,12 @@ const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
 // const selectedShift = ref(null);
+
+const hasTemplate = ref(false);
+const isSavingTemplate = ref(false);
+const isApplyingTemplate = ref(false);
+const whoAmI = ref(null);
+
 
 const hourLabels = [
   "12A",
@@ -379,6 +387,72 @@ function getShiftStartingInHour(employeeId, hourIndex) {
   });
 }
 
+
+//Hollan needs this for weekly template ownership
+async function getCurrentUser() {
+  const session = JSON.parse(localStorage.getItem("user"));
+  if (!session || !session.userId) return;
+
+  const response = await userServices.get(session.userId);
+  whoAmI.value = response.data;
+}
+
+
+async function checkForTemplate() {
+  if (!whoAmI.value) return;
+  try {
+    const response = await weekly_scheduleServices.getForUser(whoAmI.value.id);
+    hasTemplate.value = response.data.some(ws => ws.is_template === true);
+  } 
+  catch (err) {
+    console.error("Error checking template:", err);
+  }
+}
+
+async function saveTemplate() {
+  if (!whoAmI.value) return;
+  try {
+    isSavingTemplate.value = true;
+    await weekly_scheduleServices.saveTemplate({
+      user_id: whoAmI.value.id,
+      department_id: whoAmI.value.department_id,
+      week_start: format(weekStart.value, "yyyy-MM-dd"),
+      week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    console.log("Template saved");
+    await checkForTemplate();
+    await loadShifts();
+  } 
+  catch (err) {
+    console.error("Failed to save template", err);
+  } 
+  finally {
+    isSavingTemplate.value = false;
+  }
+}
+
+async function applyTemplate() {
+  if (!whoAmI.value) return;
+  try {
+    isApplyingTemplate.value = true;
+    await weekly_scheduleServices.applyTemplate({
+      user_id: whoAmI.value.id,
+      target_week_start: format(weekStart.value, "yyyy-MM-dd"),
+      target_week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    console.log("Template applied");
+    await loadShifts();
+  } catch (err) {
+    console.error("Failed to apply template", err);
+  } finally {
+    isApplyingTemplate.value = false;
+  }
+}
+
+
+
 // async function getCurrentUser() {
 //     //this guard is not needed, session works as intended.
 //     //console.log('userSession.value:', userSession.value);
@@ -449,6 +523,7 @@ onMounted(async () => {
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
+  await checkForTemplate();
 });
 </script>
 
@@ -458,6 +533,26 @@ onMounted(async () => {
       <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
 
       <div class="d-flex align-center ga-3 flex-wrap">
+
+        <v-btn
+          color="primary"
+          variant="flat"
+          :loading="isSavingTemplate"
+          @click="saveTemplate"
+        >
+          Save as Template
+        </v-btn>
+
+        <v-btn
+          v-if="hasTemplate"
+          color="secondary"
+          variant="flat"
+          :loading="isApplyingTemplate"
+          @click="applyTemplate"
+        >
+          Use Weekly Template
+        </v-btn>
+
         <v-btn-group divided>
           <v-btn icon="mdi-chevron-left" @click="prevPeriod" />
           <v-btn icon="mdi-calendar-month" />
