@@ -177,7 +177,7 @@ async function addAndEdit() {
     form.value.lastName = foundUser.value.lName;
     form.value.email = foundUser.value.email;
     form.value.phoneNumber = foundUser.value.phone_num;
-    form.value.role = foundUser.value.role;
+    form.value.role = "Employee"; //just automatically set them to employee, can be changed by the manager manually
 
     //console.log("Form after filling:", form.value);
     //console.log("id: ", Id.value);

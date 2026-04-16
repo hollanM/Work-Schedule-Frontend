@@ -9,6 +9,7 @@ import {
   differenceInCalendarDays,
   format,
   isSameDay,
+  // isSameWeek,
 } from "date-fns";
 import ScheduleShiftModal from "../components/ScheduleShiftModal.vue";
 import positionServices from "../services/positionServices";
@@ -16,6 +17,9 @@ import shiftServices from "../services/shiftServices";
 import date_timeServices from "../services/date_timeServices";
 import userServices from "../services/userServices";
 import addUserModal from "../components/UserModal.vue";
+// import taskListServices from "../services/task_listServices";
+// import departmentServices from "../services/departmentServices";
+// import store from "../store/store.js"
 
 const currentDate = ref(new Date());
 const currentView = ref("week");
@@ -23,10 +27,15 @@ const isUserModalOpened = ref(false);
 const employees = ref([]);
 const shifts = ref([]);
 const positions = ref([]);
+// const userSession = computed(() => store.getters.getLoginUserInfo);
+// const currentUser = ref([]);
+// const isManager = computed(() => currentUser.value && currentUser.value.role === 'Manager'); //needed this because user is null till the backend responds
+// const showMyShifts = ref(false); // track when the user wants to show only their shifts.
 
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
+// const selectedShift = ref(null);
 
 const hourLabels = [
   "12A",
@@ -69,6 +78,24 @@ const shiftsByUserAndDate = computed(() => {
   return map;
 });
 
+// const hasUserShifts = computed(() => {
+//   //console.log("checking found shifts");
+//   shifts.value.forEach(shift => {
+//     console.log("Checking shift for user:", {
+//       shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
+//       sessionUserId: userSession.value.userId,
+//       shiftStartDate: shift.startDate,
+//       currentDate: currentDate.value,
+//       isSameWeek: isSameWeek(shift.startDate, currentDate.value),
+//     })
+//   });
+//   return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria
+//     !shift.is_template &&
+//     shift.user_id === userSession.value.userId &&
+//     isSameWeek(shift.startDate, currentDate.value),
+//   );
+// });
+
 const employeeLookup = computed(() => {
   const map = {};
 
@@ -82,7 +109,7 @@ const employeeLookup = computed(() => {
 const selectedDateKey = computed(() => format(currentDate.value, "yyyy-MM-dd"));
 
 const weekStart = computed(() =>
-  startOfWeek(currentDate.value, { weekStartsOn: 1 }),
+  startOfWeek(currentDate.value, { weekStartsOn: 1 }), 
 );
 
 const weekDays = computed(() =>
@@ -193,8 +220,10 @@ function formatShiftTimeFromISO(isoString) {
 }
 
 function openShiftModal(selectedEmployeeName, selectedDate) {
+  // if (!isManager.value) return;
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
+  // selectedShift.value = shift;
   showModal.value = true;
 }
 
@@ -290,7 +319,7 @@ function getWeekShiftStyle(shift) {
 }
 
 function openWeekCell(day) {
-  openShiftModal("", day.date);
+    openShiftModal("", day.date);
 }
 
 function isCompactWeekShift(shift) {
@@ -303,7 +332,8 @@ function isMediumWeekShift(shift) {
 }
 
 function openDayCell() {
-  openShiftModal("", selectedDateKey.value);
+  // if(userSession.value.userId && isManager.value)
+    openShiftModal("", selectedDateKey.value);
 }
 
 function getDayShiftStyle(shift) {
@@ -349,7 +379,73 @@ function getShiftStartingInHour(employeeId, hourIndex) {
   });
 }
 
+// async function getCurrentUser() {
+//     //this guard is not needed, session works as intended.
+//     //console.log('userSession.value:', userSession.value);
+//     if (!userSession.value || !userSession.value.userId) {
+//       console.log('No user session or userId');
+//       return;
+//     }
+//     const response = await userServices.get(userSession.value.userId);
+//     currentUser.value = response.data;
+//     console.log('Current user data:', currentUser.value);
+//     if(currentUser.value.department_id === null) { //will add a department for new users but many users will change their departmetns later
+//       response.value = await createDepartment();
+//       console.log("Department created and assigned to user:", response.data);
+//       response.value = await updateUser(); //then add the new department to the user
+//       console.log("User updated with new department:", response.data);
+//     }
+// }
+
+// async function createDepartment() {
+//   const response = await departmentServices.create({
+//     name: "Department for user: " + currentUser.value.id,
+//   });
+//   console.log("Created department:", response.data);
+//   currentUser.value.department_id = response.data.id;
+// }
+
+// async function updateUser() {
+//     const response = await userServices.update(currentUser.value.id, {
+//       department_id: currentUser.value.department_id,
+//       fName: currentUser.value.fName,
+//       lName: currentUser.value.lName,
+//       email: currentUser.value.email,
+//       role: "Manager", //auto set as manager for new users since they will be new and if they are imported by a manager its automatically set to employee later anyway
+//       phone_num: currentUser.value.phone_num,
+//       oc_id: currentUser.value.oc_id,
+//       pay_rate: currentUser.value.pay_rate,
+//       manager_notes:  currentUser.value.manager_notes,
+//     });
+//     currentUser.value.role = "Manager"; //backend has been updated and now the frontend needs to see the change
+// }
+
+// async function getTaskLists() {
+//   const response = await taskListServices.getAll();
+//   console.log("Fetched task lists:", response.data);  
+//   let departmentTaskList = false;
+//   response.data.forEach(element => {
+//     if(element.department_id === currentUser.value.department_id){
+//       departmentTaskList = true;
+//     }
+//   });
+//   if(departmentTaskList)
+//   {
+//     //do nothing since the check passed
+//   } 
+//   else 
+//   { //create a task list for the department
+//     //console.log(false);
+//   //   taskListServices.create({ //if the department does not have a task list make one, this is only needed for creating shifts because of FK
+//   //     name: "Task List for Department " + currentUser.value.department_id,
+//   //     department_id: currentUser.value.department_id,
+//   //   });
+//   }
+
+// }
+
 onMounted(async () => {
+  await getCurrentUser();
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
@@ -389,6 +485,14 @@ onMounted(async () => {
     </div>
 
     <v-card v-if="currentView === 'week'" class="week-calendar-card">
+    <!-- <div>
+      <v-alert
+        v-if="!hasUserShifts && !isManager"
+        type="info"
+        title="No Shifts Assigned"
+        text="You don't have any shifts scheduled for this week."
+      ></v-alert>
+    </div> -->
       <div class="week-calendar">
         <div class="week-calendar__header">
           <div class="week-calendar__days">
@@ -469,7 +573,7 @@ onMounted(async () => {
                   getEmployeeName(shift.user_id),
                   shift.shiftDate,
                 )
-              "
+              ",
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
@@ -488,6 +592,14 @@ onMounted(async () => {
     </v-card>
 
     <v-card v-else class="day-calendar-card">
+    <!-- <div>
+      <v-alert
+        v-if="!hasUserShifts"
+        type="info"
+        title="No Shifts Assigned"
+        text="No shifts scheduled for this week."
+      ></v-alert>
+    </div> -->
       <div class="day-calendar">
         <div class="day-calendar__header">
           <div class="day-calendar__header-main">

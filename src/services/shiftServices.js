@@ -7,7 +7,6 @@ export default {
   get(id) {
     return apiClient.get(`/shifts/${id}`);
   },
-
    getForUser(id) {
     return apiClient.get(`/shifts/users/${id}`);
   },
