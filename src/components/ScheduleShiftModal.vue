@@ -248,9 +248,13 @@ async function getShifts() {
     // Fetch start/end times for each shift
     const enrichedShifts = await Promise.all(
       rawShifts.map(async shift => {
-        const start = shift.start_day
-        const end = shift.end_day
-        return { ...shift, startObj: start.first_date_time, endObj: end.first_date_time };
+        const start = await date_timeServices.get(shift.start_day_id);
+        const end = await date_timeServices.get(shift.end_day_id);
+        return {
+          ...shift,
+          startObj: start.data.first_date_time,
+          endObj: end.data.first_date_time
+        };
       })
     );
 
@@ -310,13 +314,14 @@ async function createShift(){
     console.log("Form Data to submit:", formData);
     // Here you would send formData to your backend API to create the shift
     // Example: await shiftServices.create(formData);
-    
 
-    const shiftTime = formData.shiftTime
-    const [startStr, endStr] = shiftTime.split(' - ')
+    if (!formData.start_time || !formData.end_time) {
+      message.value = "Start time and end time are required.";
+      return;
+    }
 
-    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
-    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
+    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
+    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
 
     const sqlStart = toSqlDateTime(startDateTime)  // "2026-03-03 00:00:00"
     const sqlEnd = toSqlDateTime(endDateTime)      // "2026-03-03 00:15:00"
@@ -331,7 +336,6 @@ async function createShift(){
       end_day_id: end_time.value,
       color: formData.color,
       position_id: formData.position_id,
-      qualification_list_id: formData.qualification_list_id,
       shift_task_list_id: formData.shift_task_list_id,
       is_template: formData.is_template
     })
@@ -382,7 +386,13 @@ async function deleteShift(shiftId) {
 }
 
 //date times will have to be made for each shift that gets created.
-
+async function createDateTime(date){
+   const response = await date_timeServices.create({
+        first_date_time: date
+    })  
+    console.log(response.data)
+    return response.data.id
+}
 
 //this just gets the color attribute from the shift.
 function getTextColor(bgColor) {
@@ -441,9 +451,8 @@ async function populateShiftTemplates() {
 
   // For each template, fetch its start/end date-times and add formattedTime
   for (const template of templates) {
-    const startObj = templates.start_day
-
-    const endObj = templates.end_day
+    const startObj = await date_timeServices.get(template.start_day_id);
+    const endObj = await date_timeServices.get(template.end_day_id);
     const position = await positionServices.get(template.position_id);
     
     // get the task list name if there is one
