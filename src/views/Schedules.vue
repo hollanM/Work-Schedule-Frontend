@@ -85,6 +85,10 @@ const shiftsByUserAndDate = computed(() => {
 });
 
 const hasUserShifts = computed(() => {
+  if(shifts == [])
+  {
+    return false;
+  }
   //console.log("checking found shifts");
   // shifts.value.forEach(shift => {
   //   console.log("Checking shift for user:", {
@@ -94,12 +98,13 @@ const hasUserShifts = computed(() => {
   //     currentDate: currentDate.value,
   //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
   //   })
-  // });
-  return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria
+  // });                                             //.some returns true if it finds a match to the given criteria
+  const foundShift = shifts.value.filter((shift) =>  //using .filter instead since it will almost work the same with a small bool check
     !shift.is_template &&
     shift.user_id === userSession.value.userId &&
     isSameWeek(shift.startDate, currentDate.value),
-  );
+  )
+  return (foundShift != null && foundShift != "" && foundShift != [])
 });
 
 const employeeLookup = computed(() => {
