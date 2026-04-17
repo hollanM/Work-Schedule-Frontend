@@ -310,27 +310,28 @@ async function createShift(){
     console.log("Form Data to submit:", formData);
     // Here you would send formData to your backend API to create the shift
     // Example: await shiftServices.create(formData);
+    
 
-    if (!formData.start_time || !formData.end_time) {
-      message.value = "Start time and end time are required.";
-      return;
-    }
+    const shiftTime = formData.shiftTime
+    const [startStr, endStr] = shiftTime.split(' - ')
 
-    const startDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.start_time)}`)
-    const endDateTime = new Date(`${props.date}T${normalizeTimeForSql(formData.end_time)}`)
+    const startDateTime = new Date(`${props.date}T${convertTo24Hour(startStr)}`)
+    const endDateTime = new Date(`${props.date}T${convertTo24Hour(endStr)}`)
 
     const sqlStart = toSqlDateTime(startDateTime)  // "2026-03-03 00:00:00"
     const sqlEnd = toSqlDateTime(endDateTime)      // "2026-03-03 00:15:00"
     //setting id's of create date times.
-
+    start_time.value = await createDateTime(sqlStart)
+    end_time.value = await createDateTime(sqlEnd)
 
     const response = await shiftServices.create({
       user_id: formData.employee_id,
-      
-      start_day: sqlStart,
-      end_day: sqlEnd,
+      department_id: currentUser.value.department_id,
+      start_day_id: start_time.value,
+      end_day_id: end_time.value,
       color: formData.color,
       position_id: formData.position_id,
+      qualification_list_id: formData.qualification_list_id,
       shift_task_list_id: formData.shift_task_list_id,
       is_template: formData.is_template
     })
