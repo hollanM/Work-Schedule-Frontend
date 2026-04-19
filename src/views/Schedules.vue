@@ -39,8 +39,8 @@ const employeeName = ref("");
 const selectedShift = ref(null);
 
 const hasWeeklyTemplate = ref(false);
-const isSavingTemplate = ref(false);
-const isApplyingTemplate = ref(false);
+const showTemplateAlert = ref(false);
+const templateAlert = ref("");
 
 
 const hourLabels = [
@@ -468,7 +468,6 @@ async function checkForTemplate() {
   if (!currentUser.value?.id) return;
 
   try {
-    isSavingTemplate.value = true;
     await weekly_scheduleServices.saveTemplate({
       user_id: currentUser.value.id,
       department_id: currentUser.value.department_id,
@@ -476,33 +475,34 @@ async function checkForTemplate() {
       week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
     });
 
+    templateAlert.value = "Weekly template saved successfully.";
+    setTimeout(() => showTemplateAlert.value = false, 3000);
+    showTemplateAlert.value = true;
     console.log("Template saved");
     await checkForTemplate();
     await loadShifts();
   } catch (err) {
     console.error("Failed to save template", err);
-  } finally {
-    isSavingTemplate.value = false;
-  }
+  } 
 }
 
 //Pasting the weekly template that the manager is currently viewing on a week
 async function applyTemplate() {
   if (!currentUser.value?.id) return;
   try {
-    isApplyingTemplate.value = true;
     await weekly_scheduleServices.applyTemplate({
       user_id: currentUser.value.id,
       target_week_start: format(weekStart.value, "yyyy-MM-dd"),
       target_week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
     });
 
+    templateAlert.value = "Weekly template applied successfully.";
+    showTemplateAlert.value = true;
+    setTimeout(() => showTemplateAlert.value = false, 3000);
     console.log("Template applied");
     await loadShifts();
   } catch (err) {
     console.error("Failed to apply template", err);
-  } finally {
-    isApplyingTemplate.value = false;
   }
 }
 
@@ -542,6 +542,16 @@ onMounted(async () => {
         >
           Use Weekly Template
         </v-btn>
+
+        <v-alert
+          v-if="showTemplateAlert"
+          type="success"
+          class="mb-4"
+          closable
+          @click:close="showTemplateAlert = false"
+        >
+          {{ templateAlert }}
+        </v-alert>
         
         <!-- a switch component that enables or disables the view to see shifts -->
         <v-switch
