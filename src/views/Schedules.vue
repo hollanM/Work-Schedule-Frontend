@@ -20,6 +20,7 @@ import addUserModal from "../components/UserModal.vue";
 import taskListServices from "../services/task_listServices";
 import departmentServices from "../services/departmentServices";
 import store from "../store/store.js"
+import weekly_scheduleServices from "../services/weekly_scheduleServices.js";
 
 const currentDate = ref(new Date());
 const currentView = ref("week");
@@ -36,6 +37,11 @@ const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
 const selectedShift = ref(null);
+
+const hasWeeklyTemplate = ref(false);
+const isSavingTemplate = ref(false);
+const isApplyingTemplate = ref(false);
+
 
 const hourLabels = [
   "12A",
@@ -445,11 +451,70 @@ async function getTaskLists() {
 
 }
 
+
+//Hollan Here YAHOO
+async function checkForTemplate() {
+  if (!currentUser.value?.id) return;
+  try {
+    const response = await weekly_scheduleServices.getForUser(currentUser.value.id);
+    hasWeeklyTemplate.value = response.data.some(ws => Boolean(ws.is_template));
+  } catch (err) {
+    console.error("Error finding user manager's weekly template:", err);
+  }
+}
+  
+  //Saving of the weekly template
+  async function saveTemplate() {
+  if (!currentUser.value?.id) return;
+
+  try {
+    isSavingTemplate.value = true;
+    await weekly_scheduleServices.saveTemplate({
+      user_id: currentUser.value.id,
+      department_id: currentUser.value.department_id,
+      week_start: format(weekStart.value, "yyyy-MM-dd"),
+      week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    console.log("Template saved");
+    await checkForTemplate();
+    await loadShifts();
+  } catch (err) {
+    console.error("Failed to save template", err);
+  } finally {
+    isSavingTemplate.value = false;
+  }
+}
+
+//Pasting the weekly template that the manager is currently viewing on a week
+async function applyTemplate() {
+  if (!currentUser.value?.id) return;
+  try {
+    isApplyingTemplate.value = true;
+    await weekly_scheduleServices.applyTemplate({
+      user_id: currentUser.value.id,
+      target_week_start: format(weekStart.value, "yyyy-MM-dd"),
+      target_week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    console.log("Template applied");
+    await loadShifts();
+  } catch (err) {
+    console.error("Failed to apply template", err);
+  } finally {
+    isApplyingTemplate.value = false;
+  }
+}
+
+
+
+
 onMounted(async () => {
   await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
+  await checkForTemplate();
 });
 </script>
 
@@ -459,6 +524,25 @@ onMounted(async () => {
       <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
 
       <div class="d-flex align-center ga-3 flex-wrap">
+        
+        <v-btn
+          v-if="isManager"
+          color="primary"
+          variant="flat"
+          @click="saveTemplate"
+        >
+          Save Week as Template
+        </v-btn>
+
+        <v-btn
+          v-if="isManager && hasWeeklyTemplate"
+          color="secondary"
+          variant="flat"
+          @click="applyTemplate"
+        >
+          Use Weekly Template
+        </v-btn>
+        
         <!-- a switch component that enables or disables the view to see shifts -->
         <v-switch
           v-if="currentUser.role === 'Employee'"

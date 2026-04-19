@@ -22,4 +22,11 @@ export default {
   deleteAll() {
     return apiClient.delete(`/weekly_schedules`);
   },
+
+  saveTemplate(data) {
+    return apiClient.post("/weekly_schedules/template/save", data);
+  },
+  applyTemplate(data) {
+    return apiClient.post("/weekly_schedules/template/apply", data);
+  },
 };
