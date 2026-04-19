@@ -521,10 +521,21 @@ onMounted(async () => {
 <template>
   <v-container fluid class="schedule-page pa-6">
     <div class="schedule-header d-flex align-center justify-space-between mb-6">
-      <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
+  <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
+
+    <div class="d-flex flex-column ga-2">
+
+      <v-alert
+        v-if="showTemplateAlert"
+        type="success"
+        class="mb-2"
+        closable
+        @click:close="showTemplateAlert = false"
+      >
+        {{ templateAlert }}
+      </v-alert>
 
       <div class="d-flex align-center ga-3 flex-wrap">
-        
         <v-btn
           v-if="isManager"
           color="primary"
@@ -543,17 +554,6 @@ onMounted(async () => {
           Use Weekly Template
         </v-btn>
 
-        <v-alert
-          v-if="showTemplateAlert"
-          type="success"
-          class="mb-4"
-          closable
-          @click:close="showTemplateAlert = false"
-        >
-          {{ templateAlert }}
-        </v-alert>
-        
-        <!-- a switch component that enables or disables the view to see shifts -->
         <v-switch
           v-if="currentUser.role === 'Employee'"
           v-model="showMyShifts"
@@ -588,7 +588,7 @@ onMounted(async () => {
 
       </div>
     </div>
-
+  </div>
     <v-card v-if="currentView === 'week'" class="week-calendar-card">
     <div>
       <v-alert
