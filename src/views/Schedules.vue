@@ -250,8 +250,8 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-function openShiftModal(selectedEmployeeName, selectedDate) {
-  //if (!isManager.value) return; //this check is now handeled by v-ifss
+function openShiftModal(selectedEmployeeName, selectedDate, shift = null) {
+  if (!isManager.value) return;
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
   selectedShift.value = shift;
