@@ -466,6 +466,7 @@ async function updateShift() { //currently only used by the takeShift() function
 }
 
 async function getShift() { 
+  console.log("shift id we are getting: " + selectedShift.value.id)
     const response = await shiftServices.get(selectedShift.value.id)
     //console.log("Shift get response:", response.data);
     return response;
@@ -479,17 +480,19 @@ async function getShift() {
 
 async function hasShiftConflict(userId, startDateTime, endDateTime) {
   const tempShift = await getShift(); //get updated shift in case of race condition
-  if(tempShift.user_id != null)//if the user is still null, race condition check is satisfied
+  //console.log("selected shift data" + selectedShift)
+  //console.log(tempShift);
+  if(tempShift.user_id !== null)//if the user is still null, race condition check is satisfied
   {
     console.log(tempShift);
     //console.log("shift was updated after this page loaded it");
     return true;//using the same error prompt is ok here
   }
-  else if(userId != selectedShift.value.user_id && currentUser.value.role != "Manager")
+  else if(userId !== selectedShift.value.user_id && currentUser.value.role != "Manager")
   {
     return true;
   }
-  else if(userId != tempShift.userId)
+  else if(userId !== tempShift.userId)
   {
     return true;
   }
