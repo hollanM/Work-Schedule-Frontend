@@ -121,13 +121,14 @@ const weekStart = computed(() =>
 const weekDays = computed(() =>
   Array.from({ length: 7 }).map((_, i) => {
     const nextDate = addDays(weekStart.value, i);
+    const today = new Date();
     return {
       dateObj: nextDate,
       date: format(nextDate, "yyyy-MM-dd"),
       label: format(nextDate, "EEEE"),
       shortLabel: format(nextDate, "EEE").toUpperCase(),
       dayNumber: format(nextDate, "d"),
-      isActive: isSameDay(nextDate, currentDate.value),
+      isActive: isSameDay(nextDate, today),
     };
   }),
 );
@@ -702,7 +703,7 @@ onMounted(async () => {
     <v-card v-else class="day-calendar-card">
     <div>
       <v-alert
-        v-if="!hasUserShifts"
+        v-if="!hasUserShifts && !isManager"
         type="info"
         title="No Shifts Assigned"
         text="No shifts scheduled for this week."
@@ -1014,7 +1015,7 @@ onMounted(async () => {
 }
 
 .day-calendar__day-label {
-  color: #3b5ed7;
+  color: #49556a;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1026,8 +1027,7 @@ onMounted(async () => {
   width: 52px;
   height: 52px;
   border-radius: 999px;
-  background: #3b5ed7;
-  color: #fff;
+  color: #243043;
   font-size: 22px;
   font-weight: 600;
 }
