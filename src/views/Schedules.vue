@@ -20,6 +20,7 @@ import addUserModal from "../components/UserModal.vue";
 import taskListServices from "../services/task_listServices";
 import departmentServices from "../services/departmentServices";
 import store from "../store/store.js"
+import weekly_scheduleServices from "../services/weekly_scheduleServices.js";
 
 const currentDate = ref(new Date());
 const currentView = ref("week");
@@ -36,6 +37,11 @@ const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
 const selectedShift = ref(null);
+
+const hasWeeklyTemplate = ref(false);
+const showTemplateAlert = ref(false);
+const templateAlert = ref("");
+
 
 const hourLabels = [
   "12A",
@@ -445,21 +451,109 @@ async function getTaskLists() {
 
 }
 
+
+//Hollan Here YAHOO
+async function checkForTemplate() {
+  if (!currentUser.value?.id) return;
+  try {
+    const response = await weekly_scheduleServices.getForUser(currentUser.value.id);
+    hasWeeklyTemplate.value = response.data.some(ws => Boolean(ws.is_template));
+  } catch (err) {
+    console.error("Error finding user manager's weekly template:", err);
+  }
+}
+  
+  //Saving of the weekly template
+  async function saveTemplate() {
+  if (!currentUser.value?.id) return;
+
+  try {
+    await weekly_scheduleServices.saveTemplate({
+      user_id: currentUser.value.id,
+      department_id: currentUser.value.department_id,
+      week_start: format(weekStart.value, "yyyy-MM-dd"),
+      week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    templateAlert.value = "Weekly template saved successfully.";
+    setTimeout(() => showTemplateAlert.value = false, 3000);
+    showTemplateAlert.value = true;
+    console.log("Template saved");
+    await checkForTemplate();
+    await loadShifts();
+  } catch (err) {
+    console.error("Failed to save template", err);
+  } 
+}
+
+//Pasting the weekly template that the manager is currently viewing on a week
+async function applyTemplate() {
+  if (!currentUser.value?.id) return;
+  try {
+    await weekly_scheduleServices.applyTemplate({
+      user_id: currentUser.value.id,
+      target_week_start: format(weekStart.value, "yyyy-MM-dd"),
+      target_week_end: format(addDays(weekStart.value, 6), "yyyy-MM-dd")
+    });
+
+    templateAlert.value = "Weekly template applied successfully.";
+    showTemplateAlert.value = true;
+    setTimeout(() => showTemplateAlert.value = false, 3000);
+    console.log("Template applied");
+    await loadShifts();
+  } catch (err) {
+    console.error("Failed to apply template", err);
+  }
+}
+
+
+
+
 onMounted(async () => {
   await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
   await fetchEmployees();
   await fetchPositions();
   await loadShifts();
+  await checkForTemplate();
 });
 </script>
 
 <template>
   <v-container fluid class="schedule-page pa-6">
     <div class="schedule-header d-flex align-center justify-space-between mb-6">
-      <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
+  <h1 class="text-h4 font-weight-bold">{{ formattedHeader }}</h1>
+
+    <div class="d-flex flex-column ga-2">
+
+      <v-alert
+        v-if="showTemplateAlert"
+        type="success"
+        class="mb-2"
+        closable
+        @click:close="showTemplateAlert = false"
+      >
+        {{ templateAlert }}
+      </v-alert>
 
       <div class="d-flex align-center ga-3 flex-wrap">
-        <!-- a switch component that enables or disables the view to see shifts -->
+        <v-btn
+          v-if="isManager"
+          color="primary"
+          variant="flat"
+          @click="saveTemplate"
+        >
+          Save Week as Template
+        </v-btn>
+
+        <v-btn
+          v-if="isManager && hasWeeklyTemplate"
+          color="secondary"
+          variant="flat"
+          @click="applyTemplate"
+        >
+          Use Weekly Template
+        </v-btn>
+
         <v-switch
           v-if="currentUser.role === 'Employee'"
           v-model="showMyShifts"
@@ -494,7 +588,7 @@ onMounted(async () => {
 
       </div>
     </div>
-
+  </div>
     <v-card v-if="currentView === 'week'" class="week-calendar-card">
     <div>
       <v-alert
