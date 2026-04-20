@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import {
   startOfWeek,
   addDays,
@@ -19,6 +19,8 @@ import userServices from "../services/userServices";
 import addUserModal from "../components/UserModal.vue";
 import taskListServices from "../services/task_listServices";
 import departmentServices from "../services/departmentServices";
+import notificationListServices from "../services/notificationListServices";
+import notificationServices from "../services/notificationServices";
 import store from "../store/store.js"
 import weekly_scheduleServices from "../services/weekly_scheduleServices.js";
 
@@ -36,13 +38,15 @@ const showMyShifts = ref(false); // track when the user wants to show only their
 const showModal = ref(false);
 const date = ref("");
 const employeeName = ref("");
-const selectedShift = ref(null);
+
+const showWeekShiftDialog = ref(false);
+const showDayShiftDialog = ref(false);
+const selectedShift = ref([]);
+const hasTakeError = ref(false);
 
 const hasWeeklyTemplate = ref(false);
 const showTemplateAlert = ref(false);
 const templateAlert = ref("");
-
-
 const hourLabels = [
   "12A",
   "1A",
@@ -85,21 +89,31 @@ const shiftsByUserAndDate = computed(() => {
 });
 
 const hasUserShifts = computed(() => {
-  //console.log("checking found shifts");
-  shifts.value.forEach(shift => {
-    console.log("Checking shift for user:", {
-      shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
-      sessionUserId: userSession.value.userId,
-      shiftStartDate: shift.startDate,
-      currentDate: currentDate.value,
-      isSameWeek: isSameWeek(shift.startDate, currentDate.value),
-    })
-  });
-  return shifts.value.some((shift) => //.some returns true if it finds a match to the given criteria
+  if(currentUser.value.role == "Manager")//don't know what broke that I need this now, but it fixed the issue
+  {
+    return true;
+  }
+  if(shifts == [] || shifts == null)
+  {
+    return false;
+  }
+  // console.log("checking found shifts");
+  // shifts.value.forEach(shift => {
+  //   console.log("Checking shift for user:", {
+  //     shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
+  //     sessionUserId: userSession.value.userId,
+  //     shiftStartDate: shift.startDate,
+  //     currentDate: currentDate.value,
+  //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
+  //   })
+  //   //console.log();
+  // });                                             //.some returns true if it finds a match to the given criteria
+  const foundShift = shifts.value.filter((shift) =>  //using .filter instead since it will almost work the same with a small bool check
     !shift.is_template &&
     shift.user_id === userSession.value.userId &&
     isSameWeek(shift.startDate, currentDate.value),
-  );
+  )
+  return (foundShift != null && foundShift != "" && foundShift != [])
 });
 
 const employeeLookup = computed(() => {
@@ -174,10 +188,10 @@ async function reload() {
   await loadShifts();
 }
 
-const fetchEmployees = async () => {
-  const response = await userServices.getAll();
+const fetchEmployees = async () => { //now it only gets employees with the same department id as the user
+  const response = await userServices.getDept(currentUser.value.department_id);
   employees.value = response.data
-    .filter((user) => user.role === "Employee")
+    .filter((user) => user.role === "Employee"  || user.role === "Manager") //got to include the managers
     .map((user) => ({
       ...user,
       name: [user.fName, user.lName].filter(Boolean).join(" ") || user.email || `User ${user.id}`,
@@ -192,23 +206,33 @@ const fetchPositions = async () => {
 };
 
 async function loadShifts() {
-  const response = await shiftServices.getAll();
+  //const response = await shiftServices.getAllDept(currentUser.value.department_id);//regression again - only gets a single shift
+  const response = await shiftServices.getAll();//new fix
   shifts.value = response.data;
+  let filtered = [];
+  //console.log("Fetched shifts:", shifts.value);
+  if(shifts)//did literally nothing
+  {
+    for (const shift of shifts.value) 
+    {
+      //console.log(shift.department_id, " ", currentUser.department_id);
+      if (shift.is_template || shift.department_id != currentUser.value.department_id) continue;//filter here
 
-  for (const shift of shifts.value) {
-    if (shift.is_template) continue;
+      const start = await date_timeServices.get(shift.start_day_id);
+      const end = await date_timeServices.get(shift.end_day_id);
+      const startDate = new Date(start.data.first_date_time);
+      const endDate = new Date(end.data.first_date_time);
 
-    const start = await date_timeServices.get(shift.start_day_id);
-    const end = await date_timeServices.get(shift.end_day_id);
-    const startDate = new Date(start.data.first_date_time);
-    const endDate = new Date(end.data.first_date_time);
-
-    shift.startDate = startDate;
-    shift.endDate = endDate;
-    shift.shiftDate = format(startDate, "yyyy-MM-dd");
-    shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
-    shift.positionName =
-      positions.value.find((position) => position.id === shift.position_id)?.name || "";
+      shift.startDate = startDate;
+      shift.endDate = endDate;
+      shift.shiftDate = format(startDate, "yyyy-MM-dd");
+      shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
+      shift.positionName =
+        positions.value.find((position) => position.id === shift.position_id)?.name || "";
+      filtered.push(shift);//put each into the temp variable
+    }
+    shifts.value = filtered;//reassign shfts
+    console.log("Fetched shifts:", shifts.value);
   }
 }
 
@@ -226,8 +250,8 @@ function formatShiftTimeFromISO(isoString) {
   return `${hours12}:${minutes} ${ampm}`;
 }
 
-function openShiftModal(selectedEmployeeName, selectedDate, shift = null) {
-  if (!isManager.value) return;
+function openShiftModal(selectedEmployeeName, selectedDate) {
+  //if (!isManager.value) return; //this check is now handeled by v-ifss
   employeeName.value = selectedEmployeeName;
   date.value = selectedDate;
   selectedShift.value = shift;
@@ -396,12 +420,12 @@ async function getCurrentUser() {
     }
     const response = await userServices.get(userSession.value.userId);
     currentUser.value = response.data;
-    console.log('Current user data:', currentUser.value);
+    //console.log('Current user data:', currentUser.value);
     if(currentUser.value.department_id === null) { //will add a department for new users but many users will change their departmetns later
       response.value = await createDepartment();
-      console.log("Department created and assigned to user:", response.data);
+      //console.log("Department created and assigned to user:", response.data);
       response.value = await updateUser(); //then add the new department to the user
-      console.log("User updated with new department:", response.data);
+      //console.log("User updated with new department:", response.data);
     }
 }
 
@@ -451,7 +475,6 @@ async function getTaskLists() {
   }
 
 }
-
 
 //Hollan Here YAHOO
 async function checkForTemplate() {
@@ -509,6 +532,138 @@ async function applyTemplate() {
 
 
 
+async function updateShift() { //currently only used by the takeShift() function so it updates only the person assigned to the shift
+    const response = await shiftServices.update(selectedShift.value.id, {
+      user_id: currentUser.value.id,
+    })
+    //console.log("Shift update response:", response.data, currentUser.value);
+}
+
+async function getShift() { 
+  console.log("shift id we are getting: " + selectedShift.value.id)
+    const response = await shiftServices.get(selectedShift.value.id)
+    //console.log("Shift get response:", response.data);
+    return response;
+
+    //previous way of getting it to work, when I had to get be department and then filter
+    //const response = await shiftServices.get(currentUser.value.department_id); //instead get all department shifts
+    ///const foundShift = response.data.find(item => item.id == selectedShift.value.id);
+    //console.log("shift found: ", foundShift);
+    //return foundShift;
+}
+
+async function hasShiftConflict(userId, startDateTime, endDateTime) {
+  const tempShift = await getShift(); //get updated shift in case of race condition
+  //console.log("selected shift data" + selectedShift)
+  //console.log(tempShift);
+  if(tempShift.user_id !== null)//if the user is still null, race condition check is satisfied
+  {
+    console.log(tempShift);
+    //console.log("shift was updated after this page loaded it");
+    return true;//using the same error prompt is ok here
+  }
+  else if(userId !== selectedShift.value.user_id && currentUser.value.role != "Manager")
+  {
+    return true;
+  }
+  else if(userId !== tempShift.userId)
+  {
+    return true;
+  }
+
+  const start = new Date(startDateTime);
+  const end = new Date(endDateTime);
+
+  const userShifts = shifts.value.filter(shift => 
+    !shift.is_template && shift.user_id === userId && shift.startDate && shift.endDate
+  );
+
+  return userShifts.some(shift => 
+    start < shift.endDate && end > shift.startDate
+  );
+}
+
+async function sendNoticeOfShiftTake() { 
+  const response = await notificationListServices.getAll(); //gets all for now, since I cant get by department
+  const notificationLists = response.data;
+  //console.log(notificationLists.value);
+  //const filteredNotificationLists = await notificationListServices.get(); //should be how it works
+  for(const employee of employees.value) //for each employee
+  {
+    if(employee.role == "Manager") //if they are a manager, send a notice of shift take
+    {
+      console.log("employee tested: ", employee, employee.id)
+      const notificationList = notificationLists.find((item) => item.user_id == employee.id); //get the managers notification list
+      if (!notificationList) continue; //dont know if this is needed or not but it could help in an edge case
+      const response = await notificationServices.create({ //send a notice of the shift take action
+        title: "Shift taken by user: " + currentUser.value.fName + " " + currentUser.value.lName,
+        description: currentUser.value.fName + " has taken the shift: " + selectedShift.value.positionName + " at " + selectedShift.value.startDate,
+        type: "scheduleUpdates",
+        email_pref: false,
+        mobile_pref: true,
+        is_read: false,
+        date_time_sent: new Date(), //built in method I hope
+        notification_list_id: notificationList.id,
+      });
+      console.log("Notice sent:", response.data);
+    }
+  }
+}
+
+function openWeekShiftDialog(shift) {
+  hasTakeError.value = false; //clear the errors when this function starts
+  selectedShift.value = shift;
+  console.log("selectedShift: ", selectedShift.value);
+  //console.log(!selectedShift?.value?.user_id) //working correctly
+  showWeekShiftDialog.value = true;
+}
+
+function openDayShiftDialog(shift) {
+  hasTakeError.value = false; //clear the errors when this function starts
+  selectedShift.value = shift;
+  console.log("selectedShift: ", selectedShift.value);
+  //console.log(!selectedShift?.value?.user_id) //working correctly
+  showDayShiftDialog.value = true;
+}
+
+async function editShift() {
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
+  await nextTick(); //had an issue where the changes here were too fast for vue to work with
+  openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate);
+}
+
+async function takeShift() {
+  //console.log('Taking shift:', selectedShift.value);
+  if(await hasShiftConflict(currentUser.value.user_id, selectedShift.value.startDate, selectedShift.value.endDate))
+  {
+    //hilight the box or display a notice somehow
+    hasTakeError.value = true;
+  }
+  else
+  {
+    await updateShift();
+    if(currentUser.value.role != "Manager") //only send notices if a manager is not taking shifts
+    {
+      await sendNoticeOfShiftTake();
+    }
+    showWeekShiftDialog.value = false;
+    showDayShiftDialog.value = false;
+    reload();
+  }
+}
+
+function dropShift() {
+  //console.log('Dropping shift:', selectedShift.value);
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
+}
+
+function deleteShift() {
+  //console.log('Deleting shift:', selectedShift.value);
+  showWeekShiftDialog.value = false;
+  showDayShiftDialog.value = false;
+}
 
 onMounted(async () => {
   await getCurrentUser(); //I need the current user for the v-ifs to disable pieces between manager and employee
@@ -695,6 +850,28 @@ onMounted(async () => {
                 {{ shift.positionName }}
               </span>
             </button>
+            <v-dialog v-model="showWeekShiftDialog" max-width="480">
+              <v-card>
+                <v-card-title>Shift Options</v-card-title>
+                <!-- <v-card-text> dont enable unless there needs to be text here
+                  
+                </v-card-text> -->
+                <v-alert v-if="hasTakeError"
+                  color="warning"
+                  icon="$warning"
+                  title="Warning"
+                  text="You cannot take a shift if it conflicts with your schedule, or someone else is already working it"
+                ></v-alert>
+                <v-card-actions>
+                  <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
+                  <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
+                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </div>
       </div>
@@ -714,6 +891,7 @@ onMounted(async () => {
           <div class="day-calendar__header-main">
             <div class="day-calendar__day-label">{{ format(currentDate, "EEE").toUpperCase() }}</div>
             <div class="day-calendar__day-number">{{ format(currentDate, "d") }}</div>
+
           </div>
         </div>
 
@@ -773,6 +951,28 @@ onMounted(async () => {
                 {{ shift.positionName }}
               </span>
             </button>
+            <v-dialog v-model="showDayShiftDialog" max-width="480">
+              <v-card>
+                <v-card-title>Shift Options</v-card-title>
+                <!-- <v-card-text> dont enable unless there needs to be text here
+                  
+                </v-card-text> -->
+                <v-alert v-if="hasTakeError"
+                  color="warning"
+                  icon="$warning"
+                  title="Warning"
+                  text="You cannot take a shift if it conflicts with your schedule, or someone else is already working it"
+                ></v-alert>
+                <v-card-actions>
+                  <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
+                  <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
+                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </div>
       </div>
