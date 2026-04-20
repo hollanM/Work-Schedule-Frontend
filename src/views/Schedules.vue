@@ -560,9 +560,9 @@ async function hasShiftConflict(userId, startDateTime, endDateTime) {
   {
     console.log(tempShift);
     //console.log("shift was updated after this page loaded it");
-    return true;//using the same error prompt is ok here
+    return false;//using the same error prompt is ok here
   }
-  else if(userId !== selectedShift.value.user_id && currentUser.value.role != "Manager")
+  else if(userId !== selectedShift.value.user_id && currentUser.value.role !== "Manager")
   {
     return true;
   }
@@ -630,7 +630,8 @@ async function editShift() {
   showWeekShiftDialog.value = false;
   showDayShiftDialog.value = false;
   await nextTick(); //had an issue where the changes here were too fast for vue to work with
-  openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate);
+  openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate, selectedShift.value);
+  //openShiftModal(getEmployeeName(selectedShift.value.user_id), selectedShift.value.shiftDate);
 }
 
 async function takeShift() {
@@ -831,13 +832,7 @@ onMounted(async () => {
               class="week-event"
               :class="{ 'week-event--compact': isCompactWeekShift(shift) }"
               :style="getWeekShiftStyle(shift)"
-              @click="
-                openShiftModal(
-                  getEmployeeName(shift.user_id),
-                  shift.shiftDate,
-                  shift
-                )
-              ",
+               @click="openWeekShiftDialog(shift)",
             >
               <span class="week-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="week-event__time">
@@ -864,11 +859,11 @@ onMounted(async () => {
                 ></v-alert>
                 <v-card-actions>
                   <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
-                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id || isManager">Take Shift</v-btn>
                   <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
                   <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
                   <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
-                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                  <!-- <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn> -->
                 </v-card-actions>
               </v-card>
             </v-dialog>
@@ -920,7 +915,7 @@ onMounted(async () => {
                 v-for="hourRow in weekHourRows"
                 :key="'day-cell-' + hourRow.hour"
                 type="button"
-                class="day-calendar__cell-button"
+                class="day-calendar__cell-buttkon"
                 @click="openDayCell"
               >
                 <v-icon size="16" color="success" class="day-calendar__cell-plus">
@@ -938,7 +933,7 @@ onMounted(async () => {
               class="day-event"
               :class="{ 'day-event--compact': isCompactWeekShift(shift) }"
               :style="getDayShiftStyle(shift)"
-              @click="openShiftModal(getEmployeeName(shift.user_id), shift.shiftDate, shift)"
+               @click="openDayShiftDialog(shift)"
             >
               <span class="day-event__title">{{ getEmployeeName(shift.user_id) }}</span>
               <span v-if="!isCompactWeekShift(shift)" class="day-event__time">
@@ -965,11 +960,11 @@ onMounted(async () => {
                 ></v-alert>
                 <v-card-actions>
                   <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
-                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id || isManager">Take Shift</v-btn>
                   <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
                   <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
                   <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
-                  <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
+                  <!-- <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn> -->
                 </v-card-actions>
               </v-card>
             </v-dialog>
