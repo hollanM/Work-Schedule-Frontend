@@ -491,7 +491,7 @@ async function hasShiftConflict(userId, startDateTime, endDateTime) {
   }
   else if(userId != tempShift.userId)
   {
-    return false;
+    return true;
   }
 
   const start = new Date(startDateTime);
