@@ -85,11 +85,15 @@ const shiftsByUserAndDate = computed(() => {
 });
 
 const hasUserShifts = computed(() => {
-  if(shifts == [])
+  if(currentUser.value.role == "Manager")//don't know what broke that I need this now, but it fixed the issue
+  {
+    return true;
+  }
+  if(shifts == [] || shifts == null)
   {
     return false;
   }
-  //console.log("checking found shifts");
+  // console.log("checking found shifts");
   // shifts.value.forEach(shift => {
   //   console.log("Checking shift for user:", {
   //     shiftUserId: shift.user_id ?? false, //need the null check here for the sign in page
@@ -98,6 +102,7 @@ const hasUserShifts = computed(() => {
   //     currentDate: currentDate.value,
   //     isSameWeek: isSameWeek(shift.startDate, currentDate.value),
   //   })
+  //   //console.log();
   // });                                             //.some returns true if it finds a match to the given criteria
   const foundShift = shifts.value.filter((shift) =>  //using .filter instead since it will almost work the same with a small bool check
     !shift.is_template &&
@@ -197,25 +202,33 @@ const fetchPositions = async () => {
 };
 
 async function loadShifts() {
-  const response = await shiftServices.getAllDept(currentUser.value.department_id);
+  //const response = await shiftServices.getAllDept(currentUser.value.department_id);//regression again - only gets a single shift
+  const response = await shiftServices.getAll();//new fix
   shifts.value = response.data;
-  console.log("Fetched shifts:", shifts.value);
+  let filtered = [];
+  //console.log("Fetched shifts:", shifts.value);
+  if(shifts)//did literally nothing
+  {
+    for (const shift of shifts.value) 
+    {
+      //console.log(shift.department_id, " ", currentUser.department_id);
+      if (shift.is_template || shift.department_id != currentUser.value.department_id) continue;//filter here
 
-  for (const shift of shifts.value) {
+      const start = await date_timeServices.get(shift.start_day_id);
+      const end = await date_timeServices.get(shift.end_day_id);
+      const startDate = new Date(start.data.first_date_time);
+      const endDate = new Date(end.data.first_date_time);
 
-    if (shift.is_template) continue;
-
-    const start = await date_timeServices.get(shift.start_day_id);
-    const end = await date_timeServices.get(shift.end_day_id);
-    const startDate = new Date(start.data.first_date_time);
-    const endDate = new Date(end.data.first_date_time);
-
-    shift.startDate = startDate;
-    shift.endDate = endDate;
-    shift.shiftDate = format(startDate, "yyyy-MM-dd");
-    shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
-    shift.positionName =
-      positions.value.find((position) => position.id === shift.position_id)?.name || "";
+      shift.startDate = startDate;
+      shift.endDate = endDate;
+      shift.shiftDate = format(startDate, "yyyy-MM-dd");
+      shift.formattedTime = `${formatShiftTimeFromISO(start.data.first_date_time)} - ${formatShiftTimeFromISO(end.data.first_date_time)}`;
+      shift.positionName =
+        positions.value.find((position) => position.id === shift.position_id)?.name || "";
+      filtered.push(shift);//put each into the temp variable
+    }
+    shifts.value = filtered;//reassign shfts
+    console.log("Fetched shifts:", shifts.value);
   }
 }
 
@@ -453,7 +466,7 @@ async function updateShift() { //currently only used by the takeShift() function
 }
 
 async function getShift() { 
-    const response = await shiftServices.get(selectedShift.value.id) //regression - get defaults to getDept
+    const response = await shiftServices.get(selectedShift.value.id)
     //console.log("Shift get response:", response.data);
     return response;
 
@@ -732,8 +745,10 @@ onMounted(async () => {
                 ></v-alert>
                 <v-card-actions>
                   <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
-                  <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
-                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn>
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
+                  <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
                   <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
                 </v-card-actions>
               </v-card>
@@ -831,8 +846,10 @@ onMounted(async () => {
                 ></v-alert>
                 <v-card-actions>
                   <v-btn @click="editShift" v-if="isManager">Edit Shift</v-btn> <!-- needed the ?s to remove possible null errors -->
-                  <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
-                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn>
+                  <v-btn @click="takeShift" v-if="!selectedShift?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.user_id === currentUser?.id">Drop Shift</v-btn>
+                  <!-- <v-btn @click="takeShift" v-if="!selectedShift?.value?.user_id">Take Shift</v-btn>
+                  <v-btn @click="dropShift" v-if="selectedShift?.value?.user_id == currentUser?.value?.user_id">Drop Shift</v-btn> -->
                   <v-btn @click="deleteShift" v-if="isManager">Delete Shift</v-btn>
                 </v-card-actions>
               </v-card>
