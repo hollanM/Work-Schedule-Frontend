@@ -485,10 +485,15 @@ async function hasShiftConflict(userId, startDateTime, endDateTime) {
     //console.log("shift was updated after this page loaded it");
     return true;//using the same error prompt is ok here
   }
-  if(userId != selectedShift.value.user_id && currentUser.value.role != "Manager")
+  else if(userId != selectedShift.value.user_id && currentUser.value.role != "Manager")
   {
     return true;
   }
+  else if(userId != tempShift.userId)
+  {
+    return false;
+  }
+
   const start = new Date(startDateTime);
   const end = new Date(endDateTime);
 
